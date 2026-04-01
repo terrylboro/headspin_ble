@@ -9,9 +9,6 @@ import StateDisplay from './components/StateDisplay';
 import HeadRendering from './components/HeadRendering';
 import CanalRendering from './components/CanalRendering';
 
-import PrintMessageConsole from './components/PrintMessageConsole';
-
-import { ensureImuSocket, subscribeImu, isImuConnected } from "./ws/imuSocket";
 import { useStateMachine } from './hooks/useStateMachine';
 
 import { decodeIMUPacket, IMUDecodeError, decodeNumericIMUPacket } from './utils/imuDecoder';
@@ -41,23 +38,6 @@ function formatIMUPacket(pkt: ReturnType<typeof decodeIMUPacket>): string {
   });
   return lines.join('\n');
 }
-
-// function parseIMUPacket(pkt: ReturnType<typeof decodeIMUPacket>): number[] {
-//   const readings: number[] = [];
-//   for (let i = 0; i < 9; i++) {
-//     readings[i] = pkt.frames[1];
-//   }
-//   pkt.frames.forEach((f, i) => {
-//     readings.push(
-//       `  frame[${i}]:\n` +
-//       `    accel (g):  (${f.ax_g.toFixed(3)}, ${f.ay_g.toFixed(3)}, ${f.az_g.toFixed(3)})\n` +
-//       `    gyro  (dps):(${f.gx_dps.toFixed(2)}, ${f.gy_dps.toFixed(2)}, ${f.gz_dps.toFixed(2)})`
-//     );
-//   });
-
-//   return 
-// }
-
 
 function App(): JSX.Element { 
   const { state, context, actions } = useStateMachine();
@@ -98,8 +78,6 @@ function App(): JSX.Element {
   const [deviceName, setDeviceName] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
 
-  // BLEService        svc ("12345678-1234-5678-1234-56789abcdef0");
-  // BLECharacteristic chIMU("12345678-1234-5678-1234-56789abcdef2");
   const [serviceUUID, setServiceUUID] = useState("12345678-1234-5678-1234-56789abcdef0");
   const [charUUID, setCharUUID] = useState("12345678-1234-5678-1234-56789abcdef2");
 
@@ -210,13 +188,6 @@ function App(): JSX.Element {
       text,
       decoded,
     };
-
-    // Add in updates
-    // Need to implement a function to parse the message
-    // console.log(pkt.frames[1])
-    // console.log(msg.decoded)
-    ;
-    // update(msg.decoded[0], accelY: number, accelZ: number, gyroX: number, gyroY: number, gyroZ: number, dt: number)
 
     setMessages(prev => [msg, ...prev].slice(0, 200));
   }
@@ -353,9 +324,7 @@ function App(): JSX.Element {
           actions={actions}
       />
       
-      <div style={{height: "5vh"}}/>
-      <div style={{height: "5vh"}}/>
-      <PrintMessageConsole  />
+      
   </div>
 
   <div style={{display: "flex", flexDirection: "column", flex: 1, justifyContent: "center", alignItems: "center", padding: "1vw"}}>
