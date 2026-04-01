@@ -115,12 +115,26 @@ export function decodeNumericIMUPacket(input: DataView | ArrayBuffer): number[] 
   let off = 8;
 
   for (let i = 0; i < n; i++) {
-    const ax = view.getInt16(off + 0, true);
-    const ay = view.getInt16(off + 2, true);
-    const az = view.getInt16(off + 4, true);
-    const gx = view.getInt16(off + 6, true);
-    const gy = view.getInt16(off + 8, true);
-    const gz = view.getInt16(off + 10, true);
+    let ax = view.getInt16(off + 0, true);
+    let ay = view.getInt16(off + 2, true);
+    let az = view.getInt16(off + 4, true);
+    let gx = view.getInt16(off + 6, true);
+    let gy = view.getInt16(off + 8, true);
+    let gz = view.getInt16(off + 10, true);
+
+    // converted
+    ax *= ACCEL_MG_PER_LSB * MG_TO_G;
+    ay *= ACCEL_MG_PER_LSB * MG_TO_G;
+    az *=  ACCEL_MG_PER_LSB * MG_TO_G;
+
+    gx *= GYRO_MDPS_PER_LSB * MDPS_TO_DPS;
+    gy *= GYRO_MDPS_PER_LSB * MDPS_TO_DPS;
+    gz *= GYRO_MDPS_PER_LSB * MDPS_TO_DPS;
+
+    // Apply bias correction
+    gx -= 0.05;
+    gy += 0.16;
+    gz += 0.08;
 
     arr.push(ax, ay, az, gx, gy, gz);
 

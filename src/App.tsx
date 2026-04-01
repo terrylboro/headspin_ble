@@ -182,8 +182,19 @@ function App(): JSX.Element {
       const pkt = decodeIMUPacket(rawView); // DataView is perfect here
       decoded = formatIMUPacket(pkt);
 
+      // Extract new data an dupdate filter
       const dataArr = decodeNumericIMUPacket(rawView);
       console.log(dataArr)
+      const filtPos = mFilter.update(dataArr[0]*9.81, dataArr[1]*9.81, dataArr[2]*9.81, dataArr[3], dataArr[4], dataArr[5], 0.01); // dt=0.01s (100Hz), adjust as needed
+      
+      const [w,x,y,z] = [filtPos.qw, filtPos.qx, filtPos.qy, filtPos.qz] as [number, number, number, number];
+          
+      const quat = new Quaternion(x, y, z, w);  // this worked with MATLAB-calculated quaternion
+      const mat = new Matrix4().makeRotationFromQuaternion(quat);
+
+      matrixRef.current.copy(mat);
+
+
     } catch (e) {
       // Only surface non-IMU errors if you want; otherwise silently ignore
       if (e instanceof IMUDecodeError) {
