@@ -14,7 +14,7 @@ import PrintMessageConsole from './components/PrintMessageConsole';
 import { ensureImuSocket, subscribeImu, isImuConnected } from "./ws/imuSocket";
 import { useStateMachine } from './hooks/useStateMachine';
 
-import { decodeIMUPacket, IMUDecodeError } from './utils/imuDecoder';
+import { decodeIMUPacket, IMUDecodeError, decodeNumericIMUPacket } from './utils/imuDecoder';
 
 import { MadgwickFilter } from './utils/madgwickFilter';
 
@@ -41,6 +41,22 @@ function formatIMUPacket(pkt: ReturnType<typeof decodeIMUPacket>): string {
   });
   return lines.join('\n');
 }
+
+// function parseIMUPacket(pkt: ReturnType<typeof decodeIMUPacket>): number[] {
+//   const readings: number[] = [];
+//   for (let i = 0; i < 9; i++) {
+//     readings[i] = pkt.frames[1];
+//   }
+//   pkt.frames.forEach((f, i) => {
+//     readings.push(
+//       `  frame[${i}]:\n` +
+//       `    accel (g):  (${f.ax_g.toFixed(3)}, ${f.ay_g.toFixed(3)}, ${f.az_g.toFixed(3)})\n` +
+//       `    gyro  (dps):(${f.gx_dps.toFixed(2)}, ${f.gy_dps.toFixed(2)}, ${f.gz_dps.toFixed(2)})`
+//     );
+//   });
+
+//   return 
+// }
 
 
 function App(): JSX.Element { 
@@ -161,9 +177,13 @@ function App(): JSX.Element {
 
     // Try decode IMU packet
     let decoded: string | undefined;
+    let dataArr: number[] | undefined
     try {
       const pkt = decodeIMUPacket(rawView); // DataView is perfect here
       decoded = formatIMUPacket(pkt);
+
+      const dataArr = decodeNumericIMUPacket(rawView);
+      console.log(dataArr)
     } catch (e) {
       // Only surface non-IMU errors if you want; otherwise silently ignore
       if (e instanceof IMUDecodeError) {
@@ -181,6 +201,10 @@ function App(): JSX.Element {
     };
 
     // Add in updates
+    // Need to implement a function to parse the message
+    // console.log(pkt.frames[1])
+    // console.log(msg.decoded)
+    ;
     // update(msg.decoded[0], accelY: number, accelZ: number, gyroX: number, gyroY: number, gyroZ: number, dt: number)
 
     setMessages(prev => [msg, ...prev].slice(0, 200));

@@ -90,6 +90,44 @@ export function decodeIMUPacket(input: DataView | ArrayBuffer): IMUPacket {
   return { sof, seq, n, t0_ms, frames };
 }
 
+export function decodeNumericIMUPacket(input: DataView | ArrayBuffer): number[] {
+  const view = input instanceof DataView ? input : new DataView(input);
+
+  // Header: sof(1) + seq(1) + n(2) + t0_ms(4) = 8 bytes
+  requireBytes(view, 8);
+
+  const sof = view.getUint8(0);
+  if (sof !== SOF_IMU) {
+    throw new IMUDecodeError(`Bad SOF: expected 0x${SOF_IMU.toString(16)}, got 0x${sof.toString(16)}`);
+  }
+
+  const seq = view.getUint8(1);
+  // const n = view.getUint16(2, true);
+  const n = 1;  // hardcode n=1 initially. This gets rid of the other 2 readings in the packet
+  const t0_ms = view.getUint32(4, true);
+
+  const frameSize = 12; // 6 * int16
+  const expectedLen = 8 + n * frameSize;
+  requireBytes(view, expectedLen);
+
+  const frames: IMUFrame[] = [];
+  const arr: number[] = [];
+  let off = 8;
+
+  for (let i = 0; i < n; i++) {
+    const ax = view.getInt16(off + 0, true);
+    const ay = view.getInt16(off + 2, true);
+    const az = view.getInt16(off + 4, true);
+    const gx = view.getInt16(off + 6, true);
+    const gy = view.getInt16(off + 8, true);
+    const gz = view.getInt16(off + 10, true);
+
+    arr.push(ax, ay, az, gx, gy, gz);
+
+    off += frameSize;
+  }
+  return arr;
+}
 
 
 // // imuDecoder.ts
