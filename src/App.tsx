@@ -15,6 +15,45 @@ import { decodeIMUPacket, IMUDecodeError, decodeNumericIMUPacket } from './utils
 
 import { MadgwickFilter } from './utils/madgwickFilter';
 
+// Mantine UI imports
+import '@mantine/core/styles.css';
+import {
+  AppShell,
+  Badge,
+  Box,
+  Button,
+  Card,
+  Group,
+  MantineProvider,
+  Progress,
+  Stack,
+  Text,
+  Title,
+  useMantineTheme,
+} from '@mantine/core';
+
+function TopBar() {
+  return (
+    <Group justify="space-between" h="100%" px="md">
+      <Title order={3}>HEADSPIN</Title>
+      <Group>
+        <Badge color="green">Bluetooth connected</Badge>
+        <Badge color="green">Streaming</Badge>
+      </Group>
+    </Group>
+  );
+}
+
+function StatusBar() {
+  return (
+    <Group justify="space-between" h="100%" px="md">
+      <Text size="sm">100 Hz</Text>
+      <Text size="sm">0 dropped</Text>
+      <Text size="sm">Connected</Text>
+    </Group>
+  );
+}
+
 type ReceivedMessage = {
   ts: string;
   raw: string;        // raw bytes as decimal (byte-by-byte)
@@ -259,9 +298,149 @@ function App(): JSX.Element {
     }
   }
 
+  // Mantine theming
+  const theme = useMantineTheme();
+
   return (
-    <>
-    <div style={{height: "1vh"}}/>
+
+    <MantineProvider defaultColorScheme="light">
+      <AppShell
+        header={{ height: 60 }}
+        navbar={{ width: 300, breakpoint: 'sm' }}
+        aside={{ width: 320, breakpoint: 'md' }}
+        footer={{ height: 40 }}
+        padding="md"
+      >
+
+      <AppShell.Header style={{
+          backgroundColor: theme.colors.blue[6],
+          color: theme.white,
+        }}>
+        <TopBar />
+      </AppShell.Header>
+
+      <div style={{height: "1vh"}}/>
+      <div style={{display: "flex", flexDirection: "row", width: "100%"}}>
+
+      <div style={{display: "flex", flexDirection: "column", width: "25vw", paddingRight: "1vw", paddingTop: "10vh"}}>
+        <SelectWindow 
+            ear={context.affectedEar}
+            canal={context.affectedCanal}
+            earCallback={handleEarChange}
+            canalCallback={handleCanalChange}
+            headAlignCallback={updateHeadOffset}
+        />
+
+        {context.affectedCanal && 
+        <AlignmentDisplay
+            stage={context.currentStage}
+            stageCallback={handleStageAdvance}
+            alignmentRef={alignmentRef}
+            alignedRef={alignedRef}
+            alignment={context.alignment}
+            stage1Progress={context.stage1Progress}
+            stage2Progress={context.stage2Progress}
+            stage3Progress={context.stage3Progress}
+            resetTime={context.resetTime}
+            />}
+        
+        <StateDisplay 
+            state={state}
+            context={context}
+            actions={actions}
+        />
+        
+        
+    </div>
+
+    <div style={{display: "flex", flexDirection: "column", flex: 1, justifyContent: "center", alignItems: "center", padding: "1vw"}}>
+        <CanalRendering 
+        canal={context.affectedCanal}
+        ear={context.affectedEar}
+        affectedCanal={context.affectedCanal}
+        matrixRef={matrixRef}
+        offsetMatrixRef={matrixOffset}
+        stage={context.currentStage}
+        alignmentRef={alignmentRef}
+        alignedRef={alignedRef}/>
+    </div>
+
+    <div style={{display: "flex", flexDirection: "column", width: "25vw", paddingLeft: "1vw"}}>
+    
+    <HeadRendering
+        ear={context.affectedEar}
+        matrixRef={matrixRef}
+        offsetMatrixRef={matrixOffset}/>
+    </div>
+    </div>
+
+
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+      <button onClick={connect} disabled={connected} style={{ padding: '6px 12px' }}>
+        Connect
+      </button>
+      <button onClick={disconnect} disabled={!connected} style={{ padding: '6px 12px' }}>
+        Disconnect
+      </button>
+      <div style={{ marginLeft: 12 }}>
+        <strong>Status:</strong> {connected ? 'Connected' : 'Disconnected'}
+        {deviceName ? ` — ${deviceName}` : ''}
+      </div>
+    </div>
+
+    <AppShell.Footer style={{
+          backgroundColor: theme.colors.blue[6],
+          color: theme.white,
+        }}>
+          <StatusBar />
+    </AppShell.Footer>
+
+    </AppShell>
+  </MantineProvider>
+    
+  );
+}
+
+export default App;
+
+// // Add this widget for IMU debugging
+// {error && <div style={{ color: 'salmon', marginTop: 8 }}>{error}</div>}
+
+//     <section style={{ textAlign: 'left', width: '80%', maxWidth: 800, marginTop: 20 }}>
+//       <h3>Received Messages</h3>
+//       <div style={{ maxHeight: 300, overflow: 'auto', background: 'rgba(255,255,255,0.03)', padding: 8 }}>
+//         {messages.length === 0 && <div style={{ color: '#bbb' }}>No messages yet.</div>}
+//         {messages.map((m, idx) => (
+//           <div key={idx} style={{ padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+//             <div style={{ fontSize: 12, color: '#999' }}>{m.ts}</div>
+
+//             <div style={{ fontFamily: 'monospace', fontSize: 13, color: '#fff' }}>
+//               {m.raw}
+//             </div>
+
+//             {m.decoded && (
+//               <pre style={{ marginTop: 6, fontSize: 12, color: '#ddd', whiteSpace: 'pre-wrap' }}>
+//                 {m.decoded}
+//               </pre>
+//             )}
+
+//             {/* Keeping your old "text" display (usually garbage for binary) */}
+//             {m.text && !m.decoded && (
+//               <div style={{ fontSize: 13, color: '#ddd' }}>{m.text}</div>
+//             )}
+//           </div>
+//         ))}
+//       </div>
+//     </section>
+
+
+
+
+
+
+
+// Non-mantine UI
+{/* <div style={{height: "1vh"}}/>
     <div style={{display: "flex", flexDirection: "row", width: "100%"}}>
 
     <div style={{display: "flex", flexDirection: "column", width: "25vw", paddingRight: "1vw"}}>
@@ -332,37 +511,4 @@ function App(): JSX.Element {
 
     
     </>
-  );
-}
-
-export default App;
-
-// // Add this widget for IMU debugging
-// {error && <div style={{ color: 'salmon', marginTop: 8 }}>{error}</div>}
-
-//     <section style={{ textAlign: 'left', width: '80%', maxWidth: 800, marginTop: 20 }}>
-//       <h3>Received Messages</h3>
-//       <div style={{ maxHeight: 300, overflow: 'auto', background: 'rgba(255,255,255,0.03)', padding: 8 }}>
-//         {messages.length === 0 && <div style={{ color: '#bbb' }}>No messages yet.</div>}
-//         {messages.map((m, idx) => (
-//           <div key={idx} style={{ padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-//             <div style={{ fontSize: 12, color: '#999' }}>{m.ts}</div>
-
-//             <div style={{ fontFamily: 'monospace', fontSize: 13, color: '#fff' }}>
-//               {m.raw}
-//             </div>
-
-//             {m.decoded && (
-//               <pre style={{ marginTop: 6, fontSize: 12, color: '#ddd', whiteSpace: 'pre-wrap' }}>
-//                 {m.decoded}
-//               </pre>
-//             )}
-
-//             {/* Keeping your old "text" display (usually garbage for binary) */}
-//             {m.text && !m.decoded && (
-//               <div style={{ fontSize: 13, color: '#ddd' }}>{m.text}</div>
-//             )}
-//           </div>
-//         ))}
-//       </div>
-//     </section>
+  ); */}
