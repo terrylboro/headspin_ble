@@ -5,6 +5,7 @@ import { BLUE_COLOUR, ORANGE_COLOUR, BROWN_COLOUR, BACKGR_COLOUR, RED_COLOUR} fr
 
 import { changeQuaternionBase } from "../utils/changeBase";
 import {applyYawOffset} from "../utils/applyYawOffset"
+import { useTreatment } from "../context/TreatmentProvider";
 
 interface Props {
     ear: "left" | "right" | "unselected"
@@ -12,7 +13,10 @@ interface Props {
     offsetMatrixRef: React.MutableRefObject<THREE.Matrix4> 
 }
 
-const HeadRendering = ({ear, matrixRef, offsetMatrixRef}: Props) => {
+// const HeadRendering = ({ear, matrixRef, offsetMatrixRef}: Props) => {
+const HeadRendering = () => {
+
+    const { matrixRef, offsetMatrixRef, affectedEar } = useTreatment();
 
     const camera = useRef<THREE.Camera>()
     const scene = useRef<THREE.Scene>()
@@ -82,7 +86,8 @@ const HeadRendering = ({ear, matrixRef, offsetMatrixRef}: Props) => {
                     // A manual tuning of the mesh position
                     if (mesh.geometry.attributes.position.array.length === 33435) {
                         mesh.rotation.set(0, 0, 0)
-                        mesh.position.set(ear === "left" ? 3.5 : -3.5, 0, 0)
+                        // mesh.position.set(ear === "left" ? 3.5 : -3.5, 0, 0)
+                        mesh.position.set(affectedEar === "left" ? 3.5 : -3.5, 0, 0)
                     }
                     else mesh.rotation.set(0.0, 0.0, 0)  // this was set in original code
 
@@ -103,7 +108,8 @@ const HeadRendering = ({ear, matrixRef, offsetMatrixRef}: Props) => {
             meshParts.current = [] // flush any previous loadings
         }
 
-    }, [ear, matrixRef, offsetMatrixRef])
+    // }, [ear, matrixRef, offsetMatrixRef])
+    }, [affectedEar, matrixRef, offsetMatrixRef])
 
 
     return (

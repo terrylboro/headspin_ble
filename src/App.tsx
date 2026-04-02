@@ -15,6 +15,10 @@ import { decodeIMUPacket, IMUDecodeError, decodeNumericIMUPacket } from './utils
 
 import { MadgwickFilter } from './utils/madgwickFilter';
 
+import SetupScreen from './components/SetupScreen';
+import TreatmentScreen from './components/TreatmentScreen';
+import { useBleDevice } from './context/BleProvider';
+
 // Mantine UI imports
 import '@mantine/core/styles.css';
 import {
@@ -31,6 +35,8 @@ import {
   Title,
   useMantineTheme,
 } from '@mantine/core';
+
+type Screen = 'setup' | 'treatment';
 
 function TopBar() {
   return (
@@ -81,117 +87,114 @@ function formatIMUPacket(pkt: ReturnType<typeof decodeIMUPacket>): string {
 function App(): JSX.Element { 
   const { state, context, actions } = useStateMachine();
 
-  const handleCanalChange = (newCanal: "posterior"|"anterior"|"lateral"|"unselected") => {
-      actions.selectCanal(context.affectedEar, newCanal);
-  }
+  const ble = useBleDevice();
 
-  const handleEarChange = (newEar: "left"|"right"|"unselected") => {
-      actions.updateEar(newEar);
-  }
+  const [screen, setScreen] = useState<Screen>('setup');
+  const [selectedCanals, setSelectedCanals] = useState<string[]>([]);
 
-  const handleStageAdvance = (advance: boolean) => {
-      if (advance) {
-          actions.advanceStage();
-      } else {
-          actions.returnToStage1();
-      }
-  }
+  // const handleCanalChange = (newCanal: "posterior"|"anterior"|"lateral"|"unselected") => {
+  //     actions.selectCanal(context.affectedEar, newCanal);
+  // }
 
-  const alignmentRef = useRef(0) // alignment score variable, changed by the CanalRendering component 
-                                  // using the alignment.ts function, and displayed by the 
-                                  // AlignmentDisplay component
-  const alignedRef = useRef(false) // boolean for whether or not the alignment is good enough,
-                                    // changed by AlignmentDisplay
+  // const handleEarChange = (newEar: "left"|"right"|"unselected") => {
+  //     actions.updateEar(newEar);
+  // }
 
-  const matrixRef =  useRef<Matrix4>(new Matrix4()) // 4x4 (homogeneous coords) rotation matrix
-                      //  calculated in CameraWindow then used in each CanalRendering
+  // const handleStageAdvance = (advance: boolean) => {
+  //     if (advance) {
+  //         actions.advanceStage();
+  //     } else {
+  //         actions.returnToStage1();
+  //     }
+  // }
 
-  const matrixOffset = useRef<Matrix4>(new Matrix4()) // this is used to align head yaw via a button
+  // const alignmentRef = useRef(0) // alignment score variable, changed by the CanalRendering component 
+  //                                 // using the alignment.ts function, and displayed by the 
+  //                                 // AlignmentDisplay component
+  // const alignedRef = useRef(false) // boolean for whether or not the alignment is good enough,
+  //                                   // changed by AlignmentDisplay
 
-  const updateHeadOffset = () => {
-      matrixOffset.current.copy(matrixRef.current)
-      console.log(matrixOffset.current)
-  }
+  // const matrixRef =  useRef<Matrix4>(new Matrix4()) // 4x4 (homogeneous coords) rotation matrix
+  //                     //  calculated in CameraWindow then used in each CanalRendering
+
+  // const matrixOffset = useRef<Matrix4>(new Matrix4()) // this is used to align head yaw via a button
+
+  // const updateHeadOffset = () => {
+  //     matrixOffset.current.copy(matrixRef.current)
+  //     console.log(matrixOffset.current)
+  // }
 
 
-    // Update state machine when alignment changes
-  useEffect(() => {
-      actions.updateAlignment(alignmentRef.current);
-  }, [alignmentRef.current, actions]);
+  //   // Update state machine when alignment changes
+  // useEffect(() => {
+  //     actions.updateAlignment(alignmentRef.current);
+  // }, [alignmentRef.current, actions]);
 
 
-  // Open filter
-  const mFilter = new MadgwickFilter(1/256, 0.1); // dt=1/256s, beta=0.1 (tune as needed for responsiveness vs noise)
-  // BTEC init
-  mFilter.init(0, 0, 9.81)
+  // // Open filter
+  // const mFilter = new MadgwickFilter(1/256, 0.1); // dt=1/256s, beta=0.1 (tune as needed for responsiveness vs noise)
+  // // BTEC init
+  // mFilter.init(0, 0, 9.81)
 
-  useEffect(() => {
-    return () => {
-      disconnect();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
-  function appendMessage(rawView: DataView) {
-    // IMPORTANT: treat notification payload as bytes (Uint8), not Uint16.
-    const bytes = new Uint8Array(rawView.buffer, rawView.byteOffset, rawView.byteLength);
+  // function appendMessage(rawView: DataView) {
+  //   // IMPORTANT: treat notification payload as bytes (Uint8), not Uint16.
+  //   const bytes = new Uint8Array(rawView.buffer, rawView.byteOffset, rawView.byteLength);
 
-    // Display as Base-10 byte values
-    const decimal = Array.from(bytes).map(b => b.toString(10)).join(' ');
+  //   // Display as Base-10 byte values
+  //   const decimal = Array.from(bytes).map(b => b.toString(10)).join(' ');
 
-    // Optional: try interpret as text (usually not meaningful for binary IMU)
-    let text: string | undefined;
-    try {
-      text = new TextDecoder().decode(bytes);
-    } catch {
-      text = undefined;
-    }
+  //   // Optional: try interpret as text (usually not meaningful for binary IMU)
+  //   let text: string | undefined;
+  //   try {
+  //     text = new TextDecoder().decode(bytes);
+  //   } catch {
+  //     text = undefined;
+  //   }
 
-    // Try decode IMU packet
-    let decoded: string | undefined;
-    let dataArr: number[] | undefined
-    try {
-      const pkt = decodeIMUPacket(rawView); // DataView is perfect here
-      decoded = formatIMUPacket(pkt);
+  //   // Try decode IMU packet
+  //   let decoded: string | undefined;
+  //   let dataArr: number[] | undefined
+  //   try {
+  //     const pkt = decodeIMUPacket(rawView); // DataView is perfect here
+  //     decoded = formatIMUPacket(pkt);
 
-      // Extract new data an dupdate filter
-      const dataArr = decodeNumericIMUPacket(rawView);
-      console.log(dataArr)
-      const filtPos = mFilter.update(dataArr[0]*9.81, dataArr[1]*9.81, dataArr[2]*9.81, dataArr[3], dataArr[4], dataArr[5], 0.01); // dt=0.01s (100Hz), adjust as needed
+  //     // Extract new data and update filter
+  //     const dataArr = decodeNumericIMUPacket(rawView);
+  //     console.log(dataArr)
+  //     const filtPos = mFilter.update(dataArr[0]*9.81, dataArr[1]*9.81, dataArr[2]*9.81, dataArr[3], dataArr[4], dataArr[5], 0.01); // dt=0.01s (100Hz), adjust as needed
       
-      const [w,x,y,z] = [filtPos.qw, filtPos.qx, filtPos.qy, filtPos.qz] as [number, number, number, number];
+  //     const [w,x,y,z] = [filtPos.qw, filtPos.qx, filtPos.qy, filtPos.qz] as [number, number, number, number];
           
-      const quat = new Quaternion(x, y, z, w);  // this worked with MATLAB-calculated quaternion
-      const mat = new Matrix4().makeRotationFromQuaternion(quat);
+  //     const quat = new Quaternion(x, y, z, w);  // this worked with MATLAB-calculated quaternion
+  //     const mat = new Matrix4().makeRotationFromQuaternion(quat);
 
-      matrixRef.current.copy(mat);
+  //     matrixRef.current.copy(mat);
 
 
-    } catch (e) {
-      // Only surface non-IMU errors if you want; otherwise silently ignore
-      if (e instanceof IMUDecodeError) {
-        // Not an IMU packet / partial packet / wrong SOF: ignore
-      } else {
-        decoded = `Decode error: ${String(e)}`;
-      }
-    }
+  //   } catch (e) {
+  //     // Only surface non-IMU errors if you want; otherwise silently ignore
+  //     if (e instanceof IMUDecodeError) {
+  //       // Not an IMU packet / partial packet / wrong SOF: ignore
+  //     } else {
+  //       decoded = `Decode error: ${String(e)}`;
+  //     }
+  //   }
 
-    const msg: ReceivedMessage = {
-      ts: new Date().toLocaleTimeString(),
-      raw: decimal,
-      text,
-      decoded,
-    };
+  //   const msg: ReceivedMessage = {
+  //     ts: new Date().toLocaleTimeString(),
+  //     raw: decimal,
+  //     text,
+  //     decoded,
+  //   };
 
-    setMessages(prev => [msg, ...prev].slice(0, 200));
-  }
+  //   // setMessages(prev => [msg, ...prev].slice(0, 200));
+  // }
 
   // Mantine theming
   const theme = useMantineTheme();
 
   return (
-
-    <MantineProvider defaultColorScheme="light">
       <AppShell
         header={{ height: 60 }}
         navbar={{ width: 300, breakpoint: 'sm' }}
@@ -207,74 +210,33 @@ function App(): JSX.Element {
         <TopBar />
       </AppShell.Header>
 
-      <div style={{height: "1vh"}}/>
-      <div style={{display: "flex", flexDirection: "row", width: "100%"}}>
+      
 
-      <div style={{display: "flex", flexDirection: "column", width: "25vw", paddingRight: "1vw", paddingTop: "10vh"}}>
-        <SelectWindow 
-            ear={context.affectedEar}
-            canal={context.affectedCanal}
-            earCallback={handleEarChange}
-            canalCallback={handleCanalChange}
-            headAlignCallback={updateHeadOffset}
+    <>
+      {screen === 'setup' ? (
+        <SetupScreen
+          bleStatus={ble.connected ? 'connected' : 'disconnected'}
+          deviceName={ble.deviceName}
+          bleError={ble.error}
+          selectedCanals={selectedCanals}
+          setSelectedCanals={setSelectedCanals}
+          onConnect={ble.connect}
+          onDisconnect={ble.disconnect}
+          onContinue={() => setScreen('treatment')}
         />
-
-        {context.affectedCanal && 
-        <AlignmentDisplay
-            stage={context.currentStage}
-            stageCallback={handleStageAdvance}
-            alignmentRef={alignmentRef}
-            alignedRef={alignedRef}
-            alignment={context.alignment}
-            stage1Progress={context.stage1Progress}
-            stage2Progress={context.stage2Progress}
-            stage3Progress={context.stage3Progress}
-            resetTime={context.resetTime}
-            />}
-        
-        <StateDisplay 
-            state={state}
-            context={context}
-            actions={actions}
+      ) : (
+        <TreatmentScreen
+          selectedCanals={selectedCanals}
+          progress={0}
+          latestSampleText={
+            ble.messages.length > 0
+              ? `Received ${ble.messages.length} messages`
+              : 'Waiting for data'
+          }
+          onBack={() => setScreen('setup')}
         />
-        
-        
-    </div>
-
-    <div style={{display: "flex", flexDirection: "column", flex: 1, justifyContent: "center", alignItems: "center", padding: "1vw"}}>
-        <CanalRendering 
-        canal={context.affectedCanal}
-        ear={context.affectedEar}
-        affectedCanal={context.affectedCanal}
-        matrixRef={matrixRef}
-        offsetMatrixRef={matrixOffset}
-        stage={context.currentStage}
-        alignmentRef={alignmentRef}
-        alignedRef={alignedRef}/>
-    </div>
-
-    <div style={{display: "flex", flexDirection: "column", width: "25vw", paddingLeft: "1vw"}}>
-    
-    <HeadRendering
-        ear={context.affectedEar}
-        matrixRef={matrixRef}
-        offsetMatrixRef={matrixOffset}/>
-    </div>
-    </div>
-
-
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-      <button onClick={connect} disabled={connected} style={{ padding: '6px 12px' }}>
-        Connect
-      </button>
-      <button onClick={disconnect} disabled={!connected} style={{ padding: '6px 12px' }}>
-        Disconnect
-      </button>
-      <div style={{ marginLeft: 12 }}>
-        <strong>Status:</strong> {connected ? 'Connected' : 'Disconnected'}
-        {deviceName ? ` — ${deviceName}` : ''}
-      </div>
-    </div>
+      )}
+    </>
 
     <AppShell.Footer style={{
           backgroundColor: theme.colors.blue[6],
@@ -284,7 +246,6 @@ function App(): JSX.Element {
     </AppShell.Footer>
 
     </AppShell>
-  </MantineProvider>
     
   );
 }

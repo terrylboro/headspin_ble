@@ -22,6 +22,7 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
   );
 
   const [messages, setMessages] = useState<ReceivedMessage[]>([]);
+  const [latestMessage, setLatestMessage] = useState<ReceivedMessage | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const deviceRef = useRef<BluetoothDevice | null>(null);
@@ -29,13 +30,18 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
   const disconnectHandlerRef = useRef<((event: Event) => void) | null>(null);
 
   const appendMessage = useCallback((value: DataView) => {
-    setMessages((prev) => [
-      ...prev,
-      {
-        timestamp: Date.now(),
-        data: value,
-      },
-    ]);
+
+    const msg = {
+    timestamp: Date.now(),
+    data: value,
+    };
+
+    setLatestMessage(msg);
+
+    setMessages((prev) => {
+      const next = [...prev, msg];
+      return next.length > 200 ? next.slice(next.length - 200) : next;
+    });
   }, []);
 
   const onCharacteristicValueChanged = useCallback((event: Event) => {
@@ -187,6 +193,7 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
     charUUID,
     setCharUUID,
     messages,
+    latestMessage,
     error,
     connect,
     disconnect,
