@@ -115,7 +115,7 @@ export function TreatmentProvider({
   const ble = useBleDevice();
 
   const [affectedEar, setAffectedEar] = useState<EarSide>(null);
-  const [affectedCanal, setAffectedCanal] = useState<CanalType>(null);
+  const [affectedCanal, setAffectedCanal] = useState<CanalType>('posterior');
   const [selectedCanals, setSelectedCanals] = useState<string[]>([]);
 
   const [alignment, setAlignment] = useState<AlignmentState>('idle');

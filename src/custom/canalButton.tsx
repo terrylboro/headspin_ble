@@ -3,7 +3,7 @@ import { Card, Image, Text, UnstyledButton, Stack } from '@mantine/core';
 type SelectCardButtonProps = {
   label: string;
   imageSrc: string;
-  selected?: boolean;
+  selected: boolean;
   onClick?: () => void;
 };
 

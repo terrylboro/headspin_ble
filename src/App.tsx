@@ -40,7 +40,7 @@ type Screen = 'setup' | 'treatment';
 function TopBar() {
   return (
     <Group justify="space-between" h="100%" px="md">
-      <Title order={3}>HEADSPIN</Title>
+      <Title order={3}>HeadSpin</Title>
       <Group>
         <Badge color="green">Bluetooth connected</Badge>
         <Badge color="green">Streaming</Badge>

@@ -13,6 +13,7 @@ import {
 } from '@mantine/core';
 
 import { SelectCanalButton } from '../custom/canalButton';
+import { useTreatment } from '../context/TreatmentProvider';
 
 type SetupScreenProps = {
   bleStatus: 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -24,12 +25,6 @@ type SetupScreenProps = {
   onDisconnect: () => void;
   onContinue: () => void;
 };
-
-const canalOptions = [
-  { value: 'anterior', label: 'Anterior canal' },
-  { value: 'posterior', label: 'Posterior canal' },
-  { value: 'horizontal', label: 'Horizontal canal' },
-];
 
 export default function SetupScreen({
   bleStatus,
@@ -44,6 +39,8 @@ export default function SetupScreen({
   const canContinue = bleStatus === 'connected' && selectedCanals.length > 0;
 
    const theme = useMantineTheme();
+   const { affectedCanal, setAffectedCanal } = useTreatment();
+   const { affectedEar, setAffectedEar } = useTreatment();
 
   return (
     <Box
@@ -89,8 +86,8 @@ export default function SetupScreen({
                 </Box>
 
                 <Stack gap="md">
-                <Button fullWidth size="lg" onClick={onConnect} loading={bleStatus === 'connecting' || bleStatus === 'connected'}>
-                  Connect
+                <Button fullWidth size="xl" onClick={onConnect} loading={bleStatus === 'connecting'} color={bleStatus === 'connected' ? theme.colors.green[6] : theme.colors.blue[6]}>
+                  {bleStatus === 'connected' ? 'Connected' : 'Connect'}
                 </Button>
                 </Stack>
 
@@ -110,18 +107,18 @@ export default function SetupScreen({
               <Stack h="100%" justify="space-between">
                 <Box>
                   <Title order={1} mb="sm">
-                    Select canals
+                    Select affected canal
                   </Title>
                   <Text c="dimmed" size="sm">
-                    Choose the canals you would like to treat in this session.
+                    Posterior is most commonly affected.
                   </Text>
                 </Box>
 
                 <Stack gap="md">
                   <Group wrap="nowrap" grow>
-                    <SelectCanalButton label="Posterior" imageSrc="C:/Users/teri-/Documents/Headspin_BLE/headspin_ble/public/logo192.png" selected={false} onClick={() => {}}/>
-                    <SelectCanalButton label="Anterior" imageSrc="C:/Users/teri-/Documents/Headspin_BLE/headspin_ble/public/logo192.png" selected={false} onClick={() => {}}/>
-                    <SelectCanalButton label="Lateral" imageSrc="C:/Users/teri-/Documents/Headspin_BLE/headspin_ble/public/logo192.png" selected={false} onClick={() => {}}/>
+                    <SelectCanalButton label="Posterior" imageSrc="https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/images/bg-7.png" selected={affectedCanal === 'posterior'} onClick={() => setAffectedCanal('posterior')}/>
+                    <SelectCanalButton label="Anterior" imageSrc="/logo192.png" selected={affectedCanal === 'anterior'} onClick={() => setAffectedCanal('anterior')}/>
+                    <SelectCanalButton label="Lateral" imageSrc="/logo192.png" selected={affectedCanal === 'horizontal'} onClick={() => setAffectedCanal('horizontal')}/>
                   </Group>
                 </Stack>
               </Stack>
@@ -148,11 +145,10 @@ export default function SetupScreen({
                 </Box>
 
                 <Stack gap="md">
-                  <Text size="sm">No side selected</Text>
-                    <Button color="green" fullWidth>
+                    <Button color={affectedEar === "left" ? theme.colors.green[6] : theme.colors.gray[6]} fullWidth size="xl" onClick={() => setAffectedEar("left")}>
                       Left
                     </Button>
-                    <Button color="red" fullWidth>
+                    <Button color={affectedEar === "right" ? theme.colors.red[6] : theme.colors.gray[6]} fullWidth size="xl" onClick={() => setAffectedEar("right")}>
                       Right
                     </Button>
                 </Stack>
@@ -162,7 +158,7 @@ export default function SetupScreen({
 
         </Grid>
 
-        <Button size="lg" fullWidth onClick={onContinue} disabled color="green">
+        <Button size="lg" fullWidth onClick={onContinue} disabled={!affectedEar || !affectedCanal || !( bleStatus === 'connected')} color="green">
           Continue
         </Button>
       </Stack>
