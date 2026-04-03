@@ -20,7 +20,6 @@ import TreatmentScreen from './components/TreatmentScreen';
 import { useBleDevice } from './context/BleProvider';
 
 // Mantine UI imports
-import '@mantine/core/styles.css';
 import {
   AppShell,
   Badge,
@@ -92,113 +91,13 @@ function App(): JSX.Element {
   const [screen, setScreen] = useState<Screen>('setup');
   const [selectedCanals, setSelectedCanals] = useState<string[]>([]);
 
-  // const handleCanalChange = (newCanal: "posterior"|"anterior"|"lateral"|"unselected") => {
-  //     actions.selectCanal(context.affectedEar, newCanal);
-  // }
-
-  // const handleEarChange = (newEar: "left"|"right"|"unselected") => {
-  //     actions.updateEar(newEar);
-  // }
-
-  // const handleStageAdvance = (advance: boolean) => {
-  //     if (advance) {
-  //         actions.advanceStage();
-  //     } else {
-  //         actions.returnToStage1();
-  //     }
-  // }
-
-  // const alignmentRef = useRef(0) // alignment score variable, changed by the CanalRendering component 
-  //                                 // using the alignment.ts function, and displayed by the 
-  //                                 // AlignmentDisplay component
-  // const alignedRef = useRef(false) // boolean for whether or not the alignment is good enough,
-  //                                   // changed by AlignmentDisplay
-
-  // const matrixRef =  useRef<Matrix4>(new Matrix4()) // 4x4 (homogeneous coords) rotation matrix
-  //                     //  calculated in CameraWindow then used in each CanalRendering
-
-  // const matrixOffset = useRef<Matrix4>(new Matrix4()) // this is used to align head yaw via a button
-
-  // const updateHeadOffset = () => {
-  //     matrixOffset.current.copy(matrixRef.current)
-  //     console.log(matrixOffset.current)
-  // }
-
-
-  //   // Update state machine when alignment changes
-  // useEffect(() => {
-  //     actions.updateAlignment(alignmentRef.current);
-  // }, [alignmentRef.current, actions]);
-
-
-  // // Open filter
-  // const mFilter = new MadgwickFilter(1/256, 0.1); // dt=1/256s, beta=0.1 (tune as needed for responsiveness vs noise)
-  // // BTEC init
-  // mFilter.init(0, 0, 9.81)
-
-
-  // function appendMessage(rawView: DataView) {
-  //   // IMPORTANT: treat notification payload as bytes (Uint8), not Uint16.
-  //   const bytes = new Uint8Array(rawView.buffer, rawView.byteOffset, rawView.byteLength);
-
-  //   // Display as Base-10 byte values
-  //   const decimal = Array.from(bytes).map(b => b.toString(10)).join(' ');
-
-  //   // Optional: try interpret as text (usually not meaningful for binary IMU)
-  //   let text: string | undefined;
-  //   try {
-  //     text = new TextDecoder().decode(bytes);
-  //   } catch {
-  //     text = undefined;
-  //   }
-
-  //   // Try decode IMU packet
-  //   let decoded: string | undefined;
-  //   let dataArr: number[] | undefined
-  //   try {
-  //     const pkt = decodeIMUPacket(rawView); // DataView is perfect here
-  //     decoded = formatIMUPacket(pkt);
-
-  //     // Extract new data and update filter
-  //     const dataArr = decodeNumericIMUPacket(rawView);
-  //     console.log(dataArr)
-  //     const filtPos = mFilter.update(dataArr[0]*9.81, dataArr[1]*9.81, dataArr[2]*9.81, dataArr[3], dataArr[4], dataArr[5], 0.01); // dt=0.01s (100Hz), adjust as needed
-      
-  //     const [w,x,y,z] = [filtPos.qw, filtPos.qx, filtPos.qy, filtPos.qz] as [number, number, number, number];
-          
-  //     const quat = new Quaternion(x, y, z, w);  // this worked with MATLAB-calculated quaternion
-  //     const mat = new Matrix4().makeRotationFromQuaternion(quat);
-
-  //     matrixRef.current.copy(mat);
-
-
-  //   } catch (e) {
-  //     // Only surface non-IMU errors if you want; otherwise silently ignore
-  //     if (e instanceof IMUDecodeError) {
-  //       // Not an IMU packet / partial packet / wrong SOF: ignore
-  //     } else {
-  //       decoded = `Decode error: ${String(e)}`;
-  //     }
-  //   }
-
-  //   const msg: ReceivedMessage = {
-  //     ts: new Date().toLocaleTimeString(),
-  //     raw: decimal,
-  //     text,
-  //     decoded,
-  //   };
-
-  //   // setMessages(prev => [msg, ...prev].slice(0, 200));
-  // }
-
+ 
   // Mantine theming
   const theme = useMantineTheme();
 
   return (
       <AppShell
         header={{ height: 60 }}
-        navbar={{ width: 300, breakpoint: 'sm' }}
-        aside={{ width: 320, breakpoint: 'md' }}
         footer={{ height: 40 }}
         padding="md"
       >
@@ -212,7 +111,15 @@ function App(): JSX.Element {
 
       
 
-    <>
+    <AppShell.Main
+      style={{
+        minHeight: 'calc(100vh - 60px - 44px)', // full height minus header and footer
+        display: 'block',
+        backgroundColor: theme.colors.gray[0],
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}>
+
       {screen === 'setup' ? (
         <SetupScreen
           bleStatus={ble.connected ? 'connected' : 'disconnected'}
@@ -236,7 +143,7 @@ function App(): JSX.Element {
           onBack={() => setScreen('setup')}
         />
       )}
-    </>
+    </AppShell.Main>
 
     <AppShell.Footer style={{
           backgroundColor: theme.colors.blue[6],
