@@ -1,14 +1,4 @@
-// import {
-//   quaternionNormalize,
-//   quaternionRotateVector,
-//   calculateGravityAppleConvention,
-//   quaternionToEuler,
-//   initQuaternionFromGravity,
-//   ahrsNaNGuard,
-// } from "../utils/quaternion.js";
-
-
-import { Matrix4, Quaternion } from 'three';
+// https://github.com/tszheichoi/sensor-zoo/blob/main/filters/MadgwickFilter.js
 
 // Expected gravity magnitude (m/s²) and tolerance for init.
 // Accepts 7.8–11.8 m/s² to handle noisy readings at startup.
@@ -161,13 +151,6 @@ export function ahrsNaNGuard(q: number[]) {
     roll: euler.roll, pitch: euler.pitch, yaw: euler.yaw,
   };
 }
-
-// Magnetometer magnitude bounds for outlier rejection (µT).
-// Earth's field is ~25–65 µT, but Android calibrated magnetometers
-// often report 100–150 µT due to incomplete hard-iron compensation.
-// Since we normalise before use, magnitude only gates acceptance.
-const MAG_MIN_NORM = 10;
-const MAG_MAX_NORM = 200;
 
 export class MadgwickFilter {
   beta: number;

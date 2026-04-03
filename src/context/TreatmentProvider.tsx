@@ -15,6 +15,7 @@ import { decodeNumericIMUPacket } from '../utils/imuDecoder';
 // Import your existing Madgwick module here
 // Example only — replace with your actual import:
 import { MadgwickFilter } from '../utils/madgwickFilter';
+import { changeQuaternionBase } from '../utils/changeBase';
 
 export type EarSide = 'left' | 'right' | null;
 export type CanalType = 'anterior' | 'posterior' | 'lateral' | null;
@@ -167,6 +168,8 @@ export function TreatmentProvider({
     const dataArr = decodeNumericIMUPacket(latestMessage.data);
 
     console.log(dataArr);
+
+    
     
       /**
        * 2) Run your existing Madgwick module here.
@@ -181,7 +184,9 @@ export function TreatmentProvider({
     //   const filtPos = madgwickRef.current.update
     //     ? madgwickRef.current.update(dataArr[0], dataArr[1], dataArr[2], dataArr[3], dataArr[4], dataArr[5])
     //     : madgwickRef.current(dataArr[0], dataArr[1], dataArr[2], dataArr[3], dataArr[4], dataArr[5]);
-    const filtPos = madgwickRef.current.update(dataArr[0]*9.81, dataArr[1]*9.81, dataArr[2]*9.81, dataArr[3], dataArr[4], dataArr[5], 0.01);
+    // Attempt to map IMU co-ordinates to madgwick co-ordinates
+    // const filtPos = madgwickRef.current.update(dataArr[1]*9.81, -dataArr[2]*9.81, dataArr[0]*9.81, dataArr[1], -dataArr[2], dataArr[3], 0.01);
+      const filtPos = madgwickRef.current.update(dataArr[0]*9.81, dataArr[1]*9.81, -dataArr[2]*9.81, dataArr[3], dataArr[4], -dataArr[5], 0.01);
 
       /**
        * Expect your distilled output to provide orientation in some usable form.
@@ -196,11 +201,15 @@ export function TreatmentProvider({
                   
         const quat = new Quaternion(x, y, z, w);  // this worked with MATLAB-calculated quaternion
         const mat = new Matrix4().makeRotationFromQuaternion(quat);
+        changeQuaternionBase(mat, quat);
         /**
          * 3) Update the live matrix ref used by your 3D rendering.
          * The render code can consume this without frequent React re-renders.
          */
         matrixRef.current.copy(mat);
+
+        setLatestSampleText(`Received data: ${dataArr.map((v) => v.toFixed(2)).join(' | ')} | ${filtPos.roll.toFixed(3)} | ${filtPos.pitch.toFixed(3)} | ${filtPos.yaw.toFixed(3)}`);
+
         // console.log(matrixRef.current);
 
       /**

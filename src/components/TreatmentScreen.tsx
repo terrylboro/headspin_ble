@@ -14,16 +14,10 @@ import CanalRendering from './CanalRendering';
 import { useTreatment } from '../context/TreatmentProvider';
 
 type TreatmentScreenProps = {
-  selectedCanals: string[];
-  progress: number;
-  latestSampleText: string;
   onBack: () => void;
 };
 
 export default function TreatmentScreen({
-  selectedCanals,
-  progress,
-  latestSampleText,
   onBack,
 }: TreatmentScreenProps) {
 
@@ -82,6 +76,12 @@ export default function TreatmentScreen({
         </Card>
 
       </Group>
+
+      <Card withBorder shadow="sm" radius="md">
+        <Text fw={600}>Latest data</Text>
+        <Text fw={600}>aX | aY | aZ | gX | gY | gZ | Roll | Pitch | Yaw</Text>
+        <Text>{treatment.latestSampleText}</Text>
+        </Card>
     </Stack>
   );
 }

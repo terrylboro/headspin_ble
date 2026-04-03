@@ -133,13 +133,6 @@ function App(): JSX.Element {
         />
       ) : (
         <TreatmentScreen
-          selectedCanals={selectedCanals}
-          progress={0}
-          latestSampleText={
-            ble.messages.length > 0
-              ? `Received ${ble.messages.length} messages`
-              : 'Waiting for data'
-          }
           onBack={() => setScreen('setup')}
         />
       )}
