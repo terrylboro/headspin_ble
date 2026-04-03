@@ -118,7 +118,7 @@ export default function SetupScreen({
                   <Group wrap="nowrap" grow>
                     <SelectCanalButton label="Posterior" imageSrc="https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/images/bg-7.png" selected={affectedCanal === 'posterior'} onClick={() => setAffectedCanal('posterior')}/>
                     <SelectCanalButton label="Anterior" imageSrc="/logo192.png" selected={affectedCanal === 'anterior'} onClick={() => setAffectedCanal('anterior')}/>
-                    <SelectCanalButton label="Lateral" imageSrc="/logo192.png" selected={affectedCanal === 'horizontal'} onClick={() => setAffectedCanal('horizontal')}/>
+                    <SelectCanalButton label="Lateral" imageSrc="/logo192.png" selected={affectedCanal === 'lateral'} onClick={() => setAffectedCanal('lateral')}/>
                   </Group>
                 </Stack>
               </Stack>

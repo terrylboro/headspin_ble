@@ -5,28 +5,19 @@ import { getAlignment, meshPartsLength } from "../utils/alignment";
 import { BLUE_COLOUR, ORANGE_COLOUR, BROWN_COLOUR, BACKGR_COLOUR, GREEN_COLOUR, RED_COLOUR} from "../utils/config";
 import { changeQuaternionBase } from "../utils/changeBase";
 import {applyYawOffset} from "../utils/applyYawOffset"
+import { useTreatment } from "../context/TreatmentProvider";
 
-interface Props {
-    canal: "posterior" | "anterior" | "lateral" | "all" | "unselected",
-    ear: "left" | "right" | "unselected"
-    affectedCanal: "posterior"|"anterior"|"lateral"|"all"| "unselected"
-    matrixRef: React.MutableRefObject<THREE.Matrix4>
-    offsetMatrixRef: React.MutableRefObject<THREE.Matrix4>
-    stage: number
-    alignmentRef: React.MutableRefObject<number> | null
-    alignedRef: React.MutableRefObject<boolean>
-}
 
-function capitalize(string: string) {
-    return string.charAt(0).toUpperCase() + string.slice(1)
-}
-
-const CanalRendering = ({canal, ear, affectedCanal, matrixRef, offsetMatrixRef, stage, alignmentRef, alignedRef}: Props) => {
+// {canal, ear, affectedCanal, matrixRef, offsetMatrixRef, stage, alignmentRef, alignedRef}: Props
+const CanalRendering = () => {
 
     const [active, setActive] = useState(true)
     const handleChange = () => {
         setActive(!active)
     }
+
+    // Using TreatmentProvider context to get the necessary variables for rendering and alignment
+    const {affectedEar, affectedCanal, matrixRef, offsetMatrixRef, currentStage, alignmentRef, alignedRef} = useTreatment();
 
     const camera = useRef<THREE.Camera>()
     const scene = useRef<THREE.Scene>()
@@ -37,10 +28,9 @@ const CanalRendering = ({canal, ear, affectedCanal, matrixRef, offsetMatrixRef, 
     const coloursAll = [BLUE_COLOUR, ORANGE_COLOUR, BROWN_COLOUR, 0x333333, 0x333333]
 
     useEffect(() => {
-        const affected = (affectedCanal === canal) && (canal !== "all")
 
         // Renderer initialisation
-        const canvas = document.getElementById("canalCanvas" + canal) as HTMLCanvasElement
+        const canvas = document.getElementById("canalCanvas" + affectedCanal) as HTMLCanvasElement
         renderer.current = new THREE.WebGLRenderer({canvas: canvas, antialias: true})
         const size = active ? document.documentElement.clientWidth * 0.207 : 0
 		renderer.current.setSize(size, size)
@@ -52,7 +42,7 @@ const CanalRendering = ({canal, ear, affectedCanal, matrixRef, offsetMatrixRef, 
 
         // Camera initialisation
         camera.current = new THREE.PerspectiveCamera(15, 1)
-        camera.current.position.set(0, 0, canal === "all" ? 70 : 39) 
+        camera.current.position.set(0, 0, 39)  
         camera.current.lookAt(0, 0, 0)
 
 
@@ -65,7 +55,7 @@ const CanalRendering = ({canal, ear, affectedCanal, matrixRef, offsetMatrixRef, 
         pointLight1.position.set(0, 0, 35)
         scene.current.add(pointLight1)
 
-        const pointLight2 = new THREE.PointLight(0xffffff, canal === "all" ? 850 : 1300)
+        const pointLight2 = new THREE.PointLight(0xffffff, 1300)
         pointLight2.castShadow = true
         pointLight2.position.set(0, 15, 8)
         scene.current.add(pointLight2)
@@ -79,16 +69,14 @@ const CanalRendering = ({canal, ear, affectedCanal, matrixRef, offsetMatrixRef, 
         // Load Canal Mesh
         const loader = new PLYLoader()
         let color = 0
-        for (let i = 0; i < meshPartsLength[canal]; i++) {
-            const meshPath = "rh_meshes/" + canal + "_" + i.toString() + ".ply"
+        for (let i = 0; i < meshPartsLength[affectedCanal ? affectedCanal : 5]; i++) {
+            const meshPath = "rh_meshes/" + affectedCanal + "_" + i.toString() + ".ply"
             loader.load(meshPath, (geometry) => {
 
-                if (canal === "all") color = coloursAll[i]
-                else {
-                    if (affected && ((i+1 === stage && canal === "lateral") || 
-                                    (i === stage && canal !== "lateral"))) color = RED_COLOUR
-                    else color = canalColours[canal]
-                }
+
+                if ((i+1 === currentStage && affectedCanal === "lateral") || 
+                                (i === currentStage && affectedCanal !== "lateral")) color = RED_COLOUR
+                else color = canalColours[affectedCanal ? affectedCanal : "unselected"]
 
                 const material = new THREE.MeshStandardMaterial({color: color, side: THREE.DoubleSide, flatShading: true})
                 const loadedMesh = new THREE.Mesh(geometry, material)
@@ -102,7 +90,7 @@ const CanalRendering = ({canal, ear, affectedCanal, matrixRef, offsetMatrixRef, 
         // Main animation loop
         let loop: number = requestAnimationFrame(animate)
         function animate() {
-            if (meshParts.current[meshPartsLength[canal] - 1]) {
+            if (meshParts.current[meshPartsLength[affectedCanal ? affectedCanal : 5] - 1]) {
                 for (let mesh of meshParts.current) {
                     mesh.rotation.set(0, 0, 0) // each frame first resets the canal position
                     
@@ -114,19 +102,18 @@ const CanalRendering = ({canal, ear, affectedCanal, matrixRef, offsetMatrixRef, 
                     mesh.applyQuaternion(qB);                    
                 }
 
-                if (affected) {
-                    const segmentID = canal === "lateral" ? stage - 1 : stage
 
-                    // update alignment variable for the affected canal
-                    alignmentRef!.current = getAlignment(canal, stage, meshParts.current[segmentID])
-                    if (alignedRef.current) {
-                        const material = new THREE.MeshStandardMaterial({color: GREEN_COLOUR, side: THREE.DoubleSide, flatShading: true})
-                        meshParts.current[segmentID].material = material
-                    } 
-                    else {
-                        const material = new THREE.MeshStandardMaterial({color: RED_COLOUR, side: THREE.DoubleSide, flatShading: true})
-                        meshParts.current[segmentID].material = material
-                    }
+                const segmentID = affectedCanal === "lateral" ? currentStage - 1 : currentStage
+
+                // update alignment variable for the affected canal
+                alignmentRef!.current = getAlignment(affectedCanal!, currentStage, meshParts.current[segmentID])
+                if (alignedRef) {
+                    const material = new THREE.MeshStandardMaterial({color: GREEN_COLOUR, side: THREE.DoubleSide, flatShading: true})
+                    meshParts.current[segmentID].material = material
+                } 
+                else {
+                    const material = new THREE.MeshStandardMaterial({color: RED_COLOUR, side: THREE.DoubleSide, flatShading: true})
+                    meshParts.current[segmentID].material = material
                 }
 
                 renderer.current!.render(scene.current!, camera.current!)
@@ -140,13 +127,13 @@ const CanalRendering = ({canal, ear, affectedCanal, matrixRef, offsetMatrixRef, 
             meshParts.current = [] // flush any previous loadings
         }
 
-    }, [ear, affectedCanal, active, matrixRef, offsetMatrixRef, stage])
+    }, [affectedEar, affectedCanal, active, matrixRef, offsetMatrixRef, currentStage])
 
 
     return (
         <div style={{display: "flex", flexDirection: "column"}}>
             <div style={{display: "flex", flexDirection: "row"}}>
-                <canvas id={"canalCanvas" + canal}/>
+                <canvas id={"canalCanvas" + affectedCanal}/>
             </div>
         </div>
     )

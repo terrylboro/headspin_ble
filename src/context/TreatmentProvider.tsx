@@ -17,15 +17,14 @@ import { decodeNumericIMUPacket } from '../utils/imuDecoder';
 import { MadgwickFilter } from '../utils/madgwickFilter';
 
 export type EarSide = 'left' | 'right' | null;
-export type CanalType = 'anterior' | 'posterior' | 'horizontal' | null;
-export type AlignmentState = 'idle' | 'aligning' | 'aligned' | 'misaligned';
+export type CanalType = 'anterior' | 'posterior' | 'lateral' | null;
+// export type AlignmentState = 'idle' | 'aligning' | 'aligned' | 'misaligned';
 
-export type TreatmentStage =
-  | 'idle'
-  | 'calibration'
-  | 'alignment'
-  | 'hold'
-  | 'complete';
+export enum TreatmentStage {
+  STAGE_1,
+  STAGE_2,
+  STAGE_3
+}
 
 type TreatmentContextValue = {
   affectedEar: EarSide;
@@ -37,8 +36,11 @@ type TreatmentContextValue = {
   selectedCanals: string[];
   setSelectedCanals: (canals: string[]) => void;
 
-  alignment: AlignmentState;
-  setAlignment: (alignment: AlignmentState) => void;
+  alignedRef: boolean;
+  setAlignedRef: (value: boolean) => void;
+
+  alignmentRef: React.MutableRefObject<number> | null;
+
 
   resetTime: number | null;
   setResetTime: (time: number | null) => void;
@@ -65,22 +67,8 @@ type TreatmentContextValue = {
 
 const TreatmentContext = createContext<TreatmentContextValue | null>(null);
 
-const STAGE_ORDER: TreatmentStage[] = [
-  'idle',
-  'calibration',
-  'alignment',
-  'hold',
-  'complete',
-];
-
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
-}
-
-function advanceStage(stage: TreatmentStage): TreatmentStage {
-  const index = STAGE_ORDER.indexOf(stage);
-  if (index < 0 || index >= STAGE_ORDER.length - 1) return stage;
-  return STAGE_ORDER[index + 1];
 }
 
 /**
@@ -88,24 +76,7 @@ function advanceStage(stage: TreatmentStage): TreatmentStage {
  * This function takes your distilled orientation/alignment info
  * and maps it to UI-oriented treatment state.
  */
-function evaluateAlignmentFromDistilledPose(input: {
-  rollDeg: number;
-  pitchDeg: number;
-  yawDeg: number;
-}) {
-  const { rollDeg, pitchDeg } = input;
 
-  // Example thresholds only — replace with your real logic
-  const angleError = Math.sqrt(rollDeg * rollDeg + pitchDeg * pitchDeg);
-
-  if (angleError < 5) {
-    return { alignment: 'aligned' as AlignmentState, quality: 1 };
-  }
-  if (angleError < 12) {
-    return { alignment: 'aligning' as AlignmentState, quality: 0.5 };
-  }
-  return { alignment: 'misaligned' as AlignmentState, quality: 0 };
-}
 
 export function TreatmentProvider({
   children,
@@ -118,17 +89,20 @@ export function TreatmentProvider({
   const [affectedCanal, setAffectedCanal] = useState<CanalType>('posterior');
   const [selectedCanals, setSelectedCanals] = useState<string[]>([]);
 
-  const [alignment, setAlignment] = useState<AlignmentState>('idle');
+  // const [alignment, setAlignment] = useState<AlignmentState>('idle');
   const [resetTime, setResetTime] = useState<number | null>(null);
 
   const [stageProgress, setStageProgress] = useState(0);
-  const [currentStage, setCurrentStage] = useState<TreatmentStage>('idle');
+  const [currentStage, setCurrentStage] = useState<TreatmentStage>(TreatmentStage.STAGE_1);
   const [isTreating, setIsTreating] = useState(false);
 
   const [latestSampleText, setLatestSampleText] = useState('Waiting for data');
 
   const matrixRef = useRef(new Matrix4());
   const offsetMatrixRef = useRef(new Matrix4());
+
+  const alignmentRef = useRef(0);
+  const [alignedRef, setAlignedRef] = useState(false);
 
   // Track the latest processed BLE message so we do not reprocess the same one
   const lastProcessedTimestampRef = useRef<number | null>(null);
@@ -150,14 +124,14 @@ export function TreatmentProvider({
 
   const calibrateOffset = useCallback(() => {
     offsetMatrixRef.current.copy(matrixRef.current).invert();
-    setCurrentStage('calibration');
-    setAlignment('aligned');
+    // setCurrentStage('calibration');
+    // setAlignment('aligned');
     setResetTime(Date.now());
   }, []);
 
   const startTreatment = useCallback(() => {
     setIsTreating(true);
-    setCurrentStage('alignment');
+    // setCurrentStage('alignment');
     setStageProgress(0);
     setResetTime(Date.now());
     holdStartRef.current = null;
@@ -171,10 +145,10 @@ export function TreatmentProvider({
   const resetTreatment = useCallback(() => {
     setIsTreating(false);
 
-    setAlignment('idle');
+    // setAlignment('idle');
     setResetTime(Date.now());
     setStageProgress(0);
-    setCurrentStage('idle');
+    // setCurrentStage('idle');
     setLatestSampleText('Waiting for data');
 
     matrixRef.current.identity();
@@ -253,8 +227,10 @@ export function TreatmentProvider({
       selectedCanals,
       setSelectedCanals,
 
-      alignment,
-      setAlignment,
+      alignmentRef,
+
+      alignedRef,
+      setAlignedRef,
 
       resetTime,
       setResetTime,
@@ -282,7 +258,7 @@ export function TreatmentProvider({
       affectedEar,
       affectedCanal,
       selectedCanals,
-      alignment,
+      alignmentRef,
       resetTime,
       stageProgress,
       currentStage,
