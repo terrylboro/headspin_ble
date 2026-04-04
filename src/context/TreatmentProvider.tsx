@@ -194,7 +194,7 @@ export function TreatmentProvider({
     //     : madgwickRef.current(dataArr[0], dataArr[1], dataArr[2], dataArr[3], dataArr[4], dataArr[5]);
     // Attempt to map IMU co-ordinates to madgwick co-ordinates
     // const filtPos = madgwickRef.current.update(dataArr[1]*9.81, -dataArr[2]*9.81, dataArr[0]*9.81, dataArr[1], -dataArr[2], dataArr[3], 0.01);
-      const filtPos = madgwickRef.current.update(dataArr[0]*9.81, dataArr[1]*9.81, dataArr[2]*9.81, dataArr[3], dataArr[4], dataArr[5], 0.01);
+      const filtPos = madgwickRef.current.update(-dataArr[1]*9.81, -dataArr[2]*9.81, dataArr[0]*9.81, -dataArr[4], -dataArr[5], dataArr[3], 0.01);
 
       /**
        * Expect your distilled output to provide orientation in some usable form.
