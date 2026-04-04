@@ -30,7 +30,7 @@ const ManualHeadRendering = () => {
     useEffect(() => {
 
         // Renderer initialisation
-        const canvas = document.getElementById("headCanvas") as HTMLCanvasElement
+        const canvas = document.getElementById("manualHeadCanvas") as HTMLCanvasElement
         renderer.current = new THREE.WebGLRenderer({canvas: canvas, antialias: true})
         const size = document.documentElement.clientWidth * 0.207
         renderer.current.setSize(size, size)
@@ -133,14 +133,11 @@ const ManualHeadRendering = () => {
         matrixRef.current.makeRotationFromEuler(euler);
     }, [yaw, pitch, roll]);
 
-    // const euler = new THREE.Euler(0, 0, value * Math.PI / 180, "ZYX")
-                // matrixRef.current.makeRotationFromEuler(euler)
-
 
     return (
         <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
             <div style={{height: "1.2vh"}}/>
-            <canvas id={"headCanvas"}/>
+            <canvas id={"manualHeadCanvas"}/>
             <Stack mt="md" gap="sm">
 
                 <Text fw={600}>Yaw</Text>

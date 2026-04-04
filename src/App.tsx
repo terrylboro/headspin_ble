@@ -93,7 +93,7 @@ function App(): JSX.Element {
   const [screen, setScreen] = useState<Screen>('setup');
   const [selectedCanals, setSelectedCanals] = useState<string[]>([]);
 
-  const testMode = true;
+  const testMode = false;
 
  
   // Mantine theming
@@ -126,7 +126,29 @@ function App(): JSX.Element {
 
       {
       testMode ? (
-        <ManualHeadRendering />
+          <Card withBorder shadow="sm" radius="md" style={{ flex: 2, minHeight: 480 }}>
+          <Stack h="100%">
+            <Text fw={600}>3D model view</Text>
+            <div
+              style={{
+                flex: 1,
+                background: '#111',
+                borderRadius: 8,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {/* <Text c="dimmed">React Three Fiber canvas goes here</Text> */}
+
+              <ManualHeadRendering/>
+
+            </div>
+          </Stack>
+        </Card>
+
+
+        
       ) : screen === 'setup' ? (
         <SetupScreen
           bleStatus={ble.connected ? 'connected' : 'disconnected'}

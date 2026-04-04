@@ -57,6 +57,10 @@ type TreatmentContextValue = {
 
   latestSampleText: string;
 
+  rollValue: number;
+  pitchValue: number;
+  yawValue: number;
+
   matrixRef: React.MutableRefObject<Matrix4>;
   offsetMatrixRef: React.MutableRefObject<Matrix4>;
 
@@ -98,6 +102,10 @@ export function TreatmentProvider({
   const [isTreating, setIsTreating] = useState(false);
 
   const [latestSampleText, setLatestSampleText] = useState('Waiting for data');
+
+  const [rollValue, setRollValue] = useState(0);
+  const [pitchValue, setPitchValue] = useState(0);
+  const [yawValue, setYawValue] = useState(0);
 
   const matrixRef = useRef(new Matrix4());
   const offsetMatrixRef = useRef(new Matrix4());
@@ -186,7 +194,7 @@ export function TreatmentProvider({
     //     : madgwickRef.current(dataArr[0], dataArr[1], dataArr[2], dataArr[3], dataArr[4], dataArr[5]);
     // Attempt to map IMU co-ordinates to madgwick co-ordinates
     // const filtPos = madgwickRef.current.update(dataArr[1]*9.81, -dataArr[2]*9.81, dataArr[0]*9.81, dataArr[1], -dataArr[2], dataArr[3], 0.01);
-      const filtPos = madgwickRef.current.update(dataArr[0]*9.81, dataArr[1]*9.81, -dataArr[2]*9.81, dataArr[3], dataArr[4], -dataArr[5], 0.01);
+      const filtPos = madgwickRef.current.update(dataArr[0]*9.81, dataArr[1]*9.81, dataArr[2]*9.81, dataArr[3], dataArr[4], dataArr[5], 0.01);
 
       /**
        * Expect your distilled output to provide orientation in some usable form.
@@ -209,6 +217,10 @@ export function TreatmentProvider({
         matrixRef.current.copy(mat);
 
         setLatestSampleText(`Received data: ${dataArr.map((v) => v.toFixed(2)).join(' | ')} | ${filtPos.roll.toFixed(3)} | ${filtPos.pitch.toFixed(3)} | ${filtPos.yaw.toFixed(3)}`);
+
+        setRollValue(filtPos.roll);
+        setPitchValue(filtPos.pitch);
+        setYawValue(filtPos.yaw);
 
         // console.log(matrixRef.current);
 
@@ -255,6 +267,10 @@ export function TreatmentProvider({
 
       latestSampleText,
 
+      rollValue,
+      pitchValue,
+      yawValue,
+
       matrixRef,
       offsetMatrixRef,
 
@@ -273,6 +289,9 @@ export function TreatmentProvider({
       currentStage,
       isTreating,
       latestSampleText,
+      rollValue,
+      pitchValue,
+      yawValue,
       calibrateOffset,
       startTreatment,
       stopTreatment,

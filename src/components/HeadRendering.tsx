@@ -6,6 +6,7 @@ import { BLUE_COLOUR, ORANGE_COLOUR, BROWN_COLOUR, BACKGR_COLOUR, RED_COLOUR} fr
 import { changeQuaternionBase } from "../utils/changeBase";
 import {applyYawOffset} from "../utils/applyYawOffset"
 import { useTreatment } from "../context/TreatmentProvider";
+import { Button } from "@mantine/core";
 
 interface Props {
     ear: "left" | "right" | "unselected"
@@ -39,6 +40,7 @@ const HeadRendering = () => {
         camera.current = new THREE.PerspectiveCamera(12, 1)
         camera.current.position.set(100, 0, 0) 
         camera.current.lookAt(0, 0, 0)
+        camera.current.rotation.z = Math.PI / 2;
 
 
         // Add lights
@@ -92,7 +94,9 @@ const HeadRendering = () => {
                     else mesh.rotation.set(0.0, 0.0, 0)  // this was set in original code
 
                     const qB = new THREE.Quaternion();
-                    changeQuaternionBase(matrixRef.current.clone(), qB);
+
+                    const corrected = offsetMatrixRef.current.clone().multiply(matrixRef.current);
+                    changeQuaternionBase(corrected, qB);
                     // Applying offset
                     // applyYawOffset(offsetMatrixRef.current.clone(), qB)
                     mesh.applyQuaternion(qB);
@@ -111,11 +115,20 @@ const HeadRendering = () => {
     // }, [ear, matrixRef, offsetMatrixRef])
     }, [affectedEar, matrixRef, offsetMatrixRef])
 
+    function calibrateOrientation() {
+        const current = matrixRef.current.clone();
+
+        offsetMatrixRef.current.copy(current).invert();
+    }
+
 
     return (
         <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
             <div style={{height: "1.2vh"}}/>
             <canvas id={"headCanvas"}/>
+            <Button mt="md" onClick={calibrateOrientation}>
+                Reset Orientation
+            </Button>
         </div>
     )
 }

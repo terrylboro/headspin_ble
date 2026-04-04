@@ -12,6 +12,7 @@ import {
 import HeadRendering from  './HeadRendering';
 import CanalRendering from './CanalRendering';
 import { useTreatment } from '../context/TreatmentProvider';
+import ManualHeadRendering from '../test/ManualHeadRendering';
 
 type TreatmentScreenProps = {
   onBack: () => void;
@@ -46,9 +47,8 @@ export default function TreatmentScreen({
                 justifyContent: 'center',
               }}
             >
-              {/* <Text c="dimmed">React Three Fiber canvas goes here</Text> */}
 
-              <CanalRendering/>
+              <ManualHeadRendering/>
 
             </div>
           </Stack>
@@ -72,8 +72,14 @@ export default function TreatmentScreen({
               <HeadRendering/>
 
             </div>
+
+            <Progress value={(treatment.rollValue + Math.PI) * (100 / (2*Math.PI))} mt="md" size="xl" radius="xl" />
+            <Progress value={(treatment.pitchValue + Math.PI) * (100 / (2*Math.PI))} mt="md" size="xl" radius="xl" />
+            <Progress value={(treatment.yawValue + Math.PI) * (100 / (2*Math.PI))} mt="md" size="xl" radius="xl" />
           </Stack>
         </Card>
+
+        
 
       </Group>
 
