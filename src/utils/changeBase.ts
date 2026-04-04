@@ -10,9 +10,9 @@ export function changeQuaternionBase(rotMat: Matrix4, qB: Quaternion) : void {
     // const yAB = new Vector3(0, 0, 1);
     // const zAB = new Vector3(0, 1, 0);
     
-    const xAB = new Vector3(0, -1, 0);
-    const yAB = new Vector3(0, 0, 1);
-    const zAB = new Vector3(1, 0, 0);
+    const xAB = new Vector3(1, 0, 0);
+    const yAB = new Vector3(0, 1, 0);
+    const zAB = new Vector3(0, 0, 1);
     const S = new Matrix4().makeBasis(xAB, yAB, zAB);
     const qBA = new Quaternion().setFromRotationMatrix(S);
 

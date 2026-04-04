@@ -19,6 +19,8 @@ import SetupScreen from './components/SetupScreen';
 import TreatmentScreen from './components/TreatmentScreen';
 import { useBleDevice } from './context/BleProvider';
 
+import ManualHeadRendering from './test/ManualHeadRendering';
+
 // Mantine UI imports
 import {
   AppShell,
@@ -91,6 +93,8 @@ function App(): JSX.Element {
   const [screen, setScreen] = useState<Screen>('setup');
   const [selectedCanals, setSelectedCanals] = useState<string[]>([]);
 
+  const testMode = true;
+
  
   // Mantine theming
   const theme = useMantineTheme();
@@ -120,7 +124,10 @@ function App(): JSX.Element {
         alignItems: 'center',
       }}>
 
-      {screen === 'setup' ? (
+      {
+      testMode ? (
+        <ManualHeadRendering />
+      ) : screen === 'setup' ? (
         <SetupScreen
           bleStatus={ble.connected ? 'connected' : 'disconnected'}
           deviceName={ble.deviceName}
