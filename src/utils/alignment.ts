@@ -1,4 +1,4 @@
-import { Mesh, Vector3 } from "three"
+import { Mesh, Vector3, Object3D, MathUtils, Quaternion } from "three"
 
 export const meshPartsLength: {[key: string]: number} = {posterior: 5, anterior: 5, lateral: 3, all: 5}
 
@@ -29,4 +29,30 @@ export const getAlignment = (canal: string, stage: number, mesh: Mesh) => {
     // and calculates how vertical is the line connecting them
 
     return (top.y - bottom.y)/top.distanceTo(bottom)
+}
+
+export function getCanalAlignment(
+    localDir: Vector3,
+    object: Object3D,
+    targetWorld = new Vector3(0, 1, 0),
+    thresholdDeg = 10
+) {
+    const worldDir = localDir.clone().normalize();
+
+  // rotate local direction into world space using object world rotation
+  worldDir.applyQuaternion(object.getWorldQuaternion(new Quaternion()));
+
+  const targetDir = targetWorld.clone().normalize();
+
+  const dot = MathUtils.clamp(worldDir.dot(targetDir), -1, 1);
+  const angleRad = Math.acos(dot);
+  const angleDeg = MathUtils.radToDeg(angleRad);
+
+  return {
+    isAligned: angleDeg <= thresholdDeg,
+    score: Math.max(0, dot),
+    angleDeg,
+    worldDir,
+    targetDir,
+  };
 }

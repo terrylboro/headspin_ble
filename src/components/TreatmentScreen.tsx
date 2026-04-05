@@ -13,6 +13,7 @@ import HeadRendering from  './HeadRendering';
 import CanalRendering from './CanalRendering';
 import { useTreatment } from '../context/TreatmentProvider';
 import ManualHeadRendering from '../test/ManualHeadRendering';
+import ManualCanalRendering from '../test/ManualCanalRendering';
 
 type TreatmentScreenProps = {
   onBack: () => void;
@@ -48,7 +49,7 @@ export default function TreatmentScreen({
               }}
             >
 
-              <ManualHeadRendering/>
+              <ManualCanalRendering/>
 
             </div>
           </Stack>
@@ -67,17 +68,14 @@ export default function TreatmentScreen({
                 justifyContent: 'center',
               }}
             >
-              {/* <Text c="dimmed">React Three Fiber canvas goes here</Text> */}
 
-              <HeadRendering/>
+              <ManualHeadRendering/>
 
             </div>
-
-            <Progress value={(treatment.rollValue + Math.PI) * (100 / (2*Math.PI))} mt="md" size="xl" radius="xl" />
-            <Progress value={(treatment.pitchValue + Math.PI) * (100 / (2*Math.PI))} mt="md" size="xl" radius="xl" />
-            <Progress value={(treatment.yawValue + Math.PI) * (100 / (2*Math.PI))} mt="md" size="xl" radius="xl" />
           </Stack>
         </Card>
+
+        
 
         
 
@@ -91,3 +89,31 @@ export default function TreatmentScreen({
     </Stack>
   );
 }
+
+
+
+//
+{/* <Card withBorder shadow="sm" radius="md" style={{ flex: 2, minHeight: 480 }}>
+          <Stack h="100%">
+            <Text fw={600}>3D model view</Text>
+            <div
+              style={{
+                flex: 1,
+                background: '#111',
+                borderRadius: 8,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {/* <Text c="dimmed">React Three Fiber canvas goes here</Text> */}
+
+        //       <HeadRendering/>
+
+        //     </div>
+
+        //     <Progress value={(treatment.rollValue + Math.PI) * (100 / (2*Math.PI))} mt="md" size="xl" radius="xl" />
+        //     <Progress value={(treatment.pitchValue + Math.PI) * (100 / (2*Math.PI))} mt="md" size="xl" radius="xl" />
+        //     <Progress value={(treatment.yawValue + Math.PI) * (100 / (2*Math.PI))} mt="md" size="xl" radius="xl" />
+        //   </Stack>
+        // </Card> */}

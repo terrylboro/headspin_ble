@@ -6,6 +6,7 @@ import React, {
   useMemo,
   useRef,
   useState,
+  useReducer,
 } from 'react';
 // import * as THREE from 'three';
 import { Matrix4, Quaternion } from 'three';
@@ -17,15 +18,19 @@ import { decodeNumericIMUPacket } from '../utils/imuDecoder';
 import { MadgwickFilter } from '../utils/madgwickFilter';
 import { changeQuaternionBase } from '../utils/changeBase';
 
+import { treatmentReducer, initialState } from './treatmentReducer';
+import { TreatmentState, Action } from '../types/treatmentTypes';
+
 export type EarSide = 'left' | 'right' | null;
 export type CanalType = 'anterior' | 'posterior' | 'lateral' | null;
-// export type AlignmentState = 'idle' | 'aligning' | 'aligned' | 'misaligned';
 
-export enum TreatmentStage {
-  STAGE_1,
-  STAGE_2,
-  STAGE_3
-}
+
+
+// export enum TreatmentStage {
+//   STAGE_1,
+//   STAGE_2,
+//   STAGE_3
+// }
 
 type TreatmentContextValue = {
   affectedEar: EarSide;
@@ -49,8 +54,8 @@ type TreatmentContextValue = {
   stageProgress: number;
   setStageProgress: (progress: number) => void;
 
-  currentStage: TreatmentStage;
-  setCurrentStage: (stage: TreatmentStage) => void;
+  state: TreatmentState;
+  dispatch: React.Dispatch<Action>;
 
   isTreating: boolean;
   setIsTreating: (value: boolean) => void;
@@ -72,10 +77,6 @@ type TreatmentContextValue = {
 
 const TreatmentContext = createContext<TreatmentContextValue | null>(null);
 
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max);
-}
-
 /**
  * Replace this with your real treatment rule.
  * This function takes your distilled orientation/alignment info
@@ -83,11 +84,12 @@ function clamp(value: number, min: number, max: number) {
  */
 
 
-export function TreatmentProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
+
+  // Instantiate the reducer to manage the app state
+  const [state, dispatch] = useReducer(treatmentReducer, initialState);
+
+  // Access BLE data from provider
   const ble = useBleDevice();
 
   const [affectedEar, setAffectedEar] = useState<EarSide>(null);
@@ -98,7 +100,7 @@ export function TreatmentProvider({
   const [resetTime, setResetTime] = useState<number | null>(null);
 
   const [stageProgress, setStageProgress] = useState(0);
-  const [currentStage, setCurrentStage] = useState<TreatmentStage>(TreatmentStage.STAGE_1);
+  // const [currentStage, setCurrentStage] = useState<TreatmentStage>(TreatmentStage.STAGE_1);
   const [isTreating, setIsTreating] = useState(false);
 
   const [latestSampleText, setLatestSampleText] = useState('Waiting for data');
@@ -157,13 +159,21 @@ export function TreatmentProvider({
     // setAlignment('idle');
     setResetTime(Date.now());
     setStageProgress(0);
-    // setCurrentStage('idle');
     setLatestSampleText('Waiting for data');
 
     matrixRef.current.identity();
     offsetMatrixRef.current.identity();
 
     holdStartRef.current = null;
+  }, []);
+
+  // Timer checking action for hold-based progression logic
+  useEffect(() => {
+    const id = setInterval(() => {
+      dispatch({ type: 'TIMER_TICK', now: Date.now() });
+    }, 50); // ~20Hz
+
+    return () => clearInterval(id);
   }, []);
 
   useEffect(() => {
@@ -189,11 +199,7 @@ export function TreatmentProvider({
        * - const pose = madgwickRef.current.getOrientation()
        * - const result = updateMadgwick(frame)
        */
-    //   const filtPos = madgwickRef.current.update
-    //     ? madgwickRef.current.update(dataArr[0], dataArr[1], dataArr[2], dataArr[3], dataArr[4], dataArr[5])
-    //     : madgwickRef.current(dataArr[0], dataArr[1], dataArr[2], dataArr[3], dataArr[4], dataArr[5]);
     // Attempt to map IMU co-ordinates to madgwick co-ordinates
-    // const filtPos = madgwickRef.current.update(dataArr[1]*9.81, -dataArr[2]*9.81, dataArr[0]*9.81, dataArr[1], -dataArr[2], dataArr[3], 0.01);
       const filtPos = madgwickRef.current.update(-dataArr[1]*9.81, -dataArr[2]*9.81, dataArr[0]*9.81, -dataArr[4], -dataArr[5], dataArr[3], 0.01);
 
       /**
@@ -235,7 +241,7 @@ export function TreatmentProvider({
        * Replace this section with your exact treatment progression rules.
        */
       
-  }, [ble.latestMessage, isTreating, currentStage]);
+  }, [ble.latestMessage, isTreating, state]);
 
   const value = useMemo<TreatmentContextValue>(
     () => ({
@@ -259,8 +265,8 @@ export function TreatmentProvider({
       stageProgress,
       setStageProgress,
 
-      currentStage,
-      setCurrentStage,
+      state,
+      dispatch,
 
       isTreating,
       setIsTreating,
@@ -286,7 +292,8 @@ export function TreatmentProvider({
       alignmentRef,
       resetTime,
       stageProgress,
-      currentStage,
+      state,
+      dispatch,
       isTreating,
       latestSampleText,
       rollValue,

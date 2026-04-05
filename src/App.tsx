@@ -36,6 +36,7 @@ import {
   Title,
   useMantineTheme,
 } from '@mantine/core';
+import StateMachineTestPanel from './test/StateMachineTestPanel';
 
 type Screen = 'setup' | 'treatment';
 
@@ -61,29 +62,6 @@ function StatusBar() {
   );
 }
 
-type ReceivedMessage = {
-  ts: string;
-  raw: string;        // raw bytes as decimal (byte-by-byte)
-  text?: string;      // optional UTF-8 attempt (usually nonsense for binary)
-  decoded?: string;   // pretty decoded IMU packet (if it matches)
-};
-
-function formatIMUPacket(pkt: ReturnType<typeof decodeIMUPacket>): string {
-  const lines: string[] = [];
-  lines.push(`IMU packet`);
-  lines.push(`  seq: ${pkt.seq}`);
-  lines.push(`  n: ${pkt.n}`);
-  lines.push(`  t0_ms: ${pkt.t0_ms}`);
-
-  pkt.frames.forEach((f, i) => {
-    lines.push(
-      `  frame[${i}]:\n` +
-      `    accel (g):  (${f.ax_g.toFixed(3)}, ${f.ay_g.toFixed(3)}, ${f.az_g.toFixed(3)})\n` +
-      `    gyro  (dps):(${f.gx_dps.toFixed(2)}, ${f.gy_dps.toFixed(2)}, ${f.gz_dps.toFixed(2)})`
-    );
-  });
-  return lines.join('\n');
-}
 
 function App(): JSX.Element { 
   const { state, context, actions } = useStateMachine();
@@ -93,7 +71,7 @@ function App(): JSX.Element {
   const [screen, setScreen] = useState<Screen>('setup');
   const [selectedCanals, setSelectedCanals] = useState<string[]>([]);
 
-  const testMode = false;
+  const testMode = true;
 
  
   // Mantine theming
@@ -126,26 +104,7 @@ function App(): JSX.Element {
 
       {
       testMode ? (
-          <Card withBorder shadow="sm" radius="md" style={{ flex: 2, minHeight: 480 }}>
-          <Stack h="100%">
-            <Text fw={600}>3D model view</Text>
-            <div
-              style={{
-                flex: 1,
-                background: '#111',
-                borderRadius: 8,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {/* <Text c="dimmed">React Three Fiber canvas goes here</Text> */}
-
-              <ManualHeadRendering/>
-
-            </div>
-          </Stack>
-        </Card>
+          StateMachineTestPanel()
 
 
         

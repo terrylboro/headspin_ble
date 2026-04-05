@@ -17,7 +17,7 @@ const CanalRendering = () => {
     }
 
     // Using TreatmentProvider context to get the necessary variables for rendering and alignment
-    const {affectedEar, affectedCanal, matrixRef, offsetMatrixRef, currentStage, alignmentRef, alignedRef} = useTreatment();
+    const {affectedEar, affectedCanal, matrixRef, offsetMatrixRef, state, alignmentRef, alignedRef} = useTreatment();
 
     const camera = useRef<THREE.Camera>()
     const scene = useRef<THREE.Scene>()
@@ -42,8 +42,12 @@ const CanalRendering = () => {
 
         // Camera initialisation
         camera.current = new THREE.PerspectiveCamera(15, 1)
-        camera.current.position.set(0, 0, 39)  
+        // camera.current.position.set(0, 0, 39)  
+        // camera.current.lookAt(0, 0, 0)
+        // camera.current.rotation.z = Math.PI / 2;
+        camera.current.position.set(40, 0, 0) 
         camera.current.lookAt(0, 0, 0)
+        camera.current.rotation.z = Math.PI / 2;
 
 
         // Add lights
@@ -74,8 +78,8 @@ const CanalRendering = () => {
             loader.load(meshPath, (geometry) => {
 
 
-                if ((i+1 === currentStage && affectedCanal === "lateral") || 
-                                (i === currentStage && affectedCanal !== "lateral")) color = RED_COLOUR
+                if ((i+1 === state.stage && affectedCanal === "lateral") || 
+                                (i === state.stage && affectedCanal !== "lateral")) color = RED_COLOUR
                 else color = canalColours[affectedCanal ? affectedCanal : "unselected"]
 
                 const material = new THREE.MeshStandardMaterial({color: color, side: THREE.DoubleSide, flatShading: true})
@@ -103,10 +107,10 @@ const CanalRendering = () => {
                 }
 
 
-                const segmentID = affectedCanal === "lateral" ? currentStage - 1 : currentStage
+                const segmentID = affectedCanal === "lateral" ? state.stage - 1 : state.stage
 
                 // update alignment variable for the affected canal
-                alignmentRef!.current = getAlignment(affectedCanal!, currentStage, meshParts.current[segmentID])
+                alignmentRef!.current = getAlignment(affectedCanal!, state.stage, meshParts.current[segmentID])
                 if (alignedRef) {
                     const material = new THREE.MeshStandardMaterial({color: GREEN_COLOUR, side: THREE.DoubleSide, flatShading: true})
                     meshParts.current[segmentID].material = material
@@ -127,7 +131,7 @@ const CanalRendering = () => {
             meshParts.current = [] // flush any previous loadings
         }
 
-    }, [affectedEar, affectedCanal, active, matrixRef, offsetMatrixRef, currentStage])
+    }, [affectedEar, affectedCanal, active, matrixRef, offsetMatrixRef, state])
 
 
     return (
