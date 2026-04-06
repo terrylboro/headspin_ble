@@ -61,6 +61,43 @@ const ManualCanalRendering = () => {
     const stage3Direction = new THREE.Vector3(0.7, -1, 0.2).normalize(); // test direction
     const stage3Origin = new THREE.Vector3(-2.3, 2.2, 2.5);
 
+    // Encode the canal directions in the local frame (i.e. relative to whole mesh) by segment and canal
+    const canalDirections = {
+        "posterior": {
+            "directions": [
+                new THREE.Vector3(1, -1, -0.2).normalize(), // stage 1 direction
+                new THREE.Vector3(0, 0, -1).normalize(), // stage 2 direction
+                // new THREE.Vector3(0.7, -1, 0.2).normalize() // stage 3 direction
+                new THREE.Vector3(-0.7, +1, -0.2).normalize() // stage 3 direction
+            ],
+            "origins": [
+                new THREE.Vector3(-1.3, 2, -2.3), // stage 1 origin
+                new THREE.Vector3(-1.6, 2.2, 3), // stage 2 origin
+                // new THREE.Vector3(-2.3, 2.2, 2.5) // stage 3 origin (reverse)
+                // new THREE.Vector3(0, -1, 3) // stage 3 origin
+                new THREE.Vector3(1.9, -4, 3.5) // stage 3 origin
+            ],  
+        },
+        "anterior": {
+            // TODO: update with actual directions and origins
+            "directions": [
+                new THREE.Vector3(0, 0, -1).normalize(), // stage 1 direction
+            ],
+            "origins": [
+                new THREE.Vector3(-1.6, 2.2, 3), // stage 1 origin
+            ]
+        },
+        "lateral": {
+            // TODO: update with actual directions and origins
+            "directions": [
+                new THREE.Vector3(0, 0, -1).normalize(), // stage 1 direction
+            ],
+            "origins": [
+                new THREE.Vector3(-1.6, 2.2, 3), // stage 1 origin
+            ]
+        },
+    }
+
 
     useEffect(() => {
 
@@ -107,26 +144,26 @@ const ManualCanalRendering = () => {
 
         // Add helper arrows
         stage1ArrowRef.current = new THREE.ArrowHelper(
-            stage1Direction,
-            stage1Origin,
+            canalDirections["posterior"].directions[0],
+            canalDirections["posterior"].origins[0],
             10,
             ORANGE_COLOUR
         );
         canalGroup.current.add(stage1ArrowRef.current);
 
         stage2ArrowRef.current = new THREE.ArrowHelper(
-            stage2Direction,
-            stage2Origin,
+            canalDirections["posterior"].directions[1],
+            canalDirections["posterior"].origins[1],
             10,
             ORANGE_COLOUR
         );
         canalGroup.current.add(stage2ArrowRef.current);
 
         stage3ArrowRef.current = new THREE.ArrowHelper(
-            stage3Direction,
-            stage3Origin,
+            canalDirections["posterior"].directions[2],
+            canalDirections["posterior"].origins[2],
             10,
-            ORANGE_COLOUR
+            GREEN_COLOUR
         );
         canalGroup.current.add(stage3ArrowRef.current);
 
@@ -179,7 +216,7 @@ const ManualCanalRendering = () => {
                 // update alignment variable for the affected canal
                 // alignmentRef!.current = getAlignment(state.affectedCanal!, state.stage, meshParts.current[segmentID])
                 alignmentRef!.current = getCanalAlignment( // the current direction of the stage 1 arrow
-                    stage1Direction,
+                    canalDirections["posterior"].directions[segmentID!-1], // the target direction for the current stage and canal
                     canalGroup.current,  //.children[segmentID] as THREE.Object3D, // the current segment mesh
                     new THREE.Vector3(0, 0, 1), // target world direction (upwards)
                     15 // threshold in degrees
