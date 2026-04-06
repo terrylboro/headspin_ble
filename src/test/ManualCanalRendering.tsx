@@ -178,9 +178,9 @@ const ManualCanalRendering = () => {
 
                 // update alignment variable for the affected canal
                 // alignmentRef!.current = getAlignment(state.affectedCanal!, state.stage, meshParts.current[segmentID])
-                alignmentRef!.current = getCanalAlignment(
-                    new THREE.Vector3(0, 1, 0).applyQuaternion(stage1ArrowRef.current?.quaternion || new THREE.Quaternion()).normalize(), // the current direction of the stage 1 arrow
-                    canalGroup.current.children[segmentID] as THREE.Object3D, // the current segment mesh
+                alignmentRef!.current = getCanalAlignment( // the current direction of the stage 1 arrow
+                    stage1Direction,
+                    canalGroup.current,  //.children[segmentID] as THREE.Object3D, // the current segment mesh
                     new THREE.Vector3(0, 0, 1), // target world direction (upwards)
                     15 // threshold in degrees
                 ).score

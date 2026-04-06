@@ -34,7 +34,7 @@ export const getAlignment = (canal: string, stage: number, mesh: Mesh) => {
 export function getCanalAlignment(
     localDir: Vector3,
     object: Object3D,
-    targetWorld = new Vector3(0, 1, 0),
+    targetWorld = new Vector3(0, 0, 1),
     thresholdDeg = 10
 ) {
     const worldDir = localDir.clone().normalize();
