@@ -44,10 +44,10 @@ function TopBar() {
   return (
     <Group justify="space-between" h="100%" px="md">
       <Title order={3}>HeadSpin</Title>
-      <Group>
+      {/* <Group>
         <Badge color="green">Bluetooth connected</Badge>
         <Badge color="green">Streaming</Badge>
-      </Group>
+      </Group> */}
     </Group>
   );
 }
@@ -55,23 +55,22 @@ function TopBar() {
 function StatusBar() {
   return (
     <Group justify="space-between" h="100%" px="md">
-      <Text size="sm">100 Hz</Text>
+      {/* <Text size="sm">100 Hz</Text>
       <Text size="sm">0 dropped</Text>
-      <Text size="sm">Connected</Text>
+      <Text size="sm">Connected</Text> */}
     </Group>
   );
 }
 
 
 function App(): JSX.Element { 
-  const { state, context, actions } = useStateMachine();
 
   const ble = useBleDevice();
 
   const [screen, setScreen] = useState<Screen>('setup');
   const [selectedCanals, setSelectedCanals] = useState<string[]>([]);
 
-  const testMode = true;
+  const testMode = false;
 
  
   // Mantine theming
@@ -113,8 +112,6 @@ function App(): JSX.Element {
           bleStatus={ble.connected ? 'connected' : 'disconnected'}
           deviceName={ble.deviceName}
           bleError={ble.error}
-          selectedCanals={selectedCanals}
-          setSelectedCanals={setSelectedCanals}
           onConnect={ble.connect}
           onDisconnect={ble.disconnect}
           onContinue={() => setScreen('treatment')}

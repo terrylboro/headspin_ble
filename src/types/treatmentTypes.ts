@@ -6,10 +6,12 @@ export enum TreatmentStage {
 }
 
 export type CanalType = 'anterior' | 'posterior' | 'lateral';
+export type EarSide = 'left' | 'right';
 
 export type TreatmentState = {
   stage: TreatmentStage;
   affectedCanal: CanalType | null;
+  affectedEar: EarSide | null;
   isAligned: boolean;
   holdStartTime: number | null;
   stageProgress: number;
@@ -17,8 +19,10 @@ export type TreatmentState = {
 
 export type Action =
   | { type: 'SELECT_CANAL'; canal: CanalType }
+  | { type: 'SELECT_EAR'; ear: EarSide }
   | { type: 'TOGGLE_ALIGNED' }
   | { type: 'ALIGNMENT_ENTER'}
   | { type: 'PROGRESS'; }
   | { type: 'TIMER_TICK'; now: number }
+  | { type: 'RESET_PROGRESS' }
   | { type: 'RESET' };

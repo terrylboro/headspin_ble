@@ -19,8 +19,6 @@ type SetupScreenProps = {
   bleStatus: 'disconnected' | 'connecting' | 'connected' | 'error';
   deviceName: string | null;
   bleError: string | null;
-  selectedCanals: string[];
-  setSelectedCanals: (value: string[]) => void;
   onConnect: () => void;
   onDisconnect: () => void;
   onContinue: () => void;
@@ -30,17 +28,13 @@ export default function SetupScreen({
   bleStatus,
   deviceName,
   bleError,
-  selectedCanals,
-  setSelectedCanals,
   onConnect,
   onDisconnect,
   onContinue,
 }: SetupScreenProps) {
-  const canContinue = bleStatus === 'connected' && selectedCanals.length > 0;
 
    const theme = useMantineTheme();
-   const { affectedCanal, setAffectedCanal } = useTreatment();
-   const { affectedEar, setAffectedEar } = useTreatment();
+   const { state, dispatch} = useTreatment();
 
   return (
     <Box
@@ -116,9 +110,9 @@ export default function SetupScreen({
 
                 <Stack gap="md">
                   <Group wrap="nowrap" grow>
-                    <SelectCanalButton label="Posterior" imageSrc="https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/images/bg-7.png" selected={affectedCanal === 'posterior'} onClick={() => setAffectedCanal('posterior')}/>
-                    <SelectCanalButton label="Anterior" imageSrc="/logo192.png" selected={affectedCanal === 'anterior'} onClick={() => setAffectedCanal('anterior')}/>
-                    <SelectCanalButton label="Lateral" imageSrc="/logo192.png" selected={affectedCanal === 'lateral'} onClick={() => setAffectedCanal('lateral')}/>
+                    <SelectCanalButton label="Posterior" imageSrc="https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/images/bg-7.png" selected={state.affectedCanal === 'posterior'} onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'posterior' })}/>
+                    <SelectCanalButton label="Anterior" imageSrc="/logo192.png" selected={state.affectedCanal === 'anterior'} onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'anterior' })}/>
+                    <SelectCanalButton label="Lateral" imageSrc="/logo192.png" selected={state.affectedCanal === 'lateral'} onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'lateral' })}/>
                   </Group>
                 </Stack>
               </Stack>
@@ -145,10 +139,10 @@ export default function SetupScreen({
                 </Box>
 
                 <Stack gap="md">
-                    <Button color={affectedEar === "left" ? theme.colors.green[6] : theme.colors.gray[6]} fullWidth size="xl" onClick={() => setAffectedEar("left")}>
+                    <Button color={state.affectedEar === "left" ? theme.colors.green[6] : theme.colors.gray[6]} fullWidth size="xl" onClick={() => dispatch({ type: 'SELECT_EAR', ear: 'left' })}>
                       Left
                     </Button>
-                    <Button color={affectedEar === "right" ? theme.colors.red[6] : theme.colors.gray[6]} fullWidth size="xl" onClick={() => setAffectedEar("right")}>
+                    <Button color={state.affectedEar === "right" ? theme.colors.red[6] : theme.colors.gray[6]} fullWidth size="xl" onClick={() => dispatch({ type: 'SELECT_EAR', ear: 'right' })}>
                       Right
                     </Button>
                 </Stack>
@@ -158,7 +152,7 @@ export default function SetupScreen({
 
         </Grid>
 
-        <Button size="lg" fullWidth onClick={onContinue} disabled={!affectedEar || !affectedCanal || !( bleStatus === 'connected')} color="green">
+        <Button size="lg" fullWidth onClick={onContinue} disabled={!state.affectedEar || !state.affectedCanal || !( bleStatus === 'connected')} color="green">
           Continue
         </Button>
       </Stack>

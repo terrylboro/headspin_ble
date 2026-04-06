@@ -117,7 +117,6 @@ const HeadRendering = () => {
 
     function calibrateOrientation() {
         const current = matrixRef.current.clone();
-
         offsetMatrixRef.current.copy(current).invert();
     }
 

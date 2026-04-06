@@ -5,6 +5,7 @@ const HOLD_DURATION_MS = 5000;
 export const initialState: TreatmentState = {
   stage: TreatmentStage.STAGE_1,
   affectedCanal: 'posterior',
+  affectedEar: null,
   isAligned: false,
   holdStartTime: null,
   stageProgress: 0,
@@ -17,6 +18,9 @@ export function treatmentReducer(
   switch (action.type) {
     case 'SELECT_CANAL':
       return { ...state, affectedCanal: action.canal };
+
+    case 'SELECT_EAR':
+      return { ...state, affectedEar: action.ear };
 
     case 'TOGGLE_ALIGNED':
       return { ...state, isAligned: !state.isAligned };
@@ -40,6 +44,9 @@ export function treatmentReducer(
       }
       return state;
     }
+
+    case 'RESET_PROGRESS':
+      return { ...state, stage: TreatmentStage.STAGE_1, holdStartTime: null, stageProgress: 0, isAligned: false,};
 
     case 'RESET':
       return initialState;

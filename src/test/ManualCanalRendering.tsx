@@ -99,6 +99,26 @@ const ManualCanalRendering = () => {
         },
     }
 
+    // Function to clear the scene and reset variables when canal changes
+    function clearCanalGroup() {
+        canalGroup.current.children.forEach((child) => {
+        if ((child as THREE.Mesh).geometry) {
+        (child as THREE.Mesh).geometry.dispose();
+        }
+
+        if ((child as THREE.Mesh).material) {
+        const mat = (child as THREE.Mesh).material;
+        if (Array.isArray(mat)) {
+            mat.forEach(m => m.dispose());
+        } else {
+            mat.dispose();
+        }
+        }
+    });
+
+    canalGroup.current.clear();
+    }
+
 
     useEffect(() => {
 
@@ -108,6 +128,10 @@ const ManualCanalRendering = () => {
         renderer.current = new THREE.WebGLRenderer({canvas: canvasRef.current, antialias: true})
         const size = active ? document.documentElement.clientWidth * 0.207 : 0
         renderer.current.setSize(size, size)
+
+        // Clear previous canal from scene
+        clearCanalGroup()
+        meshParts.current = [] // flush any previous meshes from memory
 
 
         // Scene initialisation
@@ -208,12 +232,12 @@ const ManualCanalRendering = () => {
             changeQuaternionBase(matrixRef.current.clone(), qB);
             canalGroup.current.setRotationFromQuaternion(qB);
 
-            const segmentID = (state.stage===TreatmentStage.COMPLETE) ? 3 : ((state.affectedCanal !== "lateral") ? state.stage + 1 : state.stage);
+            const segmentID = (state.stage===TreatmentStage.COMPLETE) ? 3 : ((state.affectedCanal !== "lateral") ? state.stage + 1 : state.stage + 1);
 
             // update alignment variable for the affected canal
             // alignmentRef!.current = getAlignment(state.affectedCanal!, state.stage, meshParts.current[segmentID])
             
-            const canalAlignRes =  getCanalAlignment( // the current direction of the stage 1 arrow
+            const canalAlignRes =  getCanalAlignment(
                 canalDirections["posterior"].directions[segmentID!-1], // the target direction for the current stage and canal
                 // canalDirections["posterior"].directions[segmentID!],
                 canalGroup.current,  //.children[segmentID] as THREE.Object3D, // the current segment mesh

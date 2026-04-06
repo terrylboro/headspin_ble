@@ -25,6 +25,11 @@ export default function TreatmentScreen({
 
   const treatment =  useTreatment();
 
+  function calibrateOrientation() {
+        const current = treatment.matrixRef.current.clone();
+        treatment.offsetMatrixRef.current.copy(current).invert();
+  }
+
   return (
     <Stack h="100%">
       <Group justify="space-between">
@@ -49,7 +54,7 @@ export default function TreatmentScreen({
               }}
             >
 
-              <ManualCanalRendering/>
+              <CanalRendering/>
 
             </div>
           </Stack>
@@ -69,17 +74,22 @@ export default function TreatmentScreen({
               }}
             >
 
-              <ManualHeadRendering/>
+              <HeadRendering/>
 
             </div>
           </Stack>
         </Card>
-
-        
-
-        
-
       </Group>
+
+      <Card withBorder shadow="sm" radius="md">
+        <Text fw={600}>Orientation values</Text>
+        < Button mt="md" onClick={calibrateOrientation}>
+            Reset Orientation
+        </Button>
+        <Button mt="md" onClick={() => treatment.dispatch({ type: 'RESET_PROGRESS' })}>
+            Restart Treatment
+        </Button>
+      </Card>
 
       <Card withBorder shadow="sm" radius="md">
         <Text fw={600}>Latest data</Text>
