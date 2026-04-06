@@ -10,13 +10,14 @@ import { useTreatment } from "../context/TreatmentProvider";
 import { CanalType } from "../context/TreatmentProvider";
 
 import { Slider, Stack, Text, Group, Button } from '@mantine/core';
+import { TreatmentStage } from "../types/treatmentTypes";
 
 
 const ManualCanalRendering = () => {
 
     // const { matrixRef, offsetMatrixRef, affectedEar } = useTreatment();
 
-    const { state, affectedCanal } = useTreatment();
+    const { state, dispatch, affectedCanal } = useTreatment();
 
     const [active, setActive] = useState(true)
         const handleChange = () => {
@@ -163,7 +164,7 @@ const ManualCanalRendering = () => {
             canalDirections["posterior"].directions[2],
             canalDirections["posterior"].origins[2],
             10,
-            GREEN_COLOUR
+            ORANGE_COLOUR
         );
         canalGroup.current.add(stage3ArrowRef.current);
 
@@ -181,9 +182,11 @@ const ManualCanalRendering = () => {
                 //                 (i === currentStage && affectedCanal !== "lateral")) color = RED_COLOUR
                 // else color = canalColours[affectedCanal ? affectedCanal : "unselected"]
 
-                // if (i-1 === state.stage) color = RED_COLOUR
-                // else 
-                color = canalColours[state.affectedCanal ? state.affectedCanal : "unselected"]
+                // if (i-1 === state.stage && i !== 0) color = RED_COLOUR
+                // else color = canalColours[state.affectedCanal ? state.affectedCanal : "unselected"]
+
+                // // color = i === 1 ? RED_COLOUR : BLUE_COLOUR;
+                color = canalColours["unselected"] //coloursAll[i]
 
                 const material = new THREE.MeshStandardMaterial({color: color, side: THREE.DoubleSide, flatShading: true})
                 const loadedMesh = new THREE.Mesh(geometry, material)
@@ -197,31 +200,46 @@ const ManualCanalRendering = () => {
 
         let loop: number = requestAnimationFrame(animate)
         function animate() {
+
             if (meshParts.current[meshPartsLength[state.affectedCanal ? state.affectedCanal : 5] - 1]) {
-                // for (let mesh of meshParts.current) {
-                //     mesh.rotation.set(0, 0, 0) // each frame first resets the canal position
-                    
-                    // const qB = new THREE.Quaternion();
-                    // changeQuaternionBase(matrixRef.current.clone(), qB);
-                //     mesh.applyQuaternion(qB);                    
-                // }
 
-                // Rotate the group
-                const qB = new THREE.Quaternion();
-                changeQuaternionBase(matrixRef.current.clone(), qB);
-                canalGroup.current.setRotationFromQuaternion(qB);
+            // Rotate the group
+            const qB = new THREE.Quaternion();
+            changeQuaternionBase(matrixRef.current.clone(), qB);
+            canalGroup.current.setRotationFromQuaternion(qB);
 
-                const segmentID = (state.affectedCanal !== "lateral") ? state.stage + 1 : state.stage;
+            const segmentID = (state.stage===TreatmentStage.COMPLETE) ? 3 : ((state.affectedCanal !== "lateral") ? state.stage + 1 : state.stage);
 
-                // update alignment variable for the affected canal
-                // alignmentRef!.current = getAlignment(state.affectedCanal!, state.stage, meshParts.current[segmentID])
-                alignmentRef!.current = getCanalAlignment( // the current direction of the stage 1 arrow
-                    canalDirections["posterior"].directions[segmentID!-1], // the target direction for the current stage and canal
-                    canalGroup.current,  //.children[segmentID] as THREE.Object3D, // the current segment mesh
-                    new THREE.Vector3(0, 0, 1), // target world direction (upwards)
-                    15 // threshold in degrees
-                ).score
-                if (state.isAligned) {
+            // update alignment variable for the affected canal
+            // alignmentRef!.current = getAlignment(state.affectedCanal!, state.stage, meshParts.current[segmentID])
+            
+            const canalAlignRes =  getCanalAlignment( // the current direction of the stage 1 arrow
+                canalDirections["posterior"].directions[segmentID!-1], // the target direction for the current stage and canal
+                // canalDirections["posterior"].directions[segmentID!],
+                canalGroup.current,  //.children[segmentID] as THREE.Object3D, // the current segment mesh
+                new THREE.Vector3(0, 0, 1), // target world direction (upwards)
+                15 // threshold in degrees
+            )
+
+            alignmentRef!.current = canalAlignRes.score
+            alignedRef!.current = canalAlignRes.isAligned
+
+            if (alignedRef!.current && !state.isAligned) {
+                // Handle the case where the canal becomes aligned
+                // dispatch({ type: 'TOGGLE_ALIGNED' })
+                dispatch({ type: 'ALIGNMENT_ENTER' })
+            }
+
+            if (state.stage === TreatmentStage.COMPLETE) {
+                const material = new THREE.MeshStandardMaterial({color: GREEN_COLOUR, side: THREE.DoubleSide, flatShading: true})
+                meshParts.current.forEach((mesh) => {
+                    mesh.material = material
+                })
+                renderer.current!.render(scene.current!, camera.current!)
+            } 
+            
+            else {
+                    if (state.isAligned) {
                     const material = new THREE.MeshStandardMaterial({color: GREEN_COLOUR, side: THREE.DoubleSide, flatShading: true})
                     meshParts.current[segmentID!].material = material
                 } 
@@ -230,9 +248,13 @@ const ManualCanalRendering = () => {
                     meshParts.current[segmentID!].material = material
                 }
 
-                renderer.current!.render(scene.current!, camera.current!)
             }
-            loop = requestAnimationFrame(animate)
+
+            
+
+        renderer.current!.render(scene.current!, camera.current!)
+            }
+        loop = requestAnimationFrame(animate)
         }
 
         return () => {
@@ -257,6 +279,8 @@ const ManualCanalRendering = () => {
         setYaw(0);
         setPitch(0);
         setRoll(0);
+        alignmentRef.current = 0;
+        alignedRef.current = false;
     }
 
 
@@ -282,6 +306,8 @@ const ManualCanalRendering = () => {
                 </Stack>
 
                 <Stack mt="md" gap="md" align="center">
+                    <Text size="lg" >{alignedRef.current ? "Aligned" : "Not Aligned"}</Text>
+
                     <Text size="lg" >{(alignmentRef.current * 100).toFixed(1)}%</Text>
 
                     <Button onClick={resetAlignment}>{"Reset Alignment"}</Button>

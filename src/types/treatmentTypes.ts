@@ -1,7 +1,8 @@
 export enum TreatmentStage {
     STAGE_1,
     STAGE_2,
-    STAGE_3
+    STAGE_3,
+    COMPLETE
 }
 
 export type CanalType = 'anterior' | 'posterior' | 'lateral';

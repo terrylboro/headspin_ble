@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button, Card, Group, Stack, Switch, Text, Title } from '@mantine/core';
 import { useTreatment } from '../context/TreatmentProvider';
 import ManualCanalRendering from './ManualCanalRendering';
+import { TreatmentStage } from '../types/treatmentTypes';
 
 export default function StateMachineTestPanel() {
   const {
@@ -19,7 +20,7 @@ export default function StateMachineTestPanel() {
         <Title order={4}>Debug controls</Title>
 
         <Stack gap={4}>
-          <Text size="sm">Stage: {state.stage}</Text>
+          <Text size="sm">Stage: {TreatmentStage[state.stage]}</Text>
           <Text size="sm">Progress: {(state.stageProgress * 100).toFixed(1)}%</Text>
           <Text size="sm">Canal: {state.affectedCanal}</Text>
         </Stack>

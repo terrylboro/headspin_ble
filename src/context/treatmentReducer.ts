@@ -22,16 +22,19 @@ export function treatmentReducer(
       return { ...state, isAligned: !state.isAligned };
 
     case 'ALIGNMENT_ENTER':
-      return { ...state, holdStartTime: Date.now() };
+      if (state.stage !== TreatmentStage.COMPLETE) {
+        return { ...state, isAligned: true, holdStartTime: Date.now() };
+      }
+      else return { ...state, stageProgress: 1 };
 
     case 'PROGRESS':
-      return { ...state, stage: (state.stage + 1) % 3 };
+      return { ...state, stage: (state.stage < 3) ? (state.stage + 1) : TreatmentStage.COMPLETE };
 
     case 'TIMER_TICK': {
       if (state.holdStartTime) {
         const elapsed = action.now - state.holdStartTime;
         if (elapsed >= HOLD_DURATION_MS) {
-          return { ...state, stage: (state.stage + 1) % 3, holdStartTime: null, isAligned: false, stageProgress: 0 };
+          return { ...state, stage: (state.stage < 3) ? (state.stage + 1) : TreatmentStage.COMPLETE, holdStartTime: null, isAligned: false, stageProgress: 0 };
         }
         return { ...state, stageProgress: elapsed / HOLD_DURATION_MS };
       }

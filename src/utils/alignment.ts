@@ -49,7 +49,7 @@ export function getCanalAlignment(
   const angleDeg = MathUtils.radToDeg(angleRad);
 
   return {
-    isAligned: angleDeg <= thresholdDeg,
+    isAligned: Math.max(0, dot) >= (1 - thresholdDeg/100), //angleDeg <= thresholdDeg,
     score: Math.max(0, dot),
     angleDeg,
     worldDir,
