@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react"
 import * as THREE from "three";
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
-import { BLUE_COLOUR, ORANGE_COLOUR, BROWN_COLOUR, BACKGR_COLOUR, RED_COLOUR} from "../utils/config";
+import { BLUE_COLOUR, ORANGE_COLOUR, BROWN_COLOUR, BACKGR_COLOUR, RED_COLOUR, BACKGR_COLOUR_CSS} from "../utils/config";
 
 import { changeQuaternionBase } from "../utils/changeBase";
 import {applyYawOffset} from "../utils/applyYawOffset"
 import { useTreatment } from "../context/TreatmentProvider";
-import { Button } from "@mantine/core";
+import { Button, Stack } from "@mantine/core";
 
 interface Props {
     ear: "left" | "right" | "unselected"
@@ -24,13 +24,18 @@ const HeadRendering = () => {
     const renderer = useRef<THREE.WebGLRenderer>()
     const meshParts = useRef<THREE.Mesh[]>([])
 
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
     useEffect(() => {
 
         // Renderer initialisation
-        const canvas = document.getElementById("headCanvas") as HTMLCanvasElement
-        renderer.current = new THREE.WebGLRenderer({canvas: canvas, antialias: true})
-        const size = document.documentElement.clientWidth * 0.207
-		renderer.current.setSize(size, size)
+        canvasRef.current = document.getElementById("headCanvas") as HTMLCanvasElement;
+        const container = document.getElementById("headCanvasContainer") as HTMLDivElement;
+
+        renderer.current = new THREE.WebGLRenderer({canvas: canvasRef.current, antialias: true})
+        // const size = document.documentElement.clientWidth * 0.207
+		// renderer.current.setSize(size, size)
+        renderer.current.setSize(container.clientWidth, container.clientHeight, false)
 
         // Scene initialisation
         scene.current = new THREE.Scene()
@@ -89,7 +94,8 @@ const HeadRendering = () => {
                     if (mesh.geometry.attributes.position.array.length === 33435) {
                         mesh.rotation.set(0, 0, 0)
                         // mesh.position.set(ear === "left" ? 3.5 : -3.5, 0, 0)
-                        mesh.position.set(affectedEar === "left" ? 3.5 : -3.5, 0, 0)
+                        // mesh.position.set(affectedEar === "left" ? 3.5 : -3.5, 0, 0)
+                        mesh.position.set(0, 0, 0)
                     }
                     else mesh.rotation.set(0.0, 0.0, 0)  // this was set in original code
 
@@ -122,10 +128,11 @@ const HeadRendering = () => {
 
 
     return (
-        <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
-            {/* <div style={{height: "1.2vh"}}/> */}
-            <canvas id={"headCanvas"}/>
-        </div>
+    <div id="headCanvasContainer" style={{ width: "100%", height: "100%", alignItems: "center", backgroundColor: "#000000"}}>
+        <canvas ref={canvasRef} id={"headCanvas"}
+            style={{ width: "100%", height: "100%", display: "block", margin: "0 auto" }}
+        />
+    </div>
     )
 }
 

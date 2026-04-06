@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import * as THREE from "three";
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { getCanalAlignment, meshPartsLength } from "../utils/alignment";
-import { BLUE_COLOUR, ORANGE_COLOUR, BROWN_COLOUR, BACKGR_COLOUR, GREEN_COLOUR, RED_COLOUR} from "../utils/config";
+import { BLUE_COLOUR, ORANGE_COLOUR, BROWN_COLOUR, BACKGR_COLOUR, GREEN_COLOUR, RED_COLOUR, BACKGR_COLOUR_CSS} from "../utils/config";
 import { changeQuaternionBase } from "../utils/changeBase";
 import {applyYawOffset} from "../utils/applyYawOffset"
 import { useTreatment } from "../context/TreatmentProvider";
@@ -67,8 +67,10 @@ const CanalRendering = () => {
 
         if (!canvasRef.current) return;
         renderer.current = new THREE.WebGLRenderer({canvas: canvasRef.current, antialias: true})
-        const size = active ? document.documentElement.clientWidth * 0.207 : 0
-        renderer.current.setSize(size, size)
+        const container = document.getElementById("canalCanvasContainer") as HTMLDivElement;
+        // const size = active ? document.documentElement.clientWidth * 0.207 : 0
+        // renderer.current.setSize(size, size)
+        renderer.current.setSize(container.clientWidth, container.clientHeight, false)
 
         // Clear previous canal from scene
         clearCanalGroup()
@@ -84,6 +86,8 @@ const CanalRendering = () => {
         camera.current.position.set(40, 0, 0) 
         camera.current.lookAt(0, 0, 0)
         camera.current.rotation.z = Math.PI / 2;
+        // Centre the meshes on the origin
+        canalGroup.current.position.set(0, 0, 0);
 
 
         // Add lights
@@ -222,12 +226,19 @@ const CanalRendering = () => {
 
 
     return (
-        <div style={{display: "flex", flexDirection: "column"}}>
-            <div style={{display: "flex", flexDirection: "row"}}>
-                <canvas ref={canvasRef}/>
-            </div>
+            <div id="canalCanvasContainer" style={{ width: "100%", height: "100%", alignItems: "center", backgroundColor: BACKGR_COLOUR_CSS}}>
+            <canvas ref={canvasRef}
+                style={{ width: "100%", height: "100%", display: "block", margin: "0 auto" }}
+            />
         </div>
+        
+        
+        
     )
 }
 
 export default CanalRendering
+
+// <Stack align="center" gap="md" >
+// <Text size="lg" >{(alignmentRef.current * 100).toFixed(1)}%</Text>
+//         </Stack>

@@ -8,6 +8,9 @@ import {
   Text,
   Title,
   Stepper,
+  Grid,
+  Flex,
+  Box,
 } from '@mantine/core';
 
 import HeadRendering from  './HeadRendering';
@@ -49,96 +52,72 @@ export default function TreatmentScreen({
         </Stepper>
       </Card>
 
-      <Group align="stretch" grow style={{ flex: 1 }}>
-        <Card withBorder shadow="sm" radius="md" style={{ flex: 2, minHeight: 480 }}>
-          <Stack h="100%">
-            <Text fw={600}>Canal Alignment</Text>
-            <div
-              style={{
-                flex: 1,
-                background: '#111',
-                borderRadius: 8,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
+      {/* <Group align="stretch" grow style={{ flex: 1 }}> */}
+      <Flex gap="xl" wrap="nowrap" w="100%">
 
-              <CanalRendering/>
+        <Box style={{ flex: 1, minWidth: 0 }}>
+          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 480 }}>
+            <Stack h="100%">
+              <Text fw={600}>Control</Text>
 
-            </div>
-          </Stack>
-        </Card>
+              <Button mt="md" onClick={() => treatment.dispatch({ type: 'RESET_PROGRESS' })}>
+                Restart Treatment
+              </Button>
 
-        <Card withBorder shadow="sm" radius="md" style={{ flex: 2, minHeight: 480 }}>
-          <Stack h="100%">
-            <Text fw={600}>Check calibration</Text>
-            <div
-              style={{
-                flex: 1,
-                background: '#111',
-                borderRadius: 8,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
+              <Button mt="md" onClick={() => {}}>
+                Record
+              </Button>
+
+            </Stack>
+          </Card>
+        </Box>
+
+        <Box style={{ flex: 3, minWidth: 0 }}>
+          <Card withBorder shadow="sm" radius="md" style={{ flex: 2, minHeight: 480 }}>
+            <Stack h="100%" >
+              <Text fw={600}>Canal Alignment</Text>
+              <div
+                style={{
+                  flex: 1,
+                  background: 'BACKGR_COLOUR_CSS',
+                  borderRadius: 8,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+
+                <CanalRendering/>
+
+              </div>
+
+              {/* <Text size="lg" >{(alignmentRef.current * 100).toFixed(1)}%</Text> */}
+            </Stack>
+          </Card>
+        </Box>
+
+        <Box style={{ flex: 2, minWidth: 0 }}>
+          <Card withBorder shadow="sm" radius="md" style={{ flex: 2, minHeight: 480 }}>
+            <Stack h="100%" align="center" justify="center">
+              <Text fw={600}>Check calibration</Text>
 
               <HeadRendering/>
 
-            </div>
+              < Button fullWidth mt="md" onClick={calibrateOrientation}>
+                Recentre
+              </Button>
 
-            < Button mt="md" onClick={calibrateOrientation}>
-              Reset Orientation
-            </Button>
-
-          </Stack>
-        </Card>
-      </Group>
-
-      <Card withBorder shadow="sm" radius="md">
-        <Text fw={600}>Orientation values</Text>
-        {/* < Button mt="md" onClick={calibrateOrientation}>
-            Reset Orientation
-        </Button> */}
-        <Button mt="md" onClick={() => treatment.dispatch({ type: 'RESET_PROGRESS' })}>
-            Restart Treatment
-        </Button>
-      </Card>
-
-      <Card withBorder shadow="sm" radius="md">
-        <Text fw={600}>Latest data</Text>
-        <Text fw={600}>aX | aY | aZ | gX | gY | gZ | Roll | Pitch | Yaw</Text>
-        <Text>{treatment.latestSampleText}</Text>
-        </Card>
+            </Stack>
+          </Card>
+        </Box>
+      </Flex> 
     </Stack>
   );
 }
 
-
-
-//
-{/* <Card withBorder shadow="sm" radius="md" style={{ flex: 2, minHeight: 480 }}>
-          <Stack h="100%">
-            <Text fw={600}>3D model view</Text>
-            <div
-              style={{
-                flex: 1,
-                background: '#111',
-                borderRadius: 8,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {/* <Text c="dimmed">React Three Fiber canvas goes here</Text> */}
-
-        //       <HeadRendering/>
-
-        //     </div>
-
-        //     <Progress value={(treatment.rollValue + Math.PI) * (100 / (2*Math.PI))} mt="md" size="xl" radius="xl" />
-        //     <Progress value={(treatment.pitchValue + Math.PI) * (100 / (2*Math.PI))} mt="md" size="xl" radius="xl" />
-        //     <Progress value={(treatment.yawValue + Math.PI) * (100 / (2*Math.PI))} mt="md" size="xl" radius="xl" />
-        //   </Stack>
-        // </Card> */}
+// Useful components
+// {/* <Card withBorder shadow="sm" radius="md">
+//         <Text fw={600}>Latest data</Text>
+//         <Text fw={600}>aX | aY | aZ | gX | gY | gZ | Roll | Pitch | Yaw</Text>
+//         <Text>{treatment.latestSampleText}</Text>
+//         </Card> */}
