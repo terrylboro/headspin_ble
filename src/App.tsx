@@ -19,6 +19,8 @@ import SetupScreen from './components/SetupScreen';
 import TreatmentScreen from './components/TreatmentScreen';
 import { useBleDevice } from './context/BleProvider';
 
+import TopBar from './components/TopBar';
+
 import ManualHeadRendering from './test/ManualHeadRendering';
 
 // Mantine UI imports
@@ -39,18 +41,6 @@ import {
 import StateMachineTestPanel from './test/StateMachineTestPanel';
 
 type Screen = 'setup' | 'treatment';
-
-function TopBar() {
-  return (
-    <Group justify="space-between" h="100%" px="md">
-      <Title order={3}>HeadSpin</Title>
-      {/* <Group>
-        <Badge color="green">Bluetooth connected</Badge>
-        <Badge color="green">Streaming</Badge>
-      </Group> */}
-    </Group>
-  );
-}
 
 function StatusBar() {
   return (
@@ -87,7 +77,7 @@ function App(): JSX.Element {
           backgroundColor: theme.colors.blue[6],
           color: theme.white,
         }}>
-        <TopBar />
+        <TopBar setScreen={setScreen} />
       </AppShell.Header>
 
       
@@ -104,8 +94,6 @@ function App(): JSX.Element {
       {
       testMode ? (
           StateMachineTestPanel()
-
-
         
       ) : screen === 'setup' ? (
         <SetupScreen
@@ -136,113 +124,3 @@ function App(): JSX.Element {
 }
 
 export default App;
-
-// // Add this widget for IMU debugging
-// {error && <div style={{ color: 'salmon', marginTop: 8 }}>{error}</div>}
-
-//     <section style={{ textAlign: 'left', width: '80%', maxWidth: 800, marginTop: 20 }}>
-//       <h3>Received Messages</h3>
-//       <div style={{ maxHeight: 300, overflow: 'auto', background: 'rgba(255,255,255,0.03)', padding: 8 }}>
-//         {messages.length === 0 && <div style={{ color: '#bbb' }}>No messages yet.</div>}
-//         {messages.map((m, idx) => (
-//           <div key={idx} style={{ padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-//             <div style={{ fontSize: 12, color: '#999' }}>{m.ts}</div>
-
-//             <div style={{ fontFamily: 'monospace', fontSize: 13, color: '#fff' }}>
-//               {m.raw}
-//             </div>
-
-//             {m.decoded && (
-//               <pre style={{ marginTop: 6, fontSize: 12, color: '#ddd', whiteSpace: 'pre-wrap' }}>
-//                 {m.decoded}
-//               </pre>
-//             )}
-
-//             {/* Keeping your old "text" display (usually garbage for binary) */}
-//             {m.text && !m.decoded && (
-//               <div style={{ fontSize: 13, color: '#ddd' }}>{m.text}</div>
-//             )}
-//           </div>
-//         ))}
-//       </div>
-//     </section>
-
-
-
-
-
-
-
-// Non-mantine UI
-{/* <div style={{height: "1vh"}}/>
-    <div style={{display: "flex", flexDirection: "row", width: "100%"}}>
-
-    <div style={{display: "flex", flexDirection: "column", width: "25vw", paddingRight: "1vw"}}>
-        <SelectWindow 
-            ear={context.affectedEar}
-            canal={context.affectedCanal}
-            earCallback={handleEarChange}
-            canalCallback={handleCanalChange}
-            headAlignCallback={updateHeadOffset}
-        />
-
-        {context.affectedCanal && 
-        <AlignmentDisplay
-            stage={context.currentStage}
-            stageCallback={handleStageAdvance}
-            alignmentRef={alignmentRef}
-            alignedRef={alignedRef}
-            alignment={context.alignment}
-            stage1Progress={context.stage1Progress}
-            stage2Progress={context.stage2Progress}
-            stage3Progress={context.stage3Progress}
-            resetTime={context.resetTime}
-            />}
-        
-        <StateDisplay 
-            state={state}
-            context={context}
-            actions={actions}
-        />
-        
-        
-    </div>
-
-    <div style={{display: "flex", flexDirection: "column", flex: 1, justifyContent: "center", alignItems: "center", padding: "1vw"}}>
-        <CanalRendering 
-        canal={context.affectedCanal}
-        ear={context.affectedEar}
-        affectedCanal={context.affectedCanal}
-        matrixRef={matrixRef}
-        offsetMatrixRef={matrixOffset}
-        stage={context.currentStage}
-        alignmentRef={alignmentRef}
-        alignedRef={alignedRef}/>
-    </div>
-
-    <div style={{display: "flex", flexDirection: "column", width: "25vw", paddingLeft: "1vw"}}>
-    
-    <HeadRendering
-        ear={context.affectedEar}
-        matrixRef={matrixRef}
-        offsetMatrixRef={matrixOffset}/>
-    </div>
-    </div>
-
-
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-      <button onClick={connect} disabled={connected} style={{ padding: '6px 12px' }}>
-        Connect
-      </button>
-      <button onClick={disconnect} disabled={!connected} style={{ padding: '6px 12px' }}>
-        Disconnect
-      </button>
-      <div style={{ marginLeft: 12 }}>
-        <strong>Status:</strong> {connected ? 'Connected' : 'Disconnected'}
-        {deviceName ? ` — ${deviceName}` : ''}
-      </div>
-    </div>
-
-    
-    </>
-  ); */}

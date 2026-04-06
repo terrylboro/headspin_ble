@@ -123,11 +123,8 @@ const HeadRendering = () => {
 
     return (
         <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
-            <div style={{height: "1.2vh"}}/>
+            {/* <div style={{height: "1.2vh"}}/> */}
             <canvas id={"headCanvas"}/>
-            <Button mt="md" onClick={calibrateOrientation}>
-                Reset Orientation
-            </Button>
         </div>
     )
 }

@@ -7,6 +7,7 @@ import {
   Stack,
   Text,
   Title,
+  Stepper,
 } from '@mantine/core';
 
 import HeadRendering from  './HeadRendering';
@@ -14,6 +15,7 @@ import CanalRendering from './CanalRendering';
 import { useTreatment } from '../context/TreatmentProvider';
 import ManualHeadRendering from '../test/ManualHeadRendering';
 import ManualCanalRendering from '../test/ManualCanalRendering';
+import { TreatmentStage } from '../types/treatmentTypes';
 
 type TreatmentScreenProps = {
   onBack: () => void;
@@ -32,17 +34,25 @@ export default function TreatmentScreen({
 
   return (
     <Stack h="100%">
-      <Group justify="space-between">
-        <Title order={2}>Treatment</Title>
-        <Button variant="light" onClick={onBack}>
-          Back to setup
-        </Button>
-      </Group>
+
+      <Card withBorder shadow="sm" radius="md">
+        <Text fw={600}>Progress</Text>
+        < Progress value={treatment.state.stageProgress * 100}
+          color={treatment.state.stage === TreatmentStage.COMPLETE ? "green" : "blue"}
+          animated = {treatment.state.stage === TreatmentStage.COMPLETE}
+          mt="md" size="xl" radius="xl" />
+        < Stepper active={treatment.state.stage} mt="md" size="md" radius="xl" color={(treatment.state.stage === TreatmentStage.COMPLETE) ? "green" : "blue"} styles={{ step: { cursor: "default" } }}>
+          <Stepper.Step label="Stage 1" />
+          <Stepper.Step label="Stage 2" />
+          <Stepper.Step label="Stage 3" />
+          {/* <Stepper.Completed ></Stepper.Completed> */}
+        </Stepper>
+      </Card>
 
       <Group align="stretch" grow style={{ flex: 1 }}>
         <Card withBorder shadow="sm" radius="md" style={{ flex: 2, minHeight: 480 }}>
           <Stack h="100%">
-            <Text fw={600}>3D model view</Text>
+            <Text fw={600}>Canal Alignment</Text>
             <div
               style={{
                 flex: 1,
@@ -62,7 +72,7 @@ export default function TreatmentScreen({
 
         <Card withBorder shadow="sm" radius="md" style={{ flex: 2, minHeight: 480 }}>
           <Stack h="100%">
-            <Text fw={600}>3D model view</Text>
+            <Text fw={600}>Check calibration</Text>
             <div
               style={{
                 flex: 1,
@@ -77,15 +87,20 @@ export default function TreatmentScreen({
               <HeadRendering/>
 
             </div>
+
+            < Button mt="md" onClick={calibrateOrientation}>
+              Reset Orientation
+            </Button>
+
           </Stack>
         </Card>
       </Group>
 
       <Card withBorder shadow="sm" radius="md">
         <Text fw={600}>Orientation values</Text>
-        < Button mt="md" onClick={calibrateOrientation}>
+        {/* < Button mt="md" onClick={calibrateOrientation}>
             Reset Orientation
-        </Button>
+        </Button> */}
         <Button mt="md" onClick={() => treatment.dispatch({ type: 'RESET_PROGRESS' })}>
             Restart Treatment
         </Button>
