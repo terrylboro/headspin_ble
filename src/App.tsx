@@ -71,6 +71,7 @@ function App(): JSX.Element {
         header={{ height: 60 }}
         // footer={{ height: 40 }}
         padding="md"
+        style={{height: '100vh', overflow: 'hidden'}}
       >
 
       <AppShell.Header style={{
@@ -84,7 +85,8 @@ function App(): JSX.Element {
 
     <AppShell.Main
       style={{
-        minHeight: 'calc(100vh - 60px - 44px)', // full height minus header and footer
+        minHeight: 'calc(100vh - 60px)', // full height minus header
+        overflow: 'hidden',
         display: 'block',
         backgroundColor: theme.colors.gray[0],
         justifyContent: 'center',
