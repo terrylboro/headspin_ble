@@ -22,7 +22,7 @@ export function SelectCanalButton({
         withBorder
         h="100%"
         radius="md"
-        padding="md"
+        padding="xs"
         style={{
           transition: 'transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease',
           borderColor: selected ? '#228be6' : undefined,
@@ -31,7 +31,7 @@ export function SelectCanalButton({
           cursor: 'pointer',
         }}
       >
-        <Stack gap="sm" align="center">
+        <Stack gap="xs" align="center">
           <Image
             src={imageSrc}
             alt={label}

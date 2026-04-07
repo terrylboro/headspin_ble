@@ -110,9 +110,9 @@ export default function SetupScreen({
 
                 <Stack gap="md">
                   <Group wrap="nowrap" grow>
-                    <SelectCanalButton label="Posterior" imageSrc="https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/images/bg-7.png" selected={state.affectedCanal === 'posterior'} onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'posterior' })}/>
-                    <SelectCanalButton label="Anterior" imageSrc="/logo192.png" selected={state.affectedCanal === 'anterior'} onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'anterior' })}/>
-                    <SelectCanalButton label="Lateral" imageSrc="/logo192.png" selected={state.affectedCanal === 'lateral'} onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'lateral' })}/>
+                    <SelectCanalButton label="Posterior" imageSrc="/Posterior Canal Selected.png" selected={state.affectedCanal === 'posterior'} onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'posterior' })}/>
+                    <SelectCanalButton label="Anterior" imageSrc="/Anterior Canal Selected.png" selected={state.affectedCanal === 'anterior'} onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'anterior' })}/>
+                    <SelectCanalButton label="Lateral" imageSrc="/Lateral Canal Selected.png" selected={state.affectedCanal === 'lateral'} onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'lateral' })}/>
                   </Group>
                 </Stack>
               </Stack>
