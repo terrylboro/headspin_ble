@@ -42,11 +42,13 @@ type TreatmentContextValue = {
   selectedCanals: string[];
   setSelectedCanals: (canals: string[]) => void;
 
-  alignedRef: boolean;
-  setAlignedRef: (value: boolean) => void;
+  alignedRef: React.MutableRefObject<boolean>;
+  // setAlignedRef: (value: boolean) => void;
+
+  showGuidanceArrows : boolean;
+  setShowGuidanceArrows: (value: boolean) => void;
 
   alignmentRef: React.MutableRefObject<number> | null;
-
 
   resetTime: number | null;
   setResetTime: (time: number | null) => void;
@@ -105,6 +107,8 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
 
   const [latestSampleText, setLatestSampleText] = useState('Waiting for data');
 
+  const [showGuidanceArrows, setShowGuidanceArrows] = useState(true);
+
   const [rollValue, setRollValue] = useState(0);
   const [pitchValue, setPitchValue] = useState(0);
   const [yawValue, setYawValue] = useState(0);
@@ -113,7 +117,8 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
   const offsetMatrixRef = useRef(new Matrix4());
 
   const alignmentRef = useRef(0);
-  const [alignedRef, setAlignedRef] = useState(false);
+  // const [alignedRef, setAlignedRef] = useState(false);
+  const alignedRef = useRef<boolean>(false);
 
   // Track the latest processed BLE message so we do not reprocess the same one
   const lastProcessedTimestampRef = useRef<number | null>(null);
@@ -257,7 +262,10 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
       alignmentRef,
 
       alignedRef,
-      setAlignedRef,
+      // setAlignedRef,
+
+      showGuidanceArrows,
+      setShowGuidanceArrows,
 
       resetTime,
       setResetTime,

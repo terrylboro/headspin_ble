@@ -69,7 +69,7 @@ function App(): JSX.Element {
   return (
       <AppShell
         header={{ height: 60 }}
-        footer={{ height: 40 }}
+        // footer={{ height: 40 }}
         padding="md"
       >
 
@@ -111,12 +111,12 @@ function App(): JSX.Element {
       )}
     </AppShell.Main>
 
-    <AppShell.Footer style={{
+    {/* <AppShell.Footer style={{
           backgroundColor: theme.colors.blue[6],
           color: theme.white,
         }}>
           <StatusBar />
-    </AppShell.Footer>
+    </AppShell.Footer> */}
 
     </AppShell>
     

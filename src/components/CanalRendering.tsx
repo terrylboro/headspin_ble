@@ -21,10 +21,10 @@ const CanalRendering = () => {
     const [active, setActive] = useState(true)
 
     // Using TreatmentProvider context to get the necessary variables for rendering and alignment
-    const {matrixRef, offsetMatrixRef, state, dispatch} = useTreatment();
+    const {matrixRef, offsetMatrixRef, alignmentRef, alignedRef, state, dispatch, showGuidanceArrows, setShowGuidanceArrows} = useTreatment();
 
-    const alignmentRef = useRef<number>(0)
-    const alignedRef = useRef<boolean>(false)
+    // const alignmentRef = useRef<number>(0)
+    // const alignedRef = useRef<boolean>(false)
 
     // Scene setting variables
     const camera = useRef<THREE.Camera>()
@@ -112,30 +112,44 @@ const CanalRendering = () => {
         // Add canalGroup which allows arrows to be grouped with mesh
         scene.current!.add(canalGroup.current);
 
-        // Add helper arrows
-        stage1ArrowRef.current = new THREE.ArrowHelper(
-            canalDirections["posterior"].directions[0],
-            canalDirections["posterior"].origins[0],
-            10,
-            ORANGE_COLOUR
-        );
-        canalGroup.current.add(stage1ArrowRef.current);
+        if (showGuidanceArrows) {
+            switch(state.stage) {
+                case TreatmentStage.STAGE_1:
+                    // Add helper arrows
+                    stage1ArrowRef.current = new THREE.ArrowHelper(
+                        canalDirections["posterior"].directions[0],
+                        canalDirections["posterior"].origins[0],
+                        10,
+                        ORANGE_COLOUR
+                    );
+                    canalGroup.current.add(stage1ArrowRef.current);
+                    break;
 
-        stage2ArrowRef.current = new THREE.ArrowHelper(
-            canalDirections["posterior"].directions[1],
-            canalDirections["posterior"].origins[1],
-            10,
-            ORANGE_COLOUR
-        );
-        canalGroup.current.add(stage2ArrowRef.current);
+                case TreatmentStage.STAGE_2:
+                    stage2ArrowRef.current = new THREE.ArrowHelper(
+                        canalDirections["posterior"].directions[1],
+                        canalDirections["posterior"].origins[1],
+                        10,
+                        ORANGE_COLOUR
+                    );
+                    canalGroup.current.add(stage2ArrowRef.current);
+                    break;
 
-        stage3ArrowRef.current = new THREE.ArrowHelper(
-            canalDirections["posterior"].directions[2],
-            canalDirections["posterior"].origins[2],
-            10,
-            ORANGE_COLOUR
-        );
-        canalGroup.current.add(stage3ArrowRef.current);
+                case TreatmentStage.STAGE_3:
+                    stage3ArrowRef.current = new THREE.ArrowHelper(
+                        canalDirections["posterior"].directions[2],
+                        canalDirections["posterior"].origins[2],
+                        10,
+                        ORANGE_COLOUR
+                    );
+                    canalGroup.current.add(stage3ArrowRef.current);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+        
 
 
         // Load Canal Mesh
@@ -189,25 +203,25 @@ const CanalRendering = () => {
                     dispatch({ type: 'ALIGNMENT_ENTER' })
                 }
     
-                if (state.stage === TreatmentStage.COMPLETE) {
-                    const material = new THREE.MeshStandardMaterial({color: GREEN_COLOUR, side: THREE.DoubleSide, flatShading: true})
-                    meshParts.current.forEach((mesh) => {
-                        mesh.material = material
-                    })
-                    renderer.current!.render(scene.current!, camera.current!)
-                } 
+                // if (state.stage === TreatmentStage.COMPLETE) {
+                //     const material = new THREE.MeshStandardMaterial({color: GREEN_COLOUR, side: THREE.DoubleSide, flatShading: true})
+                //     meshParts.current.forEach((mesh) => {
+                //         mesh.material = material
+                //     })
+                //     renderer.current!.render(scene.current!, camera.current!)
+                // } 
                 
+                // else {
+                if (state.isAligned) {
+                    const material = new THREE.MeshStandardMaterial({color: GREEN_COLOUR, side: THREE.DoubleSide, flatShading: true})
+                    meshParts.current[segmentID!].material = material
+                } 
                 else {
-                        if (state.isAligned) {
-                        const material = new THREE.MeshStandardMaterial({color: GREEN_COLOUR, side: THREE.DoubleSide, flatShading: true})
-                        meshParts.current[segmentID!].material = material
-                    } 
-                    else {
-                        const material = new THREE.MeshStandardMaterial({color: RED_COLOUR, side: THREE.DoubleSide, flatShading: true})
-                        meshParts.current[segmentID!].material = material
-                    }
-    
+                    const material = new THREE.MeshStandardMaterial({color: RED_COLOUR, side: THREE.DoubleSide, flatShading: true})
+                    meshParts.current[segmentID!].material = material
                 }
+    
+                // }
     
                 
     
@@ -222,7 +236,7 @@ const CanalRendering = () => {
             meshParts.current = [] // flush any previous loadings
         }
 
-    }, [state, matrixRef, offsetMatrixRef])
+    }, [state, matrixRef, offsetMatrixRef, showGuidanceArrows])
 
 
     return (
