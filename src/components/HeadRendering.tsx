@@ -128,7 +128,7 @@ const HeadRendering = () => {
 
 
     return (
-    <div id="headCanvasContainer" style={{ width: "100%", height: "100%", alignItems: "center", backgroundColor: "#000000"}}>
+    <div id="headCanvasContainer" style={{ height: "100%", aspectRatio: "1 / 1", alignItems: "center", backgroundColor: "#000000"}}>
         <canvas ref={canvasRef} id={"headCanvas"}
             style={{ width: "100%", height: "100%", display: "block", margin: "0 auto" }}
         />

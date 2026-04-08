@@ -86,6 +86,7 @@ function App(): JSX.Element {
     <AppShell.Main
       style={{
         minHeight: 'calc(100vh - 60px)', // full height minus header
+        // maxHeight: '60vh',
         overflow: 'hidden',
         display: 'block',
         backgroundColor: theme.colors.gray[0],

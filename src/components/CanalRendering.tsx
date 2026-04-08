@@ -236,11 +236,11 @@ const CanalRendering = () => {
             meshParts.current = [] // flush any previous loadings
         }
 
-    }, [state, matrixRef, offsetMatrixRef, showGuidanceArrows])
+    }, [state.isAligned, state.affectedCanal, state.affectedEar, matrixRef, offsetMatrixRef, showGuidanceArrows])
 
 
     return (
-            <div id="canalCanvasContainer" style={{ width: "100%", height: "100%", alignItems: "center", backgroundColor: BACKGR_COLOUR_CSS}}>
+            <div id="canalCanvasContainer" style={{height: "100%", aspectRatio: '1 / 1', alignItems: "center", backgroundColor: BACKGR_COLOUR_CSS}}>
             <canvas ref={canvasRef}
                 style={{ width: "100%", height: "100%", display: "block", margin: "0 auto" }}
             />

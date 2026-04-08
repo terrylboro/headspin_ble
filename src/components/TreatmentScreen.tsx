@@ -65,7 +65,7 @@ export default function TreatmentScreen({
       {/* <Group align="stretch" grow style={{ flex: 1 }}> */}
       <Flex gap="xl" wrap="nowrap" w="100%">
 
-        <Box style={{ flex: 1, minWidth: 0 }}>
+        <Box style={{ flex: 1, minWidth: 0, maxHeight: '60vh' }}>
           <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 480 }}>
             <Stack h="100%">
               <Text fw={600}>Control</Text>
@@ -93,7 +93,7 @@ export default function TreatmentScreen({
           </Card>
         </Box>
 
-        <Box style={{ flex: 3, minWidth: 0 }}>
+        <Box style={{ flex: 3, minWidth: 0, maxHeight: '60vh' }}>
           <Card withBorder shadow="sm" radius="md" style={{ flex: 2, minHeight: 480 }}>
             <Stack h="100%" >
               <Text fw={600}>Canal Alignment</Text>
@@ -131,7 +131,7 @@ export default function TreatmentScreen({
           </Card>
         </Box>
 
-        <Box style={{ flex: 2, minWidth: 0 }}>
+        <Box style={{ flex: 2, minWidth: 0, maxHeight: '60vh' }}>
           <Card withBorder shadow="sm" radius="md" style={{ flex: 2, minHeight: 480 }}>
             <Stack h="100%" align="center" justify="center">
               <Text fw={600}>Check calibration</Text>
