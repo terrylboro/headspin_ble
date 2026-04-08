@@ -19,10 +19,10 @@ import { MadgwickFilter } from '../utils/madgwickFilter';
 import { changeQuaternionBase } from '../utils/changeBase';
 
 import { treatmentReducer, initialState } from './treatmentReducer';
-import { TreatmentState, Action } from '../types/treatmentTypes';
+import { TreatmentState, Action, EarSide, CanalType } from '../types/treatmentTypes';
 
-export type EarSide = 'left' | 'right' | null;
-export type CanalType = 'anterior' | 'posterior' | 'lateral' | null;
+// export type EarSide = 'left' | 'right' | null;
+// export type CanalType = 'anterior' | 'posterior' | 'lateral' | null;
 
 
 

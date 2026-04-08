@@ -7,10 +7,10 @@ import { changeQuaternionBase } from "../utils/changeBase";
 import {applyYawOffset} from "../utils/applyYawOffset"
 import { useTreatment } from "../context/TreatmentProvider";
 
-import { CanalType } from "../context/TreatmentProvider";
-
 import { Slider, Stack, Text, Group, Button } from '@mantine/core';
 import { TreatmentStage } from "../types/treatmentTypes";
+
+import { createThickArrow } from "../custom/thickArrow";
 
 
 const ManualCanalRendering = () => {
@@ -40,7 +40,7 @@ const ManualCanalRendering = () => {
     const meshParts = useRef<THREE.Mesh[]>([])
 
     const canalColours = {"posterior": BLUE_COLOUR, "anterior": ORANGE_COLOUR, "lateral": BROWN_COLOUR, "all": 0, "unselected": 0x333333}
-    const coloursAll = [BLUE_COLOUR, ORANGE_COLOUR, BROWN_COLOUR, 0x333333, 0x333333]
+    const coloursAll = [BLUE_COLOUR, ORANGE_COLOUR, BROWN_COLOUR, 0x333333, 0x666666]
 
     const [yaw, setYaw] = useState(0)
     const [pitch, setPitch] = useState(0)
@@ -62,6 +62,8 @@ const ManualCanalRendering = () => {
     const stage3Direction = new THREE.Vector3(0.7, -1, 0.2).normalize(); // test direction
     const stage3Origin = new THREE.Vector3(-2.3, 2.2, 2.5);
 
+    const stage4ArrowRef = useRef<THREE.Group | null>(null);
+
     // Encode the canal directions in the local frame (i.e. relative to whole mesh) by segment and canal
     const canalDirections = {
         "posterior": {
@@ -69,14 +71,16 @@ const ManualCanalRendering = () => {
                 new THREE.Vector3(1, -1, -0.2).normalize(), // stage 1 direction
                 new THREE.Vector3(0, 0, -1).normalize(), // stage 2 direction
                 // new THREE.Vector3(0.7, -1, 0.2).normalize() // stage 3 direction
-                new THREE.Vector3(-0.7, +1, -0.2).normalize() // stage 3 direction
+                new THREE.Vector3(-0.7, +1, -0.2).normalize(), // stage 3 direction
+                new THREE.Vector3(-0.9, 0.15, 1).normalize() // stage 4 direction
             ],
             "origins": [
                 new THREE.Vector3(-1.3, 2, -2.3), // stage 1 origin
                 new THREE.Vector3(-1.6, 2.2, 3), // stage 2 origin
                 // new THREE.Vector3(-2.3, 2.2, 2.5) // stage 3 origin (reverse)
                 // new THREE.Vector3(0, -1, 3) // stage 3 origin
-                new THREE.Vector3(1.9, -4, 3.5) // stage 3 origin
+                new THREE.Vector3(1.9, -4, 3.5), // stage 3 origin
+                new THREE.Vector3(3, -2.4, 0.2) // stage 4 origin
             ],  
         },
         "anterior": {
@@ -192,7 +196,16 @@ const ManualCanalRendering = () => {
         );
         canalGroup.current.add(stage3ArrowRef.current);
 
+        stage4ArrowRef.current = createThickArrow(
+            canalDirections["posterior"].directions[3],
+            canalDirections["posterior"].origins[3],
+            7,
+            (alignedRef.current) ? GREEN_COLOUR : ORANGE_COLOUR,
+            alignmentRef.current,
+        );
+        canalGroup.current.add(stage4ArrowRef.current);
 
+        const clock = new THREE.Clock();
 
         // Load Canal Mesh
         const loader = new PLYLoader()
@@ -210,7 +223,7 @@ const ManualCanalRendering = () => {
                 // else color = canalColours[state.affectedCanal ? state.affectedCanal : "unselected"]
 
                 // // color = i === 1 ? RED_COLOUR : BLUE_COLOUR;
-                color = canalColours["unselected"] //coloursAll[i]
+                color = canalColours["unselected"] //coloursAll[i] // 
 
                 const material = new THREE.MeshStandardMaterial({color: color, side: THREE.DoubleSide, flatShading: true})
                 const loadedMesh = new THREE.Mesh(geometry, material)
@@ -225,7 +238,13 @@ const ManualCanalRendering = () => {
         let loop: number = requestAnimationFrame(animate)
         function animate() {
 
-            if (meshParts.current[meshPartsLength[state.affectedCanal ? state.affectedCanal : 5] - 1]) {
+            // Clock for pulsing effects
+            const t = clock.getElapsedTime();
+            const opacity = 0.95 + 0.3 * Math.sin(t * 4);
+
+            // console.log(meshParts.current[meshPartsLength[state.affectedCanal ? state.affectedCanal : 5] ])
+
+            if (meshParts.current[meshPartsLength[state.affectedCanal ? state.affectedCanal : 5] -1]) {
 
             // Rotate the group
             const qB = new THREE.Quaternion();
@@ -272,6 +291,16 @@ const ManualCanalRendering = () => {
                     meshParts.current[segmentID!].material = material
                 }
 
+            // Make the arrow pulse
+            const arrowMesh = stage4ArrowRef.current;
+            arrowMesh?.traverse((child) => {
+                if ((child as THREE.Mesh).material) {
+                    const mat = (child as THREE.Mesh).material as THREE.Material & { opacity?: number };
+                    if ('opacity' in mat) {
+                        mat.opacity = opacity;
+                    }
+                }
+            });
             }
 
             

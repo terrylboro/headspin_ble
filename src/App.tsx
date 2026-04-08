@@ -60,7 +60,7 @@ function App(): JSX.Element {
   const [screen, setScreen] = useState<Screen>('setup');
   const [selectedCanals, setSelectedCanals] = useState<string[]>([]);
 
-  const testMode = false;
+  const testMode = true;
 
  
   // Mantine theming

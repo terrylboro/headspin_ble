@@ -20,7 +20,7 @@ import CanalRendering from './CanalRendering';
 import { useTreatment } from '../context/TreatmentProvider';
 import ManualHeadRendering from '../test/ManualHeadRendering';
 import ManualCanalRendering from '../test/ManualCanalRendering';
-import { TreatmentStage } from '../types/treatmentTypes';
+import { TreatmentStage, HoldDurationType } from '../types/treatmentTypes';
 import AlignmentProgress from '../custom/alignmentProgress';
 
 const sliderMarks = [
@@ -47,21 +47,6 @@ export default function TreatmentScreen({
   return (
     <Stack h="100%">
 
-      <Card withBorder shadow="sm" radius="md">
-        <Text fw={600}>Progress</Text>
-        < Stepper active={treatment.state.stage} mt="md" size="md" radius="xl" color={(treatment.state.stage === TreatmentStage.COMPLETE) ? "green" : "blue"} styles={{ step: { cursor: "default" } }}>
-          <Stepper.Step label="Stage 1" />
-          <Stepper.Step label="Stage 2" />
-          <Stepper.Step label="Stage 3" />
-          {/* <Stepper.Completed ></Stepper.Completed> */}
-        </Stepper>
-        < Progress value={treatment.state.stageProgress * 100}
-          color={treatment.state.stage === TreatmentStage.COMPLETE ? "green" : "blue"}
-          animated = {treatment.state.stage === TreatmentStage.COMPLETE}
-          mt="md" size="xl" radius="xl" />
-        
-      </Card>
-
       {/* <Group align="stretch" grow style={{ flex: 1 }}> */}
       <Flex gap="xl" wrap="nowrap" w="100%">
 
@@ -77,6 +62,7 @@ export default function TreatmentScreen({
                   step={15}
                   marks={sliderMarks}
                   label={(val) => sliderMarks.find((mark) => mark.value === val)!.label} 
+                  onChange={(value) => treatment.dispatch({type: 'SET_HOLD_DURATION', holdDuration: value as HoldDurationType})}
               />
 
               <Switch mt="md" defaultChecked label="Show arrows" onChange={() => treatment.setShowGuidanceArrows(!treatment.showGuidanceArrows)}/>
@@ -146,6 +132,22 @@ export default function TreatmentScreen({
           </Card>
         </Box>
       </Flex> 
+
+      <Card withBorder shadow="sm" radius="md">
+        <Text fw={600}>Progress</Text>
+        < Stepper active={treatment.state.stage} mt="md" size="md" radius="xl" color={(treatment.state.stage === TreatmentStage.COMPLETE) ? "green" : "blue"} styles={{ step: { cursor: "default" } }}>
+          <Stepper.Step label="Position 1" />
+          <Stepper.Step label="Position 2" />
+          <Stepper.Step label="Position 3" />
+          <Stepper.Step label="Position 4" />
+          {/* <Stepper.Completed ></Stepper.Completed> */}
+        </Stepper>
+        < Progress value={treatment.state.stageProgress * 100}
+          color={treatment.state.stage === TreatmentStage.COMPLETE ? "green" : "blue"}
+          animated = {treatment.state.stage === TreatmentStage.COMPLETE}
+          mt="md" size="xl" radius="xl" />
+        
+      </Card>
     </Stack>
   );
 }

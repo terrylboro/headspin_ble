@@ -7,8 +7,6 @@ import { changeQuaternionBase } from "../utils/changeBase";
 import {applyYawOffset} from "../utils/applyYawOffset"
 import { useTreatment } from "../context/TreatmentProvider";
 
-import { CanalType } from "../context/TreatmentProvider";
-
 import { Slider, Stack, Text, Group, Button } from '@mantine/core';
 import { TreatmentStage } from "../types/treatmentTypes";
 
@@ -184,7 +182,7 @@ const CanalRendering = () => {
                 changeQuaternionBase(corrected, qB);
                 canalGroup.current.setRotationFromQuaternion(qB);
  
-                const segmentID = (state.stage===TreatmentStage.COMPLETE) ? 3 : ((state.affectedCanal !== "lateral") ? state.stage + 1 : state.stage + 1);
+                const segmentID = (state.stage===TreatmentStage.COMPLETE || state.stage===TreatmentStage.STAGE_4) ? 3 : ((state.affectedCanal !== "lateral") ? state.stage + 1 : state.stage + 1);
 
                 const canalAlignRes =  getCanalAlignment(
                     canalDirections["posterior"].directions[segmentID!-1], // the target direction for the current stage and canal
@@ -236,7 +234,7 @@ const CanalRendering = () => {
             meshParts.current = [] // flush any previous loadings
         }
 
-    }, [state.isAligned, state.affectedCanal, state.affectedEar, matrixRef, offsetMatrixRef, showGuidanceArrows])
+    }, [state.isAligned, state.affectedCanal, state.affectedEar, state.stage, matrixRef, offsetMatrixRef, showGuidanceArrows])
 
 
     return (
