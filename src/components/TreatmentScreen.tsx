@@ -71,6 +71,10 @@ export default function TreatmentScreen({
                 Restart Treatment
               </Button>
 
+              <Button mt="md" onClick={() => treatment.dispatch({ type: 'SET_HOLD_DURATION', holdDuration: 5 as HoldDurationType  })}>
+                Short Hold
+              </Button>
+
               <Button mt="md" onClick={() => {}}>
                 Record
               </Button>

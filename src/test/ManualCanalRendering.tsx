@@ -46,6 +46,10 @@ const ManualCanalRendering = () => {
     const [pitch, setPitch] = useState(0)
     const [roll, setRoll] = useState(0)
 
+    const [x, setX] = useState(0);
+    const [y, setY] = useState(0);
+    const [z, setZ] = useState(-1);
+
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
     const canalGroup = useRef<THREE.Group>(new THREE.Group());
@@ -69,14 +73,14 @@ const ManualCanalRendering = () => {
         "posterior": {
             "directions": [
                 new THREE.Vector3(1, -1, -0.2).normalize(), // stage 1 direction
-                new THREE.Vector3(0, 0, -1).normalize(), // stage 2 direction
+                new THREE.Vector3(0.6, 0, -2).normalize(), // stage 2 direction
                 // new THREE.Vector3(0.7, -1, 0.2).normalize() // stage 3 direction
                 new THREE.Vector3(-0.7, +1, -0.2).normalize(), // stage 3 direction
                 new THREE.Vector3(-0.9, 0.15, 1).normalize() // stage 4 direction
             ],
             "origins": [
                 new THREE.Vector3(-1.3, 2, -2.3), // stage 1 origin
-                new THREE.Vector3(-1.6, 2.2, 3), // stage 2 origin
+                new THREE.Vector3(-2.6, 2.0, 3), // stage 2 origin
                 // new THREE.Vector3(-2.3, 2.2, 2.5) // stage 3 origin (reverse)
                 // new THREE.Vector3(0, -1, 3) // stage 3 origin
                 new THREE.Vector3(1.9, -4, 3.5), // stage 3 origin
@@ -187,6 +191,7 @@ const ManualCanalRendering = () => {
             ORANGE_COLOUR
         );
         canalGroup.current.add(stage2ArrowRef.current);
+        // meshParts.current.push(stage2ArrowRef.current);
 
         stage3ArrowRef.current = new THREE.ArrowHelper(
             canalDirections["posterior"].directions[2],
@@ -315,7 +320,7 @@ const ManualCanalRendering = () => {
             scene.current!.clear()
             meshParts.current = [] // flush any previous loadings
         }
-    }, [state.stage, state.affectedCanal, state.isAligned])
+    }, [state.stage, state.affectedCanal, state.isAligned, setX, setY, setZ])
 
 
     useEffect(() => {
@@ -334,6 +339,12 @@ const ManualCanalRendering = () => {
         setRoll(0);
         alignmentRef.current = 0;
         alignedRef.current = false;
+    }
+
+    function resetArrow() {
+        setX(0);
+        setY(0);
+        setZ(-1);
     }
 
 
@@ -356,6 +367,13 @@ const ManualCanalRendering = () => {
                     <Text fw={600}>Roll</Text>
                     <Slider w={300} label="Roll" defaultValue={0} min={-180} max={180} step={1} value={roll} onChange={setRoll} />
 
+                    <Text fw={600}>Arrow X</Text>
+                    <Slider w={300} label="X" defaultValue={0} min={-10} max={10} step={1} value={x} onChange={setX} />
+                    <Text fw={600}>Arrow Y</Text>
+                    <Slider w={300} label="Y" defaultValue={0} min={-10} max={10} step={1} value={y} onChange={setY}/>
+                    <Text fw={600}>Arrow Z</Text>
+                    <Slider w={300} label="Z" defaultValue={0} min={-10} max={10} step={1} value={z} onChange={setZ} />
+
                 </Stack>
 
                 <Stack mt="md" gap="md" align="center">
@@ -364,6 +382,8 @@ const ManualCanalRendering = () => {
                     <Text size="lg" >{(alignmentRef.current * 100).toFixed(1)}%</Text>
 
                     <Button onClick={resetAlignment}>{"Reset Alignment"}</Button>
+
+                    <Button onClick={resetArrow}>{"Reset Arrow"}</Button>
                 </Stack>
             </Group>
             

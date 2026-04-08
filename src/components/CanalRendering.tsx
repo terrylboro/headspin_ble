@@ -11,6 +11,7 @@ import { Slider, Stack, Text, Group, Button } from '@mantine/core';
 import { TreatmentStage } from "../types/treatmentTypes";
 
 import { canalDirections } from "../utils/canalDirections";
+import { createThickArrow } from "../custom/thickArrow";
 
 
 // {canal, ear, affectedCanal, matrixRef, offsetMatrixRef, stage, alignmentRef, alignedRef}: Props
@@ -36,9 +37,10 @@ const CanalRendering = () => {
     // Group mesh control variables
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const canalGroup = useRef<THREE.Group>(new THREE.Group());
-    const stage1ArrowRef = useRef<THREE.ArrowHelper | null>(null);
-    const stage2ArrowRef = useRef<THREE.ArrowHelper | null>(null);
-    const stage3ArrowRef = useRef<THREE.ArrowHelper | null>(null);
+    const arrowRef = useRef<THREE.Group | null>(new THREE.Group());
+
+    // Add clock for animation pulsing
+    const clock = new THREE.Clock();
 
     // Function to clear the scene and reset variables when canal changes
     function clearCanalGroup() {
@@ -111,40 +113,15 @@ const CanalRendering = () => {
         scene.current!.add(canalGroup.current);
 
         if (showGuidanceArrows) {
-            switch(state.stage) {
-                case TreatmentStage.STAGE_1:
-                    // Add helper arrows
-                    stage1ArrowRef.current = new THREE.ArrowHelper(
-                        canalDirections["posterior"].directions[0],
-                        canalDirections["posterior"].origins[0],
-                        10,
-                        ORANGE_COLOUR
-                    );
-                    canalGroup.current.add(stage1ArrowRef.current);
-                    break;
-
-                case TreatmentStage.STAGE_2:
-                    stage2ArrowRef.current = new THREE.ArrowHelper(
-                        canalDirections["posterior"].directions[1],
-                        canalDirections["posterior"].origins[1],
-                        10,
-                        ORANGE_COLOUR
-                    );
-                    canalGroup.current.add(stage2ArrowRef.current);
-                    break;
-
-                case TreatmentStage.STAGE_3:
-                    stage3ArrowRef.current = new THREE.ArrowHelper(
-                        canalDirections["posterior"].directions[2],
-                        canalDirections["posterior"].origins[2],
-                        10,
-                        ORANGE_COLOUR
-                    );
-                    canalGroup.current.add(stage3ArrowRef.current);
-                    break;
-
-                default:
-                    break;
+            if (state.stage !== TreatmentStage.COMPLETE) {
+                arrowRef.current = createThickArrow(
+                canalDirections[state.affectedCanal!].directions[state.stage!],
+                canalDirections[state.affectedCanal!].origins[state.stage!],
+                10,
+                (state.isAligned) ? GREEN_COLOUR : ORANGE_COLOUR,
+                alignmentRef!.current,
+            );
+            canalGroup.current.add(arrowRef.current);
             }
         }
         
@@ -172,6 +149,11 @@ const CanalRendering = () => {
         // Main animation loop
         let loop: number = requestAnimationFrame(animate)
         function animate() {
+
+            // Opacity pulsing effect
+            const t = clock.getElapsedTime();
+            const opacity = 0.95 + 0.3 * Math.sin(t * 4);
+
             if (meshParts.current[meshPartsLength[state.affectedCanal ? state.affectedCanal : 5] - 1]) {
 
                 // Rotate the group
@@ -220,6 +202,17 @@ const CanalRendering = () => {
                 }
     
                 // }
+
+            // Make the arrow pulse
+            const arrowMesh = arrowRef.current;
+            arrowMesh?.traverse((child) => {
+                if ((child as THREE.Mesh).material) {
+                    const mat = (child as THREE.Mesh).material as THREE.Material & { opacity?: number };
+                    if ('opacity' in mat) {
+                        mat.opacity = opacity;
+                    }
+                }
+            });
     
                 
     

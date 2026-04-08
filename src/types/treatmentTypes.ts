@@ -8,7 +8,7 @@ export enum TreatmentStage {
 
 export type CanalType = 'anterior' | 'posterior' | 'lateral';
 export type EarSide = 'left' | 'right' | null;
-export type HoldDurationType = 5 | 45 | 60;
+export type HoldDurationType = 5 | 30 | 45 | 60;
 
 export type TreatmentState = {
   stage: TreatmentStage;
