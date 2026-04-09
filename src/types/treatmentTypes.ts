@@ -15,7 +15,10 @@ export type TreatmentState = {
   affectedCanal: CanalType | null;
   affectedEar: EarSide | null;
   isAligned: boolean;
-  holdStartTime: number | null;
+  // holdStartTime: number | null;
+  lastTickTime: number | null
+  timerOn : boolean;
+  timerElapsedTime : number;
   holdDurationSec: HoldDurationType;
   stageProgress: number;
 };
@@ -26,6 +29,7 @@ export type Action =
   | { type: 'TOGGLE_ALIGNED' }
   | { type: 'SET_HOLD_DURATION'; holdDuration: HoldDurationType }
   | { type: 'ALIGNMENT_ENTER'}
+  | { type: 'ALIGNMENT_EXIT'}
   | { type: 'PROGRESS'; }
   | { type: 'TIMER_TICK'; now: number }
   | { type: 'RESET_PROGRESS' }

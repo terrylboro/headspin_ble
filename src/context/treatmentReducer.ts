@@ -8,8 +8,11 @@ export const initialState: TreatmentState = {
   affectedCanal: 'posterior',
   affectedEar: null,
   isAligned: false,
-  holdStartTime: null,
+  // holdStartTime: null,
+  lastTickTime: null,
   holdDurationSec: 45,
+  timerOn: false,
+  timerElapsedTime : 0,
   stageProgress: 0,
 };
 
@@ -32,7 +35,13 @@ export function treatmentReducer(
 
     case 'ALIGNMENT_ENTER':
       if (state.stage !== TreatmentStage.COMPLETE) {
-        return { ...state, isAligned: true, holdStartTime: Date.now() };
+        return { ...state, isAligned: true, timerOn: true };
+      }
+      else return { ...state, stageProgress: 1 };
+
+    case 'ALIGNMENT_EXIT':
+      if (state.stage !== TreatmentStage.COMPLETE) {
+        return { ...state, isAligned: false, timerOn: false };
       }
       else return { ...state, stageProgress: 1 };
 
@@ -40,18 +49,42 @@ export function treatmentReducer(
       return { ...state, stage: (state.stage < 3) ? (state.stage + 1) : TreatmentStage.COMPLETE };
 
     case 'TIMER_TICK': {
-      if (state.holdStartTime) {
-        const elapsed = action.now - state.holdStartTime;
-        if (elapsed >= state.holdDurationSec*ONE_MILLISECOND) {
-          return { ...state, stage: (state.stage < 3) ? (state.stage + 1) : TreatmentStage.COMPLETE, holdStartTime: null, isAligned: false, stageProgress: 0 };
-        }
-        return { ...state, stageProgress: elapsed / (state.holdDurationSec*ONE_MILLISECOND) };
+      if (state.lastTickTime === null) {
+        return { ...state, lastTickTime: action.now } 
+      } 
+
+      const dt = action.now - state.lastTickTime;
+
+      const nextElapsed = state.isAligned ? state.timerElapsedTime + dt : state.timerElapsedTime;
+
+      const nextProgress = Math.min((nextElapsed) / (state.holdDurationSec*ONE_MILLISECOND), 1);
+
+      if (nextProgress === 1 ) {
+        return { ...state, stage: (state.stage < 3) ? (state.stage + 1) : TreatmentStage.COMPLETE, lastTickTime: null, isAligned: false, stageProgress: 0, timerElapsedTime: 0 };
       }
-      return state;
+      else {
+        return {
+        ...state,
+        timerElapsedTime: nextElapsed,
+        stageProgress: nextProgress,
+        lastTickTime: action.now,
+      };
+      }
+      
+
+
+      // if (state.holdStartTime && state.timerOn) {
+      //   const elapsed = (action.now - state.holdStartTime);
+      //   if (elapsed + state.timerElapsedTime >= state.holdDurationSec*ONE_MILLISECOND) {
+      //     return { ...state, stage: (state.stage < 3) ? (state.stage + 1) : TreatmentStage.COMPLETE, holdStartTime: null, isAligned: false, stageProgress: 0, timerElapsedTime: 0 };
+      //   }
+      //   return { ...state, stageProgress: elapsed / (state.holdDurationSec*ONE_MILLISECOND), timerElapsedTime: elapsed };
+      // }
+      // return state;
     }
 
     case 'RESET_PROGRESS':
-      return { ...state, stage: TreatmentStage.STAGE_1, holdStartTime: null, stageProgress: 0, isAligned: false,};
+      return { ...state, stage: TreatmentStage.STAGE_1, lastTickTime: null, stageProgress: 0, isAligned: false,};
 
     case 'RESET':
       return initialState;

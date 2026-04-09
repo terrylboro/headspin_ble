@@ -166,7 +166,8 @@ const CanalRendering = () => {
                     canalDirections["posterior"].directions[segmentID!-1], // the target direction for the current stage and canal
                     // canalDirections["posterior"].directions[segmentID!],
                     canalGroup.current,  //.children[segmentID] as THREE.Object3D, // the current segment mesh
-                    new THREE.Vector3(0, 0, 1), // target world direction (upwards)
+                    new THREE.Vector3(0, 0, 1),
+                    // (state.stage === TreatmentStage.STAGE_2) ? new THREE.Vector3(Math.sin(15 * Math.PI/180), 0, 15 * Math.PI/180) : new THREE.Vector3(0, 0, 1), // target world direction (upwards)          
                     15 // threshold in degrees
                 )
     
@@ -177,6 +178,11 @@ const CanalRendering = () => {
                     // Handle the case where the canal becomes aligned
                     // dispatch({ type: 'TOGGLE_ALIGNED' })
                     dispatch({ type: 'ALIGNMENT_ENTER' })
+                }
+
+                else if (!alignedRef!.current && state.isAligned) {
+                    // Handle case where canal loses alignment
+                    dispatch({ type: 'ALIGNMENT_EXIT'})
                 }
     
                 // if (state.stage === TreatmentStage.COMPLETE) {

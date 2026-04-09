@@ -210,6 +210,19 @@ const ManualCanalRendering = () => {
         );
         canalGroup.current.add(stage4ArrowRef.current);
 
+        function tiltFromUp(angleDeg: number) {
+            const theta = THREE.MathUtils.degToRad(angleDeg);
+            return new THREE.Vector3(Math.sin(theta), 0, Math.cos(theta));
+        }
+        // Test normal Epley alignment
+        scene.current.add(createThickArrow(
+            // new THREE.Vector3(0.2588, 0, 0.9659).normalize(),
+            tiltFromUp(25),
+            new THREE.Vector3(0, 0, 0).normalize(),
+            5,
+            ORANGE_COLOUR
+        ));
+
         const clock = new THREE.Clock();
 
         // Load Canal Mesh
@@ -265,7 +278,8 @@ const ManualCanalRendering = () => {
                 canalDirections["posterior"].directions[segmentID!-1], // the target direction for the current stage and canal
                 // canalDirections["posterior"].directions[segmentID!],
                 canalGroup.current,  //.children[segmentID] as THREE.Object3D, // the current segment mesh
-                new THREE.Vector3(0, 0, 1), // target world direction (upwards)
+                // new THREE.Vector3(0, 0, 1), // target world direction (upwards)
+                (state.stage === TreatmentStage.STAGE_2) ? new THREE.Vector3(Math.sin(15 * Math.PI/180), 0, 15 * Math.PI/180) : new THREE.Vector3(0, 0, 1), // target world direction (upwards)
                 15 // threshold in degrees
             )
 
@@ -366,13 +380,6 @@ const ManualCanalRendering = () => {
                     <Slider w={300} label="Pitch" defaultValue={0} min={-180} max={180} step={1} value={pitch} onChange={setPitch}/>
                     <Text fw={600}>Roll</Text>
                     <Slider w={300} label="Roll" defaultValue={0} min={-180} max={180} step={1} value={roll} onChange={setRoll} />
-
-                    <Text fw={600}>Arrow X</Text>
-                    <Slider w={300} label="X" defaultValue={0} min={-10} max={10} step={1} value={x} onChange={setX} />
-                    <Text fw={600}>Arrow Y</Text>
-                    <Slider w={300} label="Y" defaultValue={0} min={-10} max={10} step={1} value={y} onChange={setY}/>
-                    <Text fw={600}>Arrow Z</Text>
-                    <Slider w={300} label="Z" defaultValue={0} min={-10} max={10} step={1} value={z} onChange={setZ} />
 
                 </Stack>
 
