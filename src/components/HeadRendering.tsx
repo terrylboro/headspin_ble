@@ -43,9 +43,11 @@ const HeadRendering = () => {
 
         // Camera initialisation
         camera.current = new THREE.PerspectiveCamera(12, 1)
-        camera.current.position.set(100, 0, 0) 
+        // camera.current.position.set(100, 0, 0) 
+        camera.current.position.set(-100, 0, 0) 
         camera.current.lookAt(0, 0, 0)
-        camera.current.rotation.z = Math.PI / 2;
+        // camera.current.rotation.z = Math.PI / 2;
+        camera.current.rotation.z = -Math.PI / 2;
 
 
         // Add lights

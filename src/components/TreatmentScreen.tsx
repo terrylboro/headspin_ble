@@ -75,9 +75,9 @@ export default function TreatmentScreen({
                 Short Hold
               </Button>
 
-              <Button mt="md" onClick={() => {}}>
+              {/* <Button mt="md" onClick={() => {}}>
                 Record
-              </Button>
+              </Button> */}
 
             </Stack>
           </Card>
@@ -144,7 +144,6 @@ export default function TreatmentScreen({
           <Stepper.Step label="Position 2" />
           <Stepper.Step label="Position 3" />
           <Stepper.Step label="Position 4" />
-          {/* <Stepper.Completed ></Stepper.Completed> */}
         </Stepper>
         < Progress value={treatment.state.stageProgress * 100}
           color={treatment.state.stage === TreatmentStage.COMPLETE ? "green" : "blue"}

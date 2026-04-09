@@ -10,10 +10,15 @@ import {
   Grid,
   Box,
   useMantineTheme,
+  Modal,
+  Image,
 } from '@mantine/core';
+
+import { useDisclosure } from '@mantine/hooks';
 
 import { SelectCanalButton } from '../custom/canalButton';
 import { useTreatment } from '../context/TreatmentProvider';
+import { InfoCard } from '../custom/infoCard';
 
 type SetupScreenProps = {
   bleStatus: 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -36,7 +41,30 @@ export default function SetupScreen({
    const theme = useMantineTheme();
    const { state, dispatch} = useTreatment();
 
+   const [opened, { open, close }] = useDisclosure(false);
+   const [infoOpened, { open : infoOpen, close : infoClose }] = useDisclosure(false);
+
   return (
+    <>
+
+    <Modal styles={{title: {fontSize: 56, fontWeight: 600}}}size="calc(100vw - 20px)" opened={opened} onClose={close} title="How to Perform the Epley Manoeuvre"  transitionProps={{ transition: 'fade', duration: 200 }}>
+      <Stack gap="md">
+        <Group wrap="nowrap" grow>
+          <InfoCard title="Preparation" imageSrc='/diagrams/SeatedPositionBed.png' textBody="Sit the patient upright on the treatment bed. Turn their head 45° to the right."  />
+          <InfoCard title="Position 1" imageSrc='/diagrams/Position1Bed.png' textBody="Lie the patient back on the bed quickly so their shoulders are touching the bed. Keep the head reclined and looking 45° to the right. Hold for around 30 seconds or when nystagmus resides." />
+        <InfoCard title="Position 2" imageSrc='/diagrams/Position2Bed.png' textBody="Turn the patient's head 90° to the left without raising it. Their head will now be looking 45° to the left. Hold for around 30 seconds or when nystagmus resides."  />
+        <InfoCard title="Position 3" imageSrc='/diagrams/Position3Bed.png' textBody="Turn the patient's head and body another 90° to the left, so they are now looking 45° from the floor. Hold for around 30 seconds or when nystagmus resides."  />
+        <InfoCard title="Position 4" imageSrc='/diagrams/EndPosition.png' textBody="Sit the patient up on the left side, keeping their chin tucked."  />
+        </Group>
+      </Stack>
+    </Modal>
+
+    <Modal styles={{title: {fontSize: 56, fontWeight: 600}}} size="calc(100vw - 20px)" opened={infoOpened} onClose={infoClose} title="BPPV Pathology Reminder"  transitionProps={{ transition: 'fade', duration: 200 }}>
+      In 90% of cases, the posterior canal is the one affected. The diagnostic test is the Dix-Hallpike Manoeuvre, which consists of the Epley Manoeure's first two positions.
+      
+      If a patient feels dizzy and they show some torsional nystagmus during the Dix-Hallpike, it is likely their vertigo is caused by posterior canal BPPV.
+    </Modal>
+
     <Box
       h="100%"
       w="100%"
@@ -99,14 +127,30 @@ export default function SetupScreen({
               style={{ minHeight: 320 }}
             >
               <Stack h="100%" justify="space-between">
-                <Box>
-                  <Title order={1} mb="sm">
-                    Select affected canal
-                  </Title>
-                  <Text c="dimmed" size="sm">
-                    Posterior is most commonly affected.
-                  </Text>
+                
+                  <Box>
+                    <Group w='100%' justify='space-inbetween'>
+                      <Title order={1} mb="sm">
+                        Select affected canal
+                      </Title>
+                      <Button variant="outline" onClick={open}>
+                        Need a refresher?
+                      </Button>
+                    </Group>
+                  
+                  <Group>
+                    <Text c="dimmed" size="sm">
+                      Posterior is most commonly affected.
+                    </Text>
+                    <Button variant='light' onClick={infoOpen}>
+                      More info
+                    </Button>
+                  </Group>
+                  
                 </Box>
+
+                
+                
 
                 <Stack gap="md">
                   <Group wrap="nowrap" grow>
@@ -157,7 +201,10 @@ export default function SetupScreen({
         </Button>
       </Stack>
     </Box>
+    </>
   );
+    
+    
 
   // return (
   //   <Stack align="center" mt="xl">
