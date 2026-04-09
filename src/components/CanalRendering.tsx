@@ -61,8 +61,6 @@ const CanalRendering = () => {
         canalGroup.current.clear();
     }
 
-
-
     useEffect(() => {
 
         if (!canvasRef.current) return;
@@ -124,8 +122,6 @@ const CanalRendering = () => {
             canalGroup.current.add(arrowRef.current);
             }
         }
-        
-
 
         // Load Canal Mesh
         const loader = new PLYLoader()
@@ -164,7 +160,7 @@ const CanalRendering = () => {
                 changeQuaternionBase(corrected, qB);
                 canalGroup.current.setRotationFromQuaternion(qB);
  
-                const segmentID = (state.stage===TreatmentStage.COMPLETE || state.stage===TreatmentStage.STAGE_4) ? 3 : ((state.affectedCanal !== "lateral") ? state.stage + 1 : state.stage + 1);
+                const segmentID = (state.stage===TreatmentStage.COMPLETE) ? 4 : ((state.affectedCanal !== "lateral") ? state.stage + 1 : state.stage + 1);
 
                 const canalAlignRes =  getCanalAlignment(
                     canalDirections["posterior"].directions[segmentID!-1], // the target direction for the current stage and canal

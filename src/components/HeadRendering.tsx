@@ -8,14 +8,17 @@ import {applyYawOffset} from "../utils/applyYawOffset"
 import { useTreatment } from "../context/TreatmentProvider";
 import { Button, Stack } from "@mantine/core";
 
-interface Props {
-    ear: "left" | "right" | "unselected"
-    matrixRef: React.MutableRefObject<THREE.Matrix4>
-    offsetMatrixRef: React.MutableRefObject<THREE.Matrix4> 
+// interface Props {
+//     ear: "left" | "right" | "unselected"
+//     matrixRef: React.MutableRefObject<THREE.Matrix4>
+//     offsetMatrixRef: React.MutableRefObject<THREE.Matrix4> 
+// }
+type HeadRenderingProps = {
+    calibrateMode: boolean
 }
 
 // const HeadRendering = ({ear, matrixRef, offsetMatrixRef}: Props) => {
-const HeadRendering = () => {
+const HeadRendering = ({calibrateMode} : HeadRenderingProps) => {
 
     const { matrixRef, offsetMatrixRef, affectedEar } = useTreatment();
 
@@ -23,6 +26,7 @@ const HeadRendering = () => {
     const scene = useRef<THREE.Scene>()
     const renderer = useRef<THREE.WebGLRenderer>()
     const meshParts = useRef<THREE.Mesh[]>([])
+    const headGroup = useRef(new THREE.Group());
 
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -43,11 +47,9 @@ const HeadRendering = () => {
 
         // Camera initialisation
         camera.current = new THREE.PerspectiveCamera(12, 1)
-        // camera.current.position.set(100, 0, 0) 
-        camera.current.position.set(-100, 0, 0) 
+        calibrateMode ? camera.current.position.set(100, 0, 0) : camera.current.position.set(-100, 0, 0) 
         camera.current.lookAt(0, 0, 0)
-        // camera.current.rotation.z = Math.PI / 2;
-        camera.current.rotation.z = -Math.PI / 2;
+        calibrateMode ? camera.current.rotation.z = Math.PI / 2 : camera.current.rotation.z = -Math.PI / 2;
 
 
         // Add lights
@@ -64,6 +66,9 @@ const HeadRendering = () => {
         pointLight3.position.set(-17, 20, 0)
         scene.current.add(pointLight3)
 
+        // Add the head group to allow ear rotation to be offset
+        scene.current.add(headGroup.current);
+
 
         // Load Ear Mesh
         const loader = new PLYLoader()
@@ -72,8 +77,8 @@ const HeadRendering = () => {
             const material = new THREE.MeshStandardMaterial({color: BLUE_COLOUR, flatShading: true})
             const loadedMesh = new THREE.Mesh(geometry.center(), material)
 
-            scene.current!.add(loadedMesh)
-            meshParts.current.push(loadedMesh)
+            loadedMesh.position.set(0, affectedEar === "left" ? -3.5 : 3.5, 0)
+            headGroup.current!.add(loadedMesh);
         })
 
         // Load head mesh
@@ -82,51 +87,33 @@ const HeadRendering = () => {
             const material = new THREE.MeshPhongMaterial({color: 0x555555, flatShading: true, transparent: true, opacity: 0.5})
             const loadedMesh = new THREE.Mesh(geometry.center(), material)
 
-            scene.current!.add(loadedMesh)
+            // scene.current!.add(loadedMesh)
             meshParts.current.push(loadedMesh)
+            headGroup.current.add(loadedMesh)
         })
+
+
 
         let loop: number = requestAnimationFrame(animate)
 
         function animate() {
-            if (meshParts.current[0]) {
-                for (let mesh of meshParts.current) {
-                    
-                    // A manual tuning of the mesh position
-                    if (mesh.geometry.attributes.position.array.length === 33435) {
-                        mesh.rotation.set(0, 0, 0)
-                        // mesh.position.set(ear === "left" ? 3.5 : -3.5, 0, 0)
-                        // mesh.position.set(affectedEar === "left" ? 3.5 : -3.5, 0, 0)
-                        mesh.position.set(0, 0, 0)
-                    }
-                    else mesh.rotation.set(0.0, 0.0, 0)  // this was set in original code
-
-                    const qB = new THREE.Quaternion();
-
-                    const corrected = offsetMatrixRef.current.clone().multiply(matrixRef.current);
-                    changeQuaternionBase(corrected, qB);
-                    // Applying offset
-                    // applyYawOffset(offsetMatrixRef.current.clone(), qB)
-                    mesh.applyQuaternion(qB);
-                }
-
-                renderer.current!.render(scene.current!, camera.current!)
-            }
+            const qB = new THREE.Quaternion();
+            const corrected = offsetMatrixRef.current.clone().multiply(matrixRef.current);
+            changeQuaternionBase(corrected, qB);
+            // Applying offset
+            // applyYawOffset(offsetMatrixRef.current.clone(), qB)
+            headGroup.current.setRotationFromQuaternion(qB);
+            renderer.current!.render(scene.current!, camera.current!)
+            // }
             loop = requestAnimationFrame(animate)
         }
 
         return () => {
-            cancelAnimationFrame(loop) 
+            cancelAnimationFrame(loop)
+            scene.current!.clear() 
             meshParts.current = [] // flush any previous loadings
         }
-
-    // }, [ear, matrixRef, offsetMatrixRef])
     }, [affectedEar, matrixRef, offsetMatrixRef])
-
-    function calibrateOrientation() {
-        const current = matrixRef.current.clone();
-        offsetMatrixRef.current.copy(current).invert();
-    }
 
 
     return (

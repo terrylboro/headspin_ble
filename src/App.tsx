@@ -39,18 +39,9 @@ import {
   useMantineTheme,
 } from '@mantine/core';
 import StateMachineTestPanel from './test/StateMachineTestPanel';
+import CalibrationScreen from './components/CalibrationScreen';
 
-type Screen = 'setup' | 'treatment';
-
-function StatusBar() {
-  return (
-    <Group justify="space-between" h="100%" px="md">
-      {/* <Text size="sm">100 Hz</Text>
-      <Text size="sm">0 dropped</Text>
-      <Text size="sm">Connected</Text> */}
-    </Group>
-  );
-}
+type Screen = 'setup' | 'calibrate' | 'treatment';
 
 
 function App(): JSX.Element { 
@@ -105,11 +96,16 @@ function App(): JSX.Element {
           bleError={ble.error}
           onConnect={ble.connect}
           onDisconnect={ble.disconnect}
-          onContinue={() => setScreen('treatment')}
+          onContinue={() => setScreen('calibrate')}
+        />
+      ) : screen === 'treatment' ? (
+        <TreatmentScreen
+          onBack={() => setScreen('calibrate')}
         />
       ) : (
-        <TreatmentScreen
-          onBack={() => setScreen('setup')}
+          <CalibrationScreen
+            onBack={() => setScreen('setup')}
+            onContinue={() => setScreen('treatment')}
         />
       )}
     </AppShell.Main>

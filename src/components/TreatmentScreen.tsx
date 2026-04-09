@@ -123,14 +123,10 @@ export default function TreatmentScreen({
 
         <Box style={{ flex: 2, minWidth: 0, maxHeight: '60vh' }}>
           <Card withBorder shadow="sm" radius="md" style={{ flex: 2, minHeight: 480 }}>
-            <Stack h="100%" align="center" justify="center">
+            <Stack h="100%" >
               <Text fw={600}>Check calibration</Text>
 
-              <HeadRendering/>
-
-              < Button fullWidth mt="md" onClick={calibrateOrientation}>
-                Recentre
-              </Button>
+              <HeadRendering calibrateMode={false} />
 
             </Stack>
           </Card>
