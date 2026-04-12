@@ -12,6 +12,7 @@ import {
   useMantineTheme,
   Modal,
   Image,
+  SimpleGrid,
 } from '@mantine/core';
 
 import { useDisclosure } from '@mantine/hooks';
@@ -48,15 +49,14 @@ export default function SetupScreen({
     <>
 
     <Modal styles={{title: {fontSize: 56, fontWeight: 600}}}size="calc(100vw - 20px)" opened={opened} onClose={close} title="How to Perform the Epley Manoeuvre"  transitionProps={{ transition: 'fade', duration: 200 }}>
-      <Stack gap="md">
-        <Group wrap="nowrap" grow>
-          <InfoCard title="Preparation" imageSrc='/diagrams/SeatedPositionBed.png' textBody="Sit the patient upright on the treatment bed. Turn their head 45° to the right."  />
-          <InfoCard title="Position 1" imageSrc='/diagrams/Position1Bed.png' textBody="Lie the patient back on the bed quickly so their shoulders are touching the bed. Keep the head reclined and looking 45° to the right. Hold for around 30 seconds or when nystagmus resides." />
-        <InfoCard title="Position 2" imageSrc='/diagrams/Position2Bed.png' textBody="Turn the patient's head 90° to the left without raising it. Their head will now be looking 45° to the left. Hold for around 30 seconds or when nystagmus resides."  />
-        <InfoCard title="Position 3" imageSrc='/diagrams/Position3Bed.png' textBody="Turn the patient's head and body another 90° to the left, so they are now looking 45° from the floor. Hold for around 30 seconds or when nystagmus resides."  />
-        <InfoCard title="Position 4" imageSrc='/diagrams/EndPosition.png' textBody="Sit the patient up on the left side, keeping their chin tucked."  />
-        </Group>
-      </Stack>
+      <SimpleGrid cols={5} spacing="sm">
+        <InfoCard title="Preparation" imageSrc='/diagrams/Position 0 AI.png' textBody="Sit the patient upright on the treatment bed. Turn their head 45° to the right."  />
+        <InfoCard title="Position 1" imageSrc='/diagrams/Position 1 AI Cropped.png' textBody="Lie the patient back on the bed quickly so their shoulders are touching the bed. Keep the head reclined and looking 45° to the right. Hold for around 30 seconds or when nystagmus resides." />
+        <InfoCard title="Position 2" imageSrc='/diagrams/Position 2 AI Cropped.png' textBody="Turn the patient's head 90° to the left without raising it. Their head will now be looking 45° to the left. Hold for around 30 seconds or when nystagmus resides."  />
+        <InfoCard title="Position 3" imageSrc='/diagrams/Position 3 AI Cropped.png' textBody="Turn the patient's head and body another 90° to the left, so they are now looking 45° from the floor. Hold for around 30 seconds or when nystagmus resides."  />
+        <InfoCard title="Position 4" imageSrc='/diagrams/End Position AI.png' textBody="Sit the patient up on the left side, keeping their chin tucked."  />
+      </SimpleGrid>
+      
     </Modal>
 
     <Modal styles={{title: {fontSize: 56, fontWeight: 600}}} size="calc(100vw - 20px)" opened={infoOpened} onClose={infoClose} title="BPPV Pathology Reminder"  transitionProps={{ transition: 'fade', duration: 200 }}>

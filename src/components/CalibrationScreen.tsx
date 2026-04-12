@@ -33,7 +33,7 @@ export default function CalibrationScreen({
       <Flex gap="xl" wrap="nowrap" w="100%">
 
         <Box style={{ flex: 1, minWidth: 0, maxHeight: '60vh' }}>
-          <InfoCard title="Get ready" imageSrc='/logo192.png' textBody='Sit the patient upright with their legs on the treatment bed. Ensure they are looking straight ahead, then press the Recentre button to calibrate the headset.'/>
+          <InfoCard title="Get ready" imageSrc='/diagrams/PrepPosition.jpeg' textBody='Sit the patient upright with their legs on the treatment bed. Ensure they are looking straight ahead, then press the Recentre button to calibrate the headset.'/>
         </Box>
 
         <Box style={{ flex: 2, minWidth: 0, maxHeight: '60vh' }}>

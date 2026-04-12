@@ -1,4 +1,4 @@
-import { Card, Image, Text } from '@mantine/core';
+import { Box, Card, Image, Stack, Text } from '@mantine/core';
 
 type InfoCardProps = {
   title: string;
@@ -12,20 +12,25 @@ export function InfoCard({
 }: InfoCardProps) {
     return(
         <Card>
-            <Card.Section>
-                <Image
-                src={imageSrc}
-                // height={160}
-                height="100%"
-                alt="Diagram"
-                />
-            </Card.Section>
+            <Box style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <Card.Section>
+                    <Image
+                    src={imageSrc}
+                    height={300}
+                    fit="contain"
+                    alt="Diagram"
+                    />
+                </Card.Section>
 
-            <Text fw={500}>{title}</Text>
+                <Box p="md" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                   <Text fw={500}>{title}</Text>
 
-            <Text size="sm" c="dimmed">
-                {textBody}
-            </Text>
+                    <Text size="sm" c="dimmed" lineClamp={5}>
+                        {textBody}
+                    </Text> 
+                </Box>
+                
+            </Box>
         </Card>
 
     );
