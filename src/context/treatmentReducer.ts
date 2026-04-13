@@ -51,7 +51,11 @@ export function treatmentReducer(
     case 'TIMER_TICK': {
       if (state.lastTickTime === null) {
         return { ...state, lastTickTime: action.now } 
-      } 
+      }
+
+      if (state.stage === TreatmentStage.COMPLETE) {
+          return { ...state, stageProgress: 1, lastTickTime: action.now };
+      }
 
       const dt = action.now - state.lastTickTime;
 

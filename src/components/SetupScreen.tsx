@@ -13,6 +13,7 @@ import {
   Modal,
   Image,
   SimpleGrid,
+  ActionIcon,
 } from '@mantine/core';
 
 import { useDisclosure } from '@mantine/hooks';
@@ -127,30 +128,29 @@ export default function SetupScreen({
               style={{ minHeight: 320 }}
             >
               <Stack h="100%" justify="space-between">
-                
                   <Box>
-                    <Group w='100%' justify='space-inbetween'>
-                      <Title order={1} mb="sm">
+                    <Group w='100%' justify='space-between'>
+                      <Group align='center' gap='sm'>
+                        <Title order={1} mb="sm">
                         Select affected canal
-                      </Title>
+                        </Title>
+                        <ActionIcon variant='subtle' onClick={infoOpen}  >
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+                            <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 17.25a1.25 1.25 0 1 1 1.25-1.25A1.25 1.25 0 0 1 12 19.25Zm1.18-5.82-.43.22V14.5h-1.5v-1.31a1 1 0 0 1 .55-.9l.71-.36a2.14 2.14 0 0 0 1.24-1.93 1.75 1.75 0 0 0-3.5 0h-1.5a3.25 3.25 0 0 1 6.5 0 3.62 3.62 0 0 1-2.07 3.43Z"/>
+                          </svg>
+                        </ActionIcon>
+                      </Group>
+                      
                       <Button variant="outline" onClick={open}>
                         Need a refresher?
                       </Button>
                     </Group>
-                  
-                  <Group>
-                    <Text c="dimmed" size="sm">
-                      Posterior is most commonly affected.
-                    </Text>
-                    <Button variant='light' onClick={infoOpen}>
+                    
+                    {/* <Button variant='light' onClick={infoOpen}>
                       More info
-                    </Button>
-                  </Group>
+                    </Button> */}
                   
                 </Box>
-
-                
-                
 
                 <Stack gap="md">
                   <Group wrap="nowrap" grow>

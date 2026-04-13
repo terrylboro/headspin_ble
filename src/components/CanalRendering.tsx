@@ -127,7 +127,10 @@ const CanalRendering = () => {
         const loader = new PLYLoader()
         let color = 0
         for (let i = 0; i < meshPartsLength[state.affectedCanal ? state.affectedCanal : 5]; i++) {
-            const meshPath = "rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply"
+            // const meshPath = "rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply"
+            
+            const meshPath = (state.affectedEar === "left") ? ("rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply") : ("right_rh_meshes/" + state.affectedCanal + "_" + i.toString() + "_right" + ".ply");
+
             loader.load(meshPath, (geometry) => {
 
 
