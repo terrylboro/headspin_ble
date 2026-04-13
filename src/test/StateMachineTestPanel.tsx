@@ -23,6 +23,7 @@ export default function StateMachineTestPanel() {
           <Text size="sm">Stage: {TreatmentStage[state.stage]}</Text>
           <Text size="sm">Progress: {(state.stageProgress * 100).toFixed(1)}%</Text>
           <Text size="sm">Canal: {state.affectedCanal}</Text>
+          <Text size="sm">Side: {state.affectedEar}</Text>
         </Stack>
 
         <Group>
@@ -32,6 +33,17 @@ export default function StateMachineTestPanel() {
           
           <Button color="red" variant="light" onClick={() => dispatch({ type: 'RESET' })}>
             Reset
+          </Button>
+
+          <Button variant={state.affectedEar === 'left' ? 'filled' : 'light'}
+            onClick={() => dispatch({ type: 'SELECT_EAR', ear: 'left' })}
+          >
+            Left Ear
+          </Button>
+          <Button variant={state.affectedEar === 'right' ? 'filled' : 'light'}
+            onClick={() => dispatch({ type: 'SELECT_EAR', ear: 'right' })}
+          >
+            Right Ear
           </Button>
         </Group>
 

@@ -150,7 +150,12 @@ const ManualCanalRendering = () => {
         camera.current = new THREE.PerspectiveCamera(15, 1)
         camera.current.position.set(40, 0, 0) 
         camera.current.lookAt(0, 0, 0)
-        camera.current.rotation.z = Math.PI / 2;
+        // Camera rotation will vary depending on left or right ear affected
+        camera.current.rotation.z = Math.PI / 2; // works for left ear
+        // if (state.affectedEar === 'right') {
+        //     // camera.current.rotation.z = Math.PI / 2; // works for right ear
+        //     camera.current.rotation.y = Math.PI;
+        // }
 
 
         // Add lights
@@ -193,13 +198,28 @@ const ManualCanalRendering = () => {
         canalGroup.current.add(stage2ArrowRef.current);
         // meshParts.current.push(stage2ArrowRef.current);
 
+        // Dot direction by (1, -1, 1)
         stage3ArrowRef.current = new THREE.ArrowHelper(
-            canalDirections["posterior"].directions[2],
-            canalDirections["posterior"].origins[2],
+            new THREE.Vector3(-0.7, -1, -0.2).normalize(),
+            new THREE.Vector3(1.9, 4, 3.5),//.normalize(),
+            // canalDirections["posterior"].directions[2],
+            // (canalDirections["posterior"].origins[2]), //.addScaledVector(canalDirections["posterior"].directions[2], 1), // extend backwards from origin to avoid overlap with mesh
             10,
             ORANGE_COLOUR
         );
+        stage3ArrowRef.current.scale.set(1, 1, 1);
         canalGroup.current.add(stage3ArrowRef.current);
+
+        canalGroup.current.add(stage3ArrowRef.current);
+
+        canalGroup.current.add(new THREE.ArrowHelper(
+            new THREE.Vector3(0, 0, 1).normalize(),
+            new THREE.Vector3(0, 0, 0).normalize(),
+            // canalDirections["posterior"].directions[2],
+            // (canalDirections["posterior"].origins[2]).addScaledVector(canalDirections["posterior"].directions[2], 10), // extend backwards from origin to avoid overlap with mesh
+            10,
+            ORANGE_COLOUR
+        ));
 
         stage4ArrowRef.current = createThickArrow(
             canalDirections["posterior"].directions[3],
@@ -214,14 +234,14 @@ const ManualCanalRendering = () => {
             const theta = THREE.MathUtils.degToRad(angleDeg);
             return new THREE.Vector3(Math.sin(theta), 0, Math.cos(theta));
         }
-        // Test normal Epley alignment
-        scene.current.add(createThickArrow(
-            // new THREE.Vector3(0.2588, 0, 0.9659).normalize(),
-            tiltFromUp(25),
-            new THREE.Vector3(0, 0, 0).normalize(),
-            5,
-            ORANGE_COLOUR
-        ));
+        // // Test normal Epley alignment
+        // scene.current.add(createThickArrow(
+        //     // new THREE.Vector3(0.2588, 0, 0.9659).normalize(),
+        //     tiltFromUp(25),
+        //     new THREE.Vector3(0, 0, 0).normalize(),
+        //     5,
+        //     ORANGE_COLOUR
+        // ));
 
         const clock = new THREE.Clock();
 
@@ -230,6 +250,8 @@ const ManualCanalRendering = () => {
         let color = 0
         for (let i = 0; i < meshPartsLength[state.affectedCanal ? state.affectedCanal : 5]; i++) {
             const meshPath = "rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply"
+            // const meshPath = (state.affectedEar === "left") ? ("rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply") : ("right_rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply");
+
             loader.load(meshPath, (geometry) => {
 
 
@@ -247,6 +269,9 @@ const ManualCanalRendering = () => {
                 const loadedMesh = new THREE.Mesh(geometry, material)
                 
                 loadedMesh.applyMatrix4(new THREE.Matrix4().makeScale(1, 1, 1))
+                if (state.affectedEar === "right") {
+                    loadedMesh.applyMatrix4(new THREE.Matrix4().makeScale(1, -1, 1))
+                }
                 // scene.current!.add(loadedMesh)
                 canalGroup.current.add(loadedMesh)
                 meshParts.current.push(loadedMesh)
@@ -334,7 +359,7 @@ const ManualCanalRendering = () => {
             scene.current!.clear()
             meshParts.current = [] // flush any previous loadings
         }
-    }, [state.stage, state.affectedCanal, state.isAligned, setX, setY, setZ])
+    }, [state.stage, state.affectedCanal, state.affectedEar, state.isAligned, setX, setY, setZ])
 
 
     useEffect(() => {
