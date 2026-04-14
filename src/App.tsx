@@ -2,19 +2,6 @@ import { useRef, useState } from 'react';
 import { useEffect } from 'react';
 import './App.css';
 
-import { Matrix4, Quaternion } from 'three';
-import SelectWindow from './components/SelectWindow';
-import AlignmentDisplay from './components/AlignmentDisplay';
-import StateDisplay from './components/StateDisplay';
-import HeadRendering from './components/HeadRendering';
-import CanalRendering from './components/CanalRendering';
-
-import { useStateMachine } from './hooks/useStateMachine';
-
-import { decodeIMUPacket, IMUDecodeError, decodeNumericIMUPacket } from './utils/imuDecoder';
-
-import { MadgwickFilter } from './utils/madgwickFilter';
-
 import SetupScreen from './components/SetupScreen';
 import TreatmentScreen from './components/TreatmentScreen';
 import { useBleDevice } from './context/BleProvider';

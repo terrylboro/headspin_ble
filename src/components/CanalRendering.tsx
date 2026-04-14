@@ -176,7 +176,7 @@ const CanalRendering = () => {
                     canalGroup.current,  //.children[segmentID] as THREE.Object3D, // the current segment mesh
                     new THREE.Vector3(0, 0, 1),
                     // (state.stage === TreatmentStage.STAGE_2) ? new THREE.Vector3(Math.sin(15 * Math.PI/180), 0, 15 * Math.PI/180) : new THREE.Vector3(0, 0, 1), // target world direction (upwards)          
-                    15 // threshold in degrees
+                    (state.stage === TreatmentStage.STAGE_2) ? 20 : 15 // threshold in percentage (i.e. 100 - this number)
                 )
     
                 alignmentRef!.current = canalAlignRes.score
