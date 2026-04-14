@@ -54,15 +54,15 @@ const ManualCanalRendering = () => {
 
     const canalGroup = useRef<THREE.Group>(new THREE.Group());
 
-    const stage1ArrowRef = useRef<THREE.ArrowHelper | null>(null);
+    const stage1ArrowRef = useRef<THREE.Group | null>(null);
     const stage1Direction = new THREE.Vector3(1, -1, -0.2).normalize(); // test direction
     const stage1Origin = new THREE.Vector3(-1.3, 2, -2.3);
 
-    const stage2ArrowRef = useRef<THREE.ArrowHelper | null>(null);
+    const stage2ArrowRef = useRef<THREE.Group | null>(null);
     const stage2Direction = new THREE.Vector3(0, 0, -1).normalize(); // test direction
     const stage2Origin = new THREE.Vector3(-1.6, 2.2, 3);
 
-    const stage3ArrowRef = useRef<THREE.ArrowHelper | null>(null);
+    const stage3ArrowRef = useRef<THREE.Group | null>(null);
     const stage3Direction = new THREE.Vector3(0.7, -1, 0.2).normalize(); // test direction
     const stage3Origin = new THREE.Vector3(-2.3, 2.2, 2.5);
 
@@ -181,49 +181,45 @@ const ManualCanalRendering = () => {
         scene.current!.add(canalGroup.current);
 
         // Add helper arrows
-        stage1ArrowRef.current = new THREE.ArrowHelper(
-            canalDirections["posterior"].directions[0],
-            canalDirections["posterior"].origins[0],
+        stage1ArrowRef.current = createThickArrow(
+            (state.affectedEar === "left") ? canalDirections["posterior"].directions[0].clone() : canalDirections["posterior"].directions[0].clone().setY(canalDirections["posterior"].directions[0].y * -1),
+            (state.affectedEar === "left") ? canalDirections["posterior"].origins[0].clone() : canalDirections["posterior"].origins[0].clone().setY(canalDirections["posterior"].origins[0].y * -1),
             10,
-            ORANGE_COLOUR
+            ORANGE_COLOUR,
+            alignmentRef.current
         );
         canalGroup.current.add(stage1ArrowRef.current);
 
-        stage2ArrowRef.current = new THREE.ArrowHelper(
-            canalDirections["posterior"].directions[1],
-            canalDirections["posterior"].origins[1],
+        stage2ArrowRef.current = createThickArrow(
+            (state.affectedEar === "left") ? canalDirections["posterior"].directions[1].clone() : canalDirections["posterior"].directions[1].clone().setY(canalDirections["posterior"].directions[1].y * -1),
+            (state.affectedEar === "left") ? canalDirections["posterior"].origins[1].clone() : canalDirections["posterior"].origins[1].clone().setY(canalDirections["posterior"].origins[1].y * -1),
             10,
-            ORANGE_COLOUR
+            ORANGE_COLOUR,
+            alignmentRef.current
         );
         canalGroup.current.add(stage2ArrowRef.current);
         // meshParts.current.push(stage2ArrowRef.current);
 
         // Dot direction by (1, -1, 1)
-        stage3ArrowRef.current = new THREE.ArrowHelper(
-            new THREE.Vector3(-0.7, -1, -0.2).normalize(),
-            new THREE.Vector3(1.9, 4, 3.5),//.normalize(),
+        stage3ArrowRef.current = createThickArrow(
+            // new THREE.Vector3(-0.7, -1, -0.2).normalize(),
+            // new THREE.Vector3(1.9, 4, 3.5),//.normalize(),
+
+            
+            (state.affectedEar === "left") ? canalDirections["posterior"].directions[2].clone() : canalDirections["posterior"].directions[2].clone().setY(canalDirections["posterior"].directions[2].y * -1),
+            (state.affectedEar === "left") ? canalDirections["posterior"].origins[2].clone() : canalDirections["posterior"].origins[2].clone().setY(canalDirections["posterior"].origins[2].y * -1),
             // canalDirections["posterior"].directions[2],
             // (canalDirections["posterior"].origins[2]), //.addScaledVector(canalDirections["posterior"].directions[2], 1), // extend backwards from origin to avoid overlap with mesh
             10,
-            ORANGE_COLOUR
+            ORANGE_COLOUR,
+            alignmentRef.current,
         );
-        stage3ArrowRef.current.scale.set(1, 1, 1);
         canalGroup.current.add(stage3ArrowRef.current);
-
-        canalGroup.current.add(stage3ArrowRef.current);
-
-        canalGroup.current.add(new THREE.ArrowHelper(
-            new THREE.Vector3(0, 0, 1).normalize(),
-            new THREE.Vector3(0, 0, 0).normalize(),
-            // canalDirections["posterior"].directions[2],
-            // (canalDirections["posterior"].origins[2]).addScaledVector(canalDirections["posterior"].directions[2], 10), // extend backwards from origin to avoid overlap with mesh
-            10,
-            ORANGE_COLOUR
-        ));
 
         stage4ArrowRef.current = createThickArrow(
-            canalDirections["posterior"].directions[3],
-            canalDirections["posterior"].origins[3],
+            (state.affectedEar === "left") ? canalDirections["posterior"].directions[3].clone() : canalDirections["posterior"].directions[3].clone().setY(canalDirections["posterior"].directions[3].y * -1),
+            (state.affectedEar === "left") ? canalDirections["posterior"].origins[3].clone() : canalDirections["posterior"].origins[3].clone().setY(canalDirections["posterior"].origins[3].y * -1),
+            
             7,
             (alignedRef.current) ? GREEN_COLOUR : ORANGE_COLOUR,
             alignmentRef.current,
