@@ -190,7 +190,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
 
     const dataArr = decodeNumericIMUPacket(latestMessage.data);
 
-    console.log(dataArr);
+    // console.log(dataArr);
 
     
     

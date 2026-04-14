@@ -132,9 +132,14 @@ export function decodeNumericIMUPacket(input: DataView | ArrayBuffer): number[] 
     gz *= GYRO_MDPS_PER_LSB * MDPS_TO_DPS;
 
     // Apply bias correction
-    gx -= 0.05;
-    gy += 0.16;
-    gz += 0.08;
+    // These values work for the first Xiao board
+    // gx -= 0.05;
+    // gy += 0.16;
+    // gz += 0.08;
+    // For the second, use:
+    gx -= 0.065;
+    gy += 0.185;
+    gz += 0.01;
 
     arr.push(ax, ay, az, gx, gy, gz);
 

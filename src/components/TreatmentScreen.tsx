@@ -147,6 +147,13 @@ export default function TreatmentScreen({
           mt="md" size="xl" radius="xl" />
         
       </Card>
+
+      {/* Useful components
+      <Card withBorder shadow="sm" radius="md">
+        <Text fw={600}>Latest data</Text>
+        <Text fw={600}>aX | aY | aZ | gX | gY | gZ | Roll | Pitch | Yaw</Text>
+        <Text>{treatment.latestSampleText}</Text>
+        </Card> */}
     </Stack>
   );
 }
