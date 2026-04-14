@@ -137,9 +137,9 @@ export function decodeNumericIMUPacket(input: DataView | ArrayBuffer): number[] 
     // gy += 0.16;
     // gz += 0.08;
     // For the second, use:
-    gx -= 0.065;
-    gy += 0.185;
-    gz += 0.01;
+    gx -= 0.035;
+    gy += 0.145;
+    gz += 0.08;
 
     arr.push(ax, ay, az, gx, gy, gz);
 
