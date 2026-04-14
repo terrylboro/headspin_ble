@@ -113,8 +113,10 @@ const CanalRendering = () => {
         if (showGuidanceArrows) {
             if (state.stage !== TreatmentStage.COMPLETE) {
                 arrowRef.current = createThickArrow(
-                canalDirections[state.affectedCanal!].directions[state.stage!],
-                canalDirections[state.affectedCanal!].origins[state.stage!],
+                // canalDirections[state.affectedCanal!].directions[state.stage!],
+                // canalDirections[state.affectedCanal!].origins[state.stage!],
+                (state.affectedEar === "left") ? canalDirections[state.affectedCanal!].directions[state.stage!] : canalDirections[state.affectedCanal!].directions[state.stage!].clone().setY(canalDirections["posterior"].directions[state.stage!].y * -1),
+                (state.affectedEar === "left") ? canalDirections[state.affectedCanal!].origins[state.stage!] : canalDirections[state.affectedCanal!].origins[state.stage!].clone().setY(canalDirections["posterior"].origins[state.stage!].y * -1),
                 10,
                 (state.isAligned) ? GREEN_COLOUR : ORANGE_COLOUR,
                 alignmentRef!.current,
@@ -140,6 +142,9 @@ const CanalRendering = () => {
                 const loadedMesh = new THREE.Mesh(geometry, material)
                 
                 loadedMesh.applyMatrix4(new THREE.Matrix4().makeScale(1, 1, 1))
+                if (state.affectedEar === "right") {
+                    loadedMesh.applyMatrix4(new THREE.Matrix4().makeScale(1, -1, 1))
+                }
                 canalGroup.current.add(loadedMesh)
                 meshParts.current.push(loadedMesh)
             })
@@ -166,8 +171,8 @@ const CanalRendering = () => {
                 const segmentID = (state.stage===TreatmentStage.COMPLETE) ? 4 : ((state.affectedCanal !== "lateral") ? state.stage + 1 : state.stage + 1);
 
                 const canalAlignRes =  getCanalAlignment(
-                    canalDirections["posterior"].directions[segmentID!-1], // the target direction for the current stage and canal
-                    // canalDirections["posterior"].directions[segmentID!],
+                    // canalDirections["posterior"].directions[segmentID!-1], // the target direction for the current stage and canal
+                    (state.affectedEar === "left") ? canalDirections["posterior"].directions[segmentID!-1] : canalDirections["posterior"].directions[segmentID!-1].clone().setY(canalDirections["posterior"].directions[segmentID!-1].y * -1), // flip Y for right ear
                     canalGroup.current,  //.children[segmentID] as THREE.Object3D, // the current segment mesh
                     new THREE.Vector3(0, 0, 1),
                     // (state.stage === TreatmentStage.STAGE_2) ? new THREE.Vector3(Math.sin(15 * Math.PI/180), 0, 15 * Math.PI/180) : new THREE.Vector3(0, 0, 1), // target world direction (upwards)          
