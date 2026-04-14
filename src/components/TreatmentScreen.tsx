@@ -87,19 +87,7 @@ export default function TreatmentScreen({
           <Card withBorder shadow="sm" radius="md" style={{ flex: 2, minHeight: 480 }}>
             <Stack h="100%" >
               <Text fw={600}>Canal Alignment</Text>
-              {/* <Progress 
-                value={treatment.alignmentRef!.current * 100}
-                size="lg"
-                radius="xl"
-                striped
-                animated
-                styles={{
-                  root: {
-                    background: 'linear-gradient(90deg, red 0%, red 50%, orange 50%, orange 85%, green 85%, green 100%)',
-                  }
-                }}
-
-              /> */}
+              
               <AlignmentProgress score={treatment.alignmentRef!.current}/>
               <div
                 style={{
@@ -113,10 +101,7 @@ export default function TreatmentScreen({
               >
 
                 <CanalRendering/>
-
               </div>
-
-              {/* <Text size="lg" >{(alignmentRef.current * 100).toFixed(1)}%</Text> */}
             </Stack>
           </Card>
         </Box>

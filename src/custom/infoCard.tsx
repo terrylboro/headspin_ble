@@ -25,7 +25,7 @@ export function InfoCard({
                 <Box p="md" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                    <Text fw={500}>{title}</Text>
 
-                    <Text size="sm" c="dimmed" lineClamp={5}>
+                    <Text size="sm" c="dimmed" lineClamp={8}>
                         {textBody}
                     </Text> 
                 </Box>
