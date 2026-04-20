@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/my-react-app/static/css/main.1cae11d8.css",
-    "main.js": "/my-react-app/static/js/main.a1840e9e.js",
-    "static/js/453.bce03150.chunk.js": "/my-react-app/static/js/453.bce03150.chunk.js",
-    "index.html": "/my-react-app/index.html",
-    "main.1cae11d8.css.map": "/my-react-app/static/css/main.1cae11d8.css.map",
-    "main.a1840e9e.js.map": "/my-react-app/static/js/main.a1840e9e.js.map",
-    "453.bce03150.chunk.js.map": "/my-react-app/static/js/453.bce03150.chunk.js.map"
+    "main.css": "/headspin_v1/static/css/main.1cae11d8.css",
+    "main.js": "/headspin_v1/static/js/main.83b2eafd.js",
+    "static/js/453.bce03150.chunk.js": "/headspin_v1/static/js/453.bce03150.chunk.js",
+    "index.html": "/headspin_v1/index.html",
+    "main.1cae11d8.css.map": "/headspin_v1/static/css/main.1cae11d8.css.map",
+    "main.83b2eafd.js.map": "/headspin_v1/static/js/main.83b2eafd.js.map",
+    "453.bce03150.chunk.js.map": "/headspin_v1/static/js/453.bce03150.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.1cae11d8.css",
-    "static/js/main.a1840e9e.js"
+    "static/js/main.83b2eafd.js"
   ]
 }
