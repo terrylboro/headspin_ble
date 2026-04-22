@@ -50,6 +50,12 @@ export default function TreatmentScreen({
       {/* <Group align="stretch" grow style={{ flex: 1 }}> */}
       <Flex gap="xl" wrap="nowrap" w="100%">
 
+        {/* <Card withBorder shadow="sm" radius="md">
+        <Text fw={600}>Latest data</Text>
+        <Text fw={600}>aX | aY | aZ | gX | gY | gZ | Roll | Pitch | Yaw</Text>
+        <Text>{treatment.latestSampleText}</Text>
+        </Card> */}
+
         <Box style={{ flex: 1, minWidth: 0, maxHeight: '60vh' }}>
           <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 480 }}>
             <Stack h="100%">
@@ -133,12 +139,7 @@ export default function TreatmentScreen({
         
       </Card>
 
-      {/* Useful components
-      <Card withBorder shadow="sm" radius="md">
-        <Text fw={600}>Latest data</Text>
-        <Text fw={600}>aX | aY | aZ | gX | gY | gZ | Roll | Pitch | Yaw</Text>
-        <Text>{treatment.latestSampleText}</Text>
-        </Card> */}
+      
     </Stack>
   );
 }
