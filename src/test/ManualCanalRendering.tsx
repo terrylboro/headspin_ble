@@ -7,10 +7,11 @@ import { changeQuaternionBase } from "../utils/changeBase";
 import {applyYawOffset} from "../utils/applyYawOffset"
 import { useTreatment } from "../context/TreatmentProvider";
 
-import { Slider, Stack, Text, Group, Button } from '@mantine/core';
+import { Slider, Stack, Text, Group, Button, Box } from '@mantine/core';
 import { TreatmentStage } from "../types/treatmentTypes";
 
 import { createThickArrow } from "../custom/thickArrow";
+import LiveWebcam from "../components/LiveWebcam";
 
 
 const ManualCanalRendering = () => {
@@ -245,7 +246,8 @@ const ManualCanalRendering = () => {
         const loader = new PLYLoader()
         let color = 0
         for (let i = 0; i < meshPartsLength[state.affectedCanal ? state.affectedCanal : 5]; i++) {
-            const meshPath = "rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply"
+            // const meshPath = "rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply"
+            const meshPath = process.env.PUBLIC_URL + "/rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply"
             // const meshPath = (state.affectedEar === "left") ? ("rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply") : ("right_rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply");
 
             loader.load(meshPath, (geometry) => {
@@ -389,11 +391,12 @@ const ManualCanalRendering = () => {
         <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
             <div style={{height: "1.2vh"}}/>
 
-            <Group justify="space-between" align="center" style={{width: "100%"}}>
+            <Group justify="center" align="flex-start" gap="xl" style={{width: "100%"}}>
                 
                 <Stack mt="md" gap="sm">
 
                     <canvas ref={canvasRef} />
+
 
                     <Text fw={600}>Yaw</Text>
                     <Slider w={300} label="Yaw" defaultValue={0} min={-180} max={180} step={1} value={yaw} onChange={setYaw} />
@@ -405,6 +408,10 @@ const ManualCanalRendering = () => {
                 </Stack>
 
                 <Stack mt="md" gap="md" align="center">
+                    <Box w={300}>
+                        <LiveWebcam height={220} />
+                    </Box>
+
                     <Text size="lg" >{alignedRef.current ? "Aligned" : "Not Aligned"}</Text>
 
                     <Text size="lg" >{(alignmentRef.current * 100).toFixed(1)}%</Text>
