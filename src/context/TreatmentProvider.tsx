@@ -68,6 +68,10 @@ type TreatmentContextValue = {
   pitchValue: number;
   yawValue: number;
 
+  isRecording: boolean;
+  startRecording: () => void;
+  stopRecording: () => void;
+
   matrixRef: React.MutableRefObject<Matrix4>;
   offsetMatrixRef: React.MutableRefObject<Matrix4>;
 
@@ -75,6 +79,20 @@ type TreatmentContextValue = {
   startTreatment: () => void;
   stopTreatment: () => void;
   resetTreatment: () => void;
+};
+
+type RecordedImuSample = {
+  timestamp: number;
+  relativeTimestampMs: number;
+  ax: number;
+  ay: number;
+  az: number;
+  gx: number;
+  gy: number;
+  gz: number;
+  roll: number;
+  pitch: number;
+  yaw: number;
 };
 
 const TreatmentContext = createContext<TreatmentContextValue | null>(null);
@@ -112,9 +130,12 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
   const [rollValue, setRollValue] = useState(0);
   const [pitchValue, setPitchValue] = useState(0);
   const [yawValue, setYawValue] = useState(0);
+  const [isRecording, setIsRecording] = useState(false);
 
   const matrixRef = useRef(new Matrix4());
   const offsetMatrixRef = useRef(new Matrix4());
+  const recordedSamplesRef = useRef<RecordedImuSample[]>([]);
+  const recordingStartTimestampRef = useRef<number | null>(null);
 
   const alignmentRef = useRef(0);
   // const [alignedRef, setAlignedRef] = useState(false);
@@ -171,6 +192,64 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
 
     holdStartRef.current = null;
   }, []);
+
+  const downloadRecording = useCallback((samples: RecordedImuSample[]) => {
+    if (samples.length === 0) {
+      return;
+    }
+
+    const now = new Date();
+    const twoDigits = (value: number) => value.toString().padStart(2, '0');
+    const formattedTimestamp = [
+      twoDigits(now.getMonth() + 1),
+      twoDigits(now.getDate()),
+      twoDigits(now.getHours()),
+      twoDigits(now.getMinutes()),
+      twoDigits(now.getSeconds()),
+    ];
+
+    const header = ['timestamp', 'relative_timestamp_ms', 'ax', 'ay', 'az', 'gx', 'gy', 'gz', 'roll_deg', 'pitch_deg', 'yaw_deg'];
+    const rows = samples.map((sample) => [
+      sample.timestamp,
+      sample.relativeTimestampMs,
+      sample.ax,
+      sample.ay,
+      sample.az,
+      sample.gx,
+      sample.gy,
+      sample.gz,
+      sample.roll,
+      sample.pitch,
+      sample.yaw,
+    ]);
+
+    const csvContent = [header, ...rows]
+      .map((row) => row.join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = `imu-recording-${formattedTimestamp[0]}-${formattedTimestamp[1]}-${formattedTimestamp[2]}:${formattedTimestamp[3]}:${formattedTimestamp[4]}.csv`;
+    link.click();
+
+    window.URL.revokeObjectURL(url);
+  }, []);
+
+  const startRecording = useCallback(() => {
+    recordedSamplesRef.current = [];
+    recordingStartTimestampRef.current = null;
+    setIsRecording(true);
+  }, []);
+
+  const stopRecording = useCallback(() => {
+    setIsRecording(false);
+    downloadRecording(recordedSamplesRef.current);
+    recordedSamplesRef.current = [];
+    recordingStartTimestampRef.current = null;
+  }, [downloadRecording]);
 
   // Timer checking action for hold-based progression logic
   useEffect(() => {
@@ -233,6 +312,26 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
         setPitchValue(filtPos.pitch);
         setYawValue(filtPos.yaw);
 
+        if (isRecording) {
+          if (recordingStartTimestampRef.current === null) {
+            recordingStartTimestampRef.current = latestMessage.timestamp;
+          }
+
+          recordedSamplesRef.current.push({
+            timestamp: latestMessage.timestamp,
+            relativeTimestampMs: latestMessage.timestamp - recordingStartTimestampRef.current,
+            ax: dataArr[0],
+            ay: dataArr[1],
+            az: dataArr[2],
+            gx: dataArr[3],
+            gy: dataArr[4],
+            gz: dataArr[5],
+            roll: filtPos.roll * 180 / Math.PI,
+            pitch: filtPos.pitch * 180 / Math.PI,
+            yaw: filtPos.yaw * 180 / Math.PI,
+          });
+        }
+
         // console.log(matrixRef.current);
 
       /**
@@ -284,6 +383,9 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
       rollValue,
       pitchValue,
       yawValue,
+      isRecording,
+      startRecording,
+      stopRecording,
 
       matrixRef,
       offsetMatrixRef,
@@ -307,6 +409,9 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
       rollValue,
       pitchValue,
       yawValue,
+      isRecording,
+      startRecording,
+      stopRecording,
       calibrateOffset,
       startTreatment,
       stopTreatment,

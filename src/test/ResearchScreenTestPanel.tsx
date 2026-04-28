@@ -29,6 +29,9 @@ export default function ResearchScreenTestPanel({
     stageProgress,
     affectedCanal,
     setAffectedCanal,
+    isRecording,
+    startRecording,
+    stopRecording,
   } = useTreatment();
 
   const theme = useMantineTheme();
@@ -127,10 +130,18 @@ export default function ResearchScreenTestPanel({
 
 
         <Button
-        variant='filled'
-        onClick={() => {}}
+        variant={isRecording ? 'light' : 'filled'}
+        color={isRecording ? 'red' : 'blue'}
+        onClick={() => {
+          if (isRecording) {
+            stopRecording();
+            return;
+          }
+
+          startRecording();
+        }}
         >
-        Record
+        {isRecording ? 'Stop Recording' : 'Record'}
         </Button>
 
         <Button variant={state.isAligned ? 'filled' : 'light'}
