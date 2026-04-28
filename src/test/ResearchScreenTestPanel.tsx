@@ -41,7 +41,7 @@ export default function ResearchScreenTestPanel({
   return (
     <Stack h="100%" gap="xl">
       <LiveChartCard
-          title="Simulated Bluetooth Data Stream"
+          title="Orientation Data Stream"
           points={50}
           updateIntervalMs={100}
       />

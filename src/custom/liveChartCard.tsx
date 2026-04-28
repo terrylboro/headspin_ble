@@ -79,10 +79,7 @@ export default function LiveChartCard({
       <Stack gap="xs">
         <Group justify="space-between" align="flex-start">
           <div>
-            <Title order={2}>{title}</Title>
-            <Text c="dimmed" size="sm">
-              Rolling history of the latest IMU-derived Euler angles from the treatment context.
-            </Text>
+            <Title order={4}>{title}</Title>
           </div>
 
           <Badge color="teal" variant="light">
@@ -110,18 +107,15 @@ export default function LiveChartCard({
           tickLine="none"
         />
 
-        <Group justify="space-between">
-          <Text size="sm" c="dimmed">
-            Pitch: {latestPoint?.pitch.toFixed(1) ?? '0.0'} deg
-          </Text>
-          <Text size="sm" c="dimmed">
-            Roll: {latestPoint?.roll.toFixed(1) ?? '0.0'} deg
-          </Text>
-          <Text size="sm" c="dimmed">
+        <Group justify="left">
+          <Text size="xl" c="orange.6">
             Yaw: {latestPoint?.yaw.toFixed(1) ?? '0.0'} deg
           </Text>
-          <Text size="sm" c="dimmed">
-            Samples: {data.length}
+          <Text size="xl" c="blue.6">
+            Pitch: {latestPoint?.pitch.toFixed(1) ?? '0.0'} deg
+          </Text>
+          <Text size="xl" c="grape.6">
+            Roll: {latestPoint?.roll.toFixed(1) ?? '0.0'} deg
           </Text>
         </Group>
       </Stack>
