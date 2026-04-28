@@ -12,6 +12,7 @@ import { TreatmentStage } from "../types/treatmentTypes";
 
 import { canalDirections } from "../utils/canalDirections";
 import { createThickArrow } from "../custom/thickArrow";
+import { useSound } from "use-sound";
 
 
 // {canal, ear, affectedCanal, matrixRef, offsetMatrixRef, stage, alignmentRef, alignedRef}: Props
@@ -22,8 +23,10 @@ const CanalRendering = () => {
     // Using TreatmentProvider context to get the necessary variables for rendering and alignment
     const {matrixRef, offsetMatrixRef, alignmentRef, alignedRef, state, dispatch, showGuidanceArrows, setShowGuidanceArrows} = useTreatment();
 
-    // const alignmentRef = useRef<number>(0)
-    // const alignedRef = useRef<boolean>(false)
+    // Setup sounds
+    const [playAligned] = useSound(process.env.PUBLIC_URL + "/sounds/aligned.mp3")
+    const [playNotAligned] = useSound(process.env.PUBLIC_URL + "/sounds/naligned.mp3")
+    const [playNext] = useSound(process.env.PUBLIC_URL + "/sounds/stagedone.mp3")
 
     // Scene setting variables
     const camera = useRef<THREE.Camera>()
@@ -176,7 +179,7 @@ const CanalRendering = () => {
                     canalGroup.current,  //.children[segmentID] as THREE.Object3D, // the current segment mesh
                     new THREE.Vector3(0, 0, 1),
                     // (state.stage === TreatmentStage.STAGE_2) ? new THREE.Vector3(Math.sin(15 * Math.PI/180), 0, 15 * Math.PI/180) : new THREE.Vector3(0, 0, 1), // target world direction (upwards)          
-                    (state.stage === TreatmentStage.STAGE_2) ? 20 : 15 // threshold in percentage (i.e. 100 - this number)
+                    (state.stage === TreatmentStage.STAGE_2) ? 25 : 15 // threshold in percentage (i.e. 100 - this number)
                 )
     
                 alignmentRef!.current = canalAlignRes.score
@@ -185,10 +188,12 @@ const CanalRendering = () => {
                 if (alignedRef!.current && !state.isAligned) {
                     // Handle the case where the canal becomes aligned
                     // dispatch({ type: 'TOGGLE_ALIGNED' })
+                    if (state.stage !== TreatmentStage.COMPLETE) playAligned();
                     dispatch({ type: 'ALIGNMENT_ENTER' })
                 }
 
                 else if (!alignedRef!.current && state.isAligned) {
+                    if (state.stage !== TreatmentStage.COMPLETE) playNotAligned();
                     // Handle case where canal loses alignment
                     dispatch({ type: 'ALIGNMENT_EXIT'})
                 }

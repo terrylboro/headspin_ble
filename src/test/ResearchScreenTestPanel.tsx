@@ -4,6 +4,8 @@ import { Button, Card, Group, Stack, Switch, Text, Title, Box, useMantineTheme }
 import { useTreatment } from '../context/TreatmentProvider';
 import ManualCanalRendering from './ManualCanalRendering';
 import { TreatmentStage } from '../types/treatmentTypes';
+
+import useSound from "use-sound"
 // import { LineChart } from '';
 
 type ResearchScreenTestProps = {
@@ -31,6 +33,10 @@ export default function ResearchScreenTestPanel({
 
   const theme = useMantineTheme();
   const treatment = useTreatment();
+
+  const [playAligned] = useSound(process.env.PUBLIC_URL + "/sounds/aligned.mp3")
+  const [playNotAligned] = useSound(process.env.PUBLIC_URL + "/sounds/naligned.mp3")
+  const [playNext] = useSound(process.env.PUBLIC_URL + "/sounds/stagedone.mp3")
 
   return (
     <Stack h="100%" gap="xl">
@@ -115,6 +121,18 @@ export default function ResearchScreenTestPanel({
           </Button>
         </Group>
 
+        <Group>
+          <Button onClick={() => playAligned()} >
+            Aligned Sound
+          </Button>
+          <Button onClick={() => playNotAligned()} >
+            NAligned Sound
+          </Button>
+          <Button onClick={() => playNext()} >
+            Progress Sound
+          </Button>
+        </Group>
+
 
         <Button
         variant='filled'
@@ -145,7 +163,6 @@ export default function ResearchScreenTestPanel({
     </Card>
   </Group>
 
-                    // Useful components
  <Card withBorder shadow="sm" radius="md">
          <Text fw={600}>Latest data</Text>
          <Text fw={600}>aX | aY | aZ | gX | gY | gZ | Roll | Pitch | Yaw</Text>

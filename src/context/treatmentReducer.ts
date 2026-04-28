@@ -1,7 +1,10 @@
 import { TreatmentState, Action, TreatmentStage } from '../types/treatmentTypes';
+import useSound from "use-sound"
 
 // const HOLD_DURATION_MS = 5000;
 const ONE_MILLISECOND = 1000;
+// For audio
+
 
 export const initialState: TreatmentState = {
   stage: TreatmentStage.STAGE_1,
