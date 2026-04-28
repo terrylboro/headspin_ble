@@ -1,7 +1,7 @@
 import { AppShell, Group, Title, Button } from '@mantine/core';
 
 type TopBarProps = {
-    setScreen: (screen: 'setup' | 'treatment') => void;
+    setScreen: (screen: 'setup' | 'treatment' | 'research') => void;
 };
 
 export default function TopBar({ setScreen }: TopBarProps) {
@@ -12,6 +12,9 @@ export default function TopBar({ setScreen }: TopBarProps) {
         <Badge color="green">Bluetooth connected</Badge>
         <Badge color="green">Streaming</Badge>
       </Group> */}
+      < Button color="green" onClick={() => setScreen("research")}>
+          Activate Research Mode
+      </Button>
       <Button color="green" onClick={() => setScreen('setup')}>
           Back to setup
         </Button>

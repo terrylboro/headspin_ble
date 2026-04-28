@@ -28,8 +28,9 @@ import {
 } from '@mantine/core';
 import StateMachineTestPanel from './test/StateMachineTestPanel';
 import CalibrationScreen from './components/CalibrationScreen';
+import ResearchScreen from './components/ResearchScreen';
 
-type Screen = 'setup' | 'calibrate' | 'treatment';
+type Screen = 'setup' | 'calibrate' | 'treatment' | 'research';
 
 
 function App(): JSX.Element { 
@@ -39,7 +40,7 @@ function App(): JSX.Element {
   const [screen, setScreen] = useState<Screen>('setup');
   const [selectedCanals, setSelectedCanals] = useState<string[]>([]);
 
-  const testMode = true;
+  const testMode = false;
 
  
   // Mantine theming
@@ -92,7 +93,13 @@ function App(): JSX.Element {
           onDisconnect={ble.disconnect}
           onContinue={() => setScreen('calibrate')}
         />
-      ) : screen === 'treatment' ? (
+      ) : screen === 'research' ? (
+        <ResearchScreen
+          onBack={() => setScreen('calibrate')}
+        />
+      ) :
+      
+      screen === 'treatment' ? (
         <TreatmentScreen
           onBack={() => setScreen('calibrate')}
         />

@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { Button, Card, Group, Stack, Switch, Text, Title, Box, useMantineTheme } from '@mantine/core';
+import { Button, Card, Group, Stack, Text, Title, useMantineTheme } from '@mantine/core';
 // import {LineChart} from '@mantine/charts';
 import { useTreatment } from '../context/TreatmentProvider';
 import ManualCanalRendering from './ManualCanalRendering';
@@ -26,9 +25,6 @@ export default function ResearchScreenTestPanel({
   const {
     state,
     dispatch,
-    stageProgress,
-    affectedCanal,
-    setAffectedCanal,
     isRecording,
     startRecording,
     stopRecording,
@@ -45,8 +41,9 @@ export default function ResearchScreenTestPanel({
     <Stack h="100%" gap="xl">
       <LiveChartCard
           title="Orientation Data Stream"
-          points={50}
-          updateIntervalMs={100}
+          orientationRef={treatment.orientationRef}
+          points={30}
+          updateIntervalMs={250}
       />
     < Group align="stretch" grow>
     <Card withBorder shadow="sm" radius="md" p="lg">

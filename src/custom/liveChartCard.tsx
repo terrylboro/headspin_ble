@@ -1,8 +1,6 @@
-
-import { useEffect, useRef, useState } from 'react';
+import React, { memo, startTransition, useEffect, useRef, useState } from 'react';
 import { Badge, Card, Group, Stack, Text, Title } from '@mantine/core';
 import { LineChart } from '@mantine/charts';
-import { useTreatment } from '../context/TreatmentProvider';
 
 type ChartSample = {
   sample: string;
@@ -15,6 +13,7 @@ type LiveChartCardProps = {
   title?: string;
   points?: number;
   updateIntervalMs?: number;
+  orientationRef: React.MutableRefObject<OrientationSnapshot>;
 };
 
 type OrientationSnapshot = Omit<ChartSample, 'sample'>;
@@ -37,45 +36,52 @@ function createInitialData(points: number, orientation: OrientationSnapshot) {
   );
 }
 
-export default function LiveChartCard({
+function LiveChartCard({
   title = 'Live IMU Orientation',
-  points = 40,
-  updateIntervalMs = 350,
+  points = 30,
+  updateIntervalMs = 250,
+  orientationRef,
 }: LiveChartCardProps) {
-  const treatment = useTreatment();
   const nextStepRef = useRef(1);
   const [data, setData] = useState<ChartSample[]>([]);
-  const lastSampleTimeRef = useRef(0);
 
   useEffect(() => {
-    const orientation = {
-      pitch: toDegrees(treatment.pitchValue),
-      roll: toDegrees(treatment.rollValue),
-      yaw: toDegrees(treatment.yawValue),
+    setData([]);
+    nextStepRef.current = 1;
+  }, [points]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      const orientation = {
+        pitch: toDegrees(orientationRef.current.pitch),
+        roll: toDegrees(orientationRef.current.roll),
+        yaw: toDegrees(orientationRef.current.yaw),
+      };
+
+      startTransition(() => {
+        setData((currentData) => {
+          const nextSample = createChartSample(nextStepRef.current, orientation);
+          nextStepRef.current += 1;
+
+          const seededData =
+            currentData.length === 0
+              ? createInitialData(Math.max(points - 1, 0), orientation)
+              : currentData;
+
+          return [...seededData.slice(-(points - 1)), nextSample];
+        });
+      });
+    }, updateIntervalMs);
+
+    return () => {
+      window.clearInterval(intervalId);
     };
-
-    const now = Date.now();
-    if (now - lastSampleTimeRef.current < updateIntervalMs) {
-      return;
-    }
-
-    lastSampleTimeRef.current = now;
-
-    setData((currentData) => {
-      const nextSample = createChartSample(nextStepRef.current, orientation);
-      nextStepRef.current += 1;
-
-      const seededData =
-        currentData.length === 0 ? createInitialData(Math.max(points - 1, 0), orientation) : currentData;
-
-      return [...seededData.slice(-(points - 1)), nextSample];
-    });
-  }, [points, treatment.pitchValue, treatment.rollValue, treatment.yawValue, updateIntervalMs]);
+  }, [orientationRef, points, updateIntervalMs]);
 
   const latestPoint = data[data.length - 1];
 
   return (
-    <Card withBorder shadow="sm" radius="md" p="xs">
+    <Card withBorder shadow="sm" radius="md" p="xs" style={{ flex: 1, height: '100%' }}>
       <Stack gap="xs">
         <Group justify="space-between" align="flex-start">
           <div>
@@ -122,3 +128,5 @@ export default function LiveChartCard({
     </Card>
   );
 }
+
+export default memo(LiveChartCard);

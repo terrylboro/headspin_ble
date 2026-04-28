@@ -22,6 +22,8 @@ import ManualHeadRendering from '../test/ManualHeadRendering';
 import ManualCanalRendering from '../test/ManualCanalRendering';
 import { TreatmentStage, HoldDurationType } from '../types/treatmentTypes';
 import AlignmentProgress from '../custom/alignmentProgress';
+import LiveChartCard from '../custom/liveChartCard';
+import LiveWebcam from '../components/LiveWebcam';
 
 const sliderMarks = [
   { value: 30, label: '30s' },
@@ -29,15 +31,15 @@ const sliderMarks = [
   { value: 60, label: '60s' },
 ];
 
-type TreatmentScreenProps = {
+type ResearchScreenProps = {
   onBack: () => void;
 };
 
-export default function TreatmentScreen({
+export default function ResearchScreen({
   onBack,
-}: TreatmentScreenProps) {
+}: ResearchScreenProps) {
 
-  const treatment =  useTreatment();
+  const treatment = useTreatment();
 
   function calibrateOrientation() {
         const current = treatment.matrixRef.current.clone();
@@ -47,15 +49,44 @@ export default function TreatmentScreen({
   return (
     <Stack h="100%">
 
-      {/* <Group align="stretch" grow style={{ flex: 1 }}> */}
-      <Flex gap="xl" wrap="nowrap" w="100%">
+      <Flex gap="xl" wrap="nowrap" w="100%" align="stretch">
+        <Box style={{ flex: 4, minWidth: 0, display: 'flex' }}>
+          <LiveChartCard
+            title="Orientation Data Stream"
+            orientationRef={treatment.orientationRef}
+            points={25}
+            updateIntervalMs={250}
+          />
+        </Box>
+        <Box style={{ flex: 1, minWidth: 0, display: 'flex' }}>
+          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 200, height: '100%' }}>
+            <Stack h="100%">
+              <Text fw={600}>Head Position</Text>
 
-        <Box style={{ flex: 1, minWidth: 0, maxHeight: '60vh' }}>
-          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 480 }}>
+              <HeadRendering calibrateMode={false} />
+
+            </Stack>
+          </Card>
+        </Box>
+
+      </Flex>
+      
+
+
+      <Flex gap="xl" wrap="nowrap" w="100%" align="stretch">
+
+        {/* <Card withBorder shadow="sm" radius="md">
+        <Text fw={600}>Latest data</Text>
+        <Text fw={600}>aX | aY | aZ | gX | gY | gZ | Roll | Pitch | Yaw</Text>
+        <Text>{treatment.latestSampleText}</Text>
+        </Card> */}
+
+        <Box style={{ flex: 1, minWidth: 0, display: 'flex' }}>
+          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 480, height: '100%' }}>
             <Stack h="100%">
               <Text fw={600}>Control</Text>
 
-              <Text fw={600} >Hold time</Text>
+              {/* <Text fw={600} >Hold time</Text>
               <Slider
                   defaultValue={45}
                   min={30} max={60}
@@ -63,17 +94,41 @@ export default function TreatmentScreen({
                   marks={sliderMarks}
                   label={(val) => sliderMarks.find((mark) => mark.value === val)!.label} 
                   onChange={(value) => treatment.dispatch({type: 'SET_HOLD_DURATION', holdDuration: value as HoldDurationType})}
-              />
+              /> */}
 
               <Switch mt="md" defaultChecked label="Show arrows" onChange={() => treatment.setShowGuidanceArrows(!treatment.showGuidanceArrows)}/>
 
+              <Button onClick={() => treatment.dispatch({ type: 'PROGRESS' })}>
+                Progress
+              </Button>
+              
+              <Button
+                variant={treatment.isRecording ? 'light' : 'filled'}
+                color={treatment.isRecording ? 'red' : 'blue'}
+                onClick={() => {
+                  if (treatment.isRecording) {
+                    treatment.stopRecording();
+                    return;
+                  }
+
+                  treatment.startRecording();
+                }}
+                >
+                {treatment.isRecording ? 'Stop Recording' : 'Record'}
+              </Button>
+              
               <Button mt="md" onClick={() => treatment.dispatch({ type: 'RESET_PROGRESS' })}>
                 Restart Treatment
               </Button>
 
-              <Button mt="md" onClick={() => treatment.dispatch({ type: 'SET_HOLD_DURATION', holdDuration: 5 as HoldDurationType  })}>
-                Short Hold
-              </Button>
+              {/* < Stepper active={treatment.state.stage} orientation="vertical" mt="md" size="sm" radius="xl" color={(treatment.state.stage === TreatmentStage.COMPLETE) ? "green" : "blue"} styles={{ step: { cursor: "default" } }}>
+                <Stepper.Step label="Position 1" description="45 degrees left" />
+                <Stepper.Step label="Position 2" description="45 degrees right" />
+                <Stepper.Step label="Position 3" description="135 degrees right" />
+                <Stepper.Step label="Position 4" description="Upright, chin tucked" />
+              </Stepper> */}
+
+              
 
               {/* <Button mt="md" onClick={() => {}}>
                 Record
@@ -83,10 +138,14 @@ export default function TreatmentScreen({
           </Card>
         </Box>
 
-        <Box style={{ flex: 3, minWidth: 0, maxHeight: '60vh' }}>
-          <Card withBorder shadow="sm" radius="md" style={{ flex: 2, minHeight: 480 }}>
+        <Box style={{ flex: 2, minWidth: 0, display: 'flex' }}>
+          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 480, height: '100%' }}>
             <Stack h="100%" >
-              <Text fw={600}>Canal Alignment</Text>
+              <Group justify="space-between">
+                <Text fw={600}>Canal Alignment</Text>
+                <Text size="sm">{(treatment.alignmentRef!.current * 100).toFixed(0)}%</Text>
+              </Group>
+              {/* <Text fw={600}>Canal Alignment</Text> */}
               
               <AlignmentProgress score={treatment.alignmentRef!.current}/>
               <div
@@ -102,43 +161,61 @@ export default function TreatmentScreen({
 
                 <CanalRendering/>
               </div>
+
+              {/* <Text fw={600}>Progress</Text>
+              < Progress value={treatment.state.stageProgress * 100}
+                color={treatment.state.stage === TreatmentStage.COMPLETE ? "green" : "blue"}
+                animated = {treatment.state.stage === TreatmentStage.COMPLETE}
+                mt="xs" size="xl" radius="xl" /> */}
             </Stack>
           </Card>
         </Box>
 
-        <Box style={{ flex: 2, minWidth: 0, maxHeight: '60vh' }}>
-          <Card withBorder shadow="sm" radius="md" style={{ flex: 2, minHeight: 480 }}>
+        {/* <Box style={{ flex: 2, minWidth: 0, display: 'flex' }}>
+          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 480, height: '100%' }}>
             <Stack h="100%" >
-              <Text fw={600}>Check calibration</Text>
+              <Text fw={600}>Head Position</Text>
 
               <HeadRendering calibrateMode={false} />
+
+            </Stack>
+          </Card>
+        </Box> */}
+
+        <Box style={{ flex: 2, minWidth: 0, display: 'flex' }}>
+          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 480, height: '100%' }}>
+            <Stack h="100%" >
+              <Text fw={600}>Canal Video</Text>
+              <LiveWebcam height={"100%"} />
 
             </Stack>
           </Card>
         </Box>
       </Flex> 
 
-      <Card withBorder shadow="sm" radius="md">
-        <Text fw={600}>Progress</Text>
-        < Stepper active={treatment.state.stage} mt="md" size="md" radius="xl" color={(treatment.state.stage === TreatmentStage.COMPLETE) ? "green" : "blue"} styles={{ step: { cursor: "default" } }}>
+      {/* <Card withBorder shadow="sm" radius="md"> */}
+        {/* <Text fw={600}>Progress</Text> */}
+        {/* < Stepper active={treatment.state.stage} mt="md" size="md" radius="xl" color={(treatment.state.stage === TreatmentStage.COMPLETE) ? "green" : "blue"} styles={{ step: { cursor: "default" } }}>
           <Stepper.Step label="Position 1" />
           <Stepper.Step label="Position 2" />
           <Stepper.Step label="Position 3" />
           <Stepper.Step label="Position 4" />
-        </Stepper>
-        < Progress value={treatment.state.stageProgress * 100}
+        </Stepper> */}
+        {/* < Progress value={treatment.state.stageProgress * 100}
           color={treatment.state.stage === TreatmentStage.COMPLETE ? "green" : "blue"}
           animated = {treatment.state.stage === TreatmentStage.COMPLETE}
-          mt="md" size="xl" radius="xl" />
+          mt="md" size="xl" radius="xl" /> */}
         
-      </Card>
+      {/* </Card> */}
 
-      {/* Useful components */}
-      <Card withBorder shadow="sm" radius="md">
-        <Text fw={600}>Latest data</Text>
-        <Text fw={600}>aX | aY | aZ | gX | gY | gZ | Roll | Pitch | Yaw</Text>
-        <Text>{treatment.latestSampleText}</Text>
-        </Card>
+      
     </Stack>
   );
 }
+
+// Useful components
+// {/* <Card withBorder shadow="sm" radius="md">
+//         <Text fw={600}>Latest data</Text>
+//         <Text fw={600}>aX | aY | aZ | gX | gY | gZ | Roll | Pitch | Yaw</Text>
+//         <Text>{treatment.latestSampleText}</Text>
+//         </Card> */}

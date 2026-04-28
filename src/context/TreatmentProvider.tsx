@@ -64,9 +64,11 @@ type TreatmentContextValue = {
 
   latestSampleText: string;
 
-  rollValue: number;
-  pitchValue: number;
-  yawValue: number;
+  orientationRef: React.MutableRefObject<{
+    roll: number;
+    pitch: number;
+    yaw: number;
+  }>;
 
   isRecording: boolean;
   startRecording: () => void;
@@ -127,15 +129,17 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
 
   const [showGuidanceArrows, setShowGuidanceArrows] = useState(true);
 
-  const [rollValue, setRollValue] = useState(0);
-  const [pitchValue, setPitchValue] = useState(0);
-  const [yawValue, setYawValue] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
 
   const matrixRef = useRef(new Matrix4());
   const offsetMatrixRef = useRef(new Matrix4());
   const recordedSamplesRef = useRef<RecordedImuSample[]>([]);
   const recordingStartTimestampRef = useRef<number | null>(null);
+  const orientationRef = useRef({
+    roll: 0,
+    pitch: 0,
+    yaw: 0,
+  });
 
   const alignmentRef = useRef(0);
   // const [alignedRef, setAlignedRef] = useState(false);
@@ -308,9 +312,9 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
 
         setLatestSampleText(`Received data: ${dataArr.map((v) => v.toFixed(2)).join(' | ')} | ${filtPos.roll.toFixed(3)} | ${filtPos.pitch.toFixed(3)} | ${filtPos.yaw.toFixed(3)}`);
 
-        setRollValue(filtPos.roll);
-        setPitchValue(filtPos.pitch);
-        setYawValue(filtPos.yaw);
+        orientationRef.current.roll = filtPos.roll;
+        orientationRef.current.pitch = filtPos.pitch;
+        orientationRef.current.yaw = filtPos.yaw;
 
         if (isRecording) {
           if (recordingStartTimestampRef.current === null) {
@@ -380,9 +384,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
 
       latestSampleText,
 
-      rollValue,
-      pitchValue,
-      yawValue,
+      orientationRef,
       isRecording,
       startRecording,
       stopRecording,
@@ -406,9 +408,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
       dispatch,
       isTreating,
       latestSampleText,
-      rollValue,
-      pitchValue,
-      yawValue,
+      orientationRef,
       isRecording,
       startRecording,
       stopRecording,
