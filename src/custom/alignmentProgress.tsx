@@ -40,7 +40,7 @@ export default function AlignmentProgress({ score }: AlignmentProgressProps) {
           }}
         /> */}
 
-      <Text size="sm">{percent.toFixed(0)}%</Text>
+      {/* <Text size="sm">{percent.toFixed(0)}%</Text> */}
     </Stack>
   );
 }

@@ -131,7 +131,7 @@ const CanalRendering = () => {
         for (let i = 0; i < meshPartsLength[state.affectedCanal ? state.affectedCanal : 5]; i++) {
             // const meshPath = "rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply"
             
-            const meshPath = (state.affectedEar === "left") ? ("rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply") : ("right_rh_meshes/" + state.affectedCanal + "_" + i.toString() + "_right" + ".ply");
+            const meshPath = (state.affectedEar === "left") ? (process.env.PUBLIC_URL + "/rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply") : (process.env.PUBLIC_URL + "/right_rh_meshes/" + state.affectedCanal + "_" + i.toString() + "_right" + ".ply");
 
             loader.load(meshPath, (geometry) => {
 

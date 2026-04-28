@@ -72,7 +72,7 @@ const HeadRendering = ({calibrateMode} : HeadRenderingProps) => {
 
         // Load Ear Mesh
         const loader = new PLYLoader()
-        loader.load("rh_meshes/capsule_3x.ply", (geometry) => {
+        loader.load(process.env.PUBLIC_URL + "/rh_meshes/capsule_3x.ply", (geometry) => {
 
             const material = new THREE.MeshStandardMaterial({color: BLUE_COLOUR, flatShading: true})
             const loadedMesh = new THREE.Mesh(geometry.center(), material)
@@ -82,7 +82,7 @@ const HeadRendering = ({calibrateMode} : HeadRenderingProps) => {
         })
 
         // Load head mesh
-        loader.load("rh_meshes/head.ply", (geometry) => {
+        loader.load(process.env.PUBLIC_URL + "/rh_meshes/head.ply", (geometry) => {
 
             const material = new THREE.MeshPhongMaterial({color: 0x555555, flatShading: true, transparent: true, opacity: 0.5})
             const loadedMesh = new THREE.Mesh(geometry.center(), material)

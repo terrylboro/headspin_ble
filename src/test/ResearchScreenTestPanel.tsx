@@ -4,6 +4,7 @@ import { Button, Card, Group, Stack, Switch, Text, Title, Box, useMantineTheme }
 import { useTreatment } from '../context/TreatmentProvider';
 import ManualCanalRendering from './ManualCanalRendering';
 import { TreatmentStage } from '../types/treatmentTypes';
+// import { LineChart } from '';
 
 type ResearchScreenTestProps = {
   bleStatus: 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -29,8 +30,10 @@ export default function ResearchScreenTestPanel({
   } = useTreatment();
 
   const theme = useMantineTheme();
+  const treatment = useTreatment();
 
   return (
+    <Stack h="100%" gap="xl">
     < Group align="stretch" grow>
     <Card withBorder shadow="sm" radius="md" p="lg">
       <Stack gap="md">
@@ -141,5 +144,13 @@ export default function ResearchScreenTestPanel({
       </Stack>
     </Card>
   </Group>
+
+                    // Useful components
+ <Card withBorder shadow="sm" radius="md">
+         <Text fw={600}>Latest data</Text>
+         <Text fw={600}>aX | aY | aZ | gX | gY | gZ | Roll | Pitch | Yaw</Text>
+         <Text>{treatment.latestSampleText}</Text>
+         </Card>
+  </Stack>
   );
 }
