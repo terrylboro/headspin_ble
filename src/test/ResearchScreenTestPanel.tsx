@@ -6,7 +6,7 @@ import ManualCanalRendering from './ManualCanalRendering';
 import { TreatmentStage } from '../types/treatmentTypes';
 
 import useSound from "use-sound"
-// import { LineChart } from '';
+import LiveChartCard from '../custom/liveChartCard';
 
 type ResearchScreenTestProps = {
   bleStatus: 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -40,11 +40,15 @@ export default function ResearchScreenTestPanel({
 
   return (
     <Stack h="100%" gap="xl">
+      <LiveChartCard
+          title="Simulated Bluetooth Data Stream"
+          points={50}
+          updateIntervalMs={100}
+      />
     < Group align="stretch" grow>
     <Card withBorder shadow="sm" radius="md" p="lg">
       <Stack gap="md">
         <Title order={4}>Debug controls</Title>
-
         <Group>
             <Card withBorder shadow="sm" radius="md" p="xl"
                 h="100%" w="100%" style={{ minHeight: 120 }} >
@@ -54,19 +58,7 @@ export default function ResearchScreenTestPanel({
                     {bleStatus === 'connected' ? 'Device Connected' : 'Connect Device'}
                 </Button>
 
-                {/* <LineChart
-                    h={320}
-                    data={data}
-                    dataKey="time"
-                    withLegend
-                    curveType="monotone"
-                    yAxisLabel="Value"
-                    xAxisLabel="Time"
-                    series={[
-                    { name: 'temperature', color: 'red.6', label: 'Temperature' },
-                    { name: 'pressure', color: 'blue.6', label: 'Pressure' },
-                    ]}
-                /> */}
+                
 
                 </Stack>
             </Card>

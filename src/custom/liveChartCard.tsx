@@ -1,10 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+
+import { useEffect, useRef, useState } from 'react';
 import { Badge, Card, Group, Stack, Text, Title } from '@mantine/core';
 import { LineChart } from '@mantine/charts';
+import { useTreatment } from '../context/TreatmentProvider';
 
 type ChartSample = {
   sample: string;
-  value: number;
+  pitch: number;
+  roll: number;
+  yaw: number;
 };
 
 type LiveChartCardProps = {
@@ -13,59 +17,62 @@ type LiveChartCardProps = {
   updateIntervalMs?: number;
 };
 
-function createSample(step: number): ChartSample {
-  const waveA = Math.sin(step / 5) * 14;
-  const waveB = Math.cos(step / 11) * 9;
-  const noise = (Math.random() - 0.5) * 4;
-  const value = Math.max(0, Math.min(100, 50 + waveA + waveB + noise));
+type OrientationSnapshot = Omit<ChartSample, 'sample'>;
 
+function toDegrees(valueInRadians: number) {
+  return Number(((valueInRadians * 180) / Math.PI).toFixed(2));
+}
+
+function createChartSample(step: number, orientation: OrientationSnapshot): ChartSample {
   return {
     sample: `${step}`,
-    value: Number(value.toFixed(2)),
+    ...orientation,
   };
 }
 
-function createInitialData(points: number) {
-  return Array.from({ length: points }, (_, index) => createSample(index));
+function createInitialData(points: number, orientation: OrientationSnapshot) {
+  return Array.from(
+    { length: points },
+    (_, index) => createChartSample(index + 1, orientation)
+  );
 }
 
 export default function LiveChartCard({
-  title = 'Live line chart',
+  title = 'Live IMU Orientation',
   points = 40,
   updateIntervalMs = 350,
 }: LiveChartCardProps) {
-  const [nextStep, setNextStep] = useState(points);
-  const [data, setData] = useState<ChartSample[]>(() => createInitialData(points));
+  const treatment = useTreatment();
+  const nextStepRef = useRef(1);
+  const [data, setData] = useState<ChartSample[]>([]);
+  const lastSampleTimeRef = useRef(0);
 
   useEffect(() => {
-    setData(createInitialData(points));
-    setNextStep(points);
-  }, [points]);
-
-  useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      setNextStep((currentStep) => {
-        const upcomingStep = currentStep + 1;
-
-        setData((currentData) => [
-          ...currentData.slice(-(points - 1)),
-          createSample(upcomingStep),
-        ]);
-
-        return upcomingStep;
-      });
-    }, updateIntervalMs);
-
-    return () => {
-      window.clearInterval(intervalId);
+    const orientation = {
+      pitch: toDegrees(treatment.pitchValue),
+      roll: toDegrees(treatment.rollValue),
+      yaw: toDegrees(treatment.yawValue),
     };
-  }, [points, updateIntervalMs]);
+
+    const now = Date.now();
+    if (now - lastSampleTimeRef.current < updateIntervalMs) {
+      return;
+    }
+
+    lastSampleTimeRef.current = now;
+
+    setData((currentData) => {
+      const nextSample = createChartSample(nextStepRef.current, orientation);
+      nextStepRef.current += 1;
+
+      const seededData =
+        currentData.length === 0 ? createInitialData(Math.max(points - 1, 0), orientation) : currentData;
+
+      return [...seededData.slice(-(points - 1)), nextSample];
+    });
+  }, [points, treatment.pitchValue, treatment.rollValue, treatment.yawValue, updateIntervalMs]);
 
   const latestPoint = data[data.length - 1];
-  const averageValue = useMemo(() => {
-    const total = data.reduce((sum, point) => sum + point.value, 0);
-    return total / Math.max(data.length, 1);
-  }, [data]);
 
   return (
     <Card withBorder shadow="sm" radius="md" p="xs">
@@ -74,13 +81,12 @@ export default function LiveChartCard({
           <div>
             <Title order={2}>{title}</Title>
             <Text c="dimmed" size="sm">
-              Dummy stream updating on an interval. Later we can replace this state update with
-              incoming Bluetooth values.
+              Rolling history of the latest IMU-derived Euler angles from the treatment context.
             </Text>
           </div>
 
-          <Badge color="blue" variant="light">
-            Demo stream
+          <Badge color="teal" variant="light">
+            Live IMU
           </Badge>
         </Group>
 
@@ -90,25 +96,32 @@ export default function LiveChartCard({
           dataKey="sample"
           withLegend={false}
           withDots={false}
-          series={[{ name: 'value', color: 'blue.6' }]}
+          series={[
+            { name: 'pitch', color: 'blue.6' },
+            { name: 'roll', color: 'grape.6' },
+            { name: 'yaw', color: 'orange.6' },
+          ]}
           curveType="natural"
           strokeWidth={3}
           gridAxis="xy"
           xAxisLabel="Sample"
-          yAxisLabel="Value"
-          yAxisProps={{ domain: [0, 100] }}
+          yAxisLabel="Degrees"
+          yAxisProps={{ domain: [-180, 180] }}
           tickLine="none"
         />
 
         <Group justify="space-between">
           <Text size="sm" c="dimmed">
-            Latest: {latestPoint?.value.toFixed(1)}
+            Pitch: {latestPoint?.pitch.toFixed(1) ?? '0.0'} deg
           </Text>
           <Text size="sm" c="dimmed">
-            Average: {averageValue.toFixed(1)}
+            Roll: {latestPoint?.roll.toFixed(1) ?? '0.0'} deg
           </Text>
           <Text size="sm" c="dimmed">
-            Samples shown: {data.length}
+            Yaw: {latestPoint?.yaw.toFixed(1) ?? '0.0'} deg
+          </Text>
+          <Text size="sm" c="dimmed">
+            Samples: {data.length}
           </Text>
         </Group>
       </Stack>
