@@ -133,13 +133,13 @@ export function decodeNumericIMUPacket(input: DataView | ArrayBuffer): number[] 
 
     // Apply bias correction
     // These values work for the first Xiao board
-    // gx -= 0.05;
-    // gy += 0.16;
-    // gz += 0.08;
-    // For the second, use:
-    gx -= 0.053;
-    gy += 0.17;
-    gz += 0.045;
+    gx -= 0.04;
+    gy += 0.15;
+    gz += 0.075;
+    // // For the second, use:
+    // gx -= 0.053;
+    // gy += 0.17;
+    // gz += 0.045;
 
     arr.push(ax, ay, az, gx, gy, gz);
 

@@ -24,6 +24,7 @@ import { TreatmentStage, HoldDurationType } from '../types/treatmentTypes';
 import AlignmentProgress from '../custom/alignmentProgress';
 import LiveChartCard from '../custom/liveChartCard';
 import LiveWebcam from '../components/LiveWebcam';
+import SimpleTimer from '../custom/simpleTimer';
 
 const sliderMarks = [
   { value: 30, label: '30s' },
@@ -84,7 +85,7 @@ export default function ResearchScreen({
         <Box style={{ flex: 1, minWidth: 0, display: 'flex' }}>
           <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 480, height: '100%' }}>
             <Stack h="100%">
-              <Text fw={600}>Control</Text>
+              <Text fw={600}>Stage Progress</Text>
 
               {/* <Text fw={600} >Hold time</Text>
               <Slider
@@ -96,11 +97,17 @@ export default function ResearchScreen({
                   onChange={(value) => treatment.dispatch({type: 'SET_HOLD_DURATION', holdDuration: value as HoldDurationType})}
               /> */}
 
-              <Switch mt="md" defaultChecked label="Show arrows" onChange={() => treatment.setShowGuidanceArrows(!treatment.showGuidanceArrows)}/>
+              {/* <Switch mt="md" defaultChecked label="Show arrows" onChange={() => treatment.setShowGuidanceArrows(!treatment.showGuidanceArrows)}/> */}
 
               <Button onClick={() => treatment.dispatch({ type: 'PROGRESS' })}>
-                Progress
+                Progress Stage
               </Button>
+
+              <Button onClick={() => treatment.dispatch({ type: 'RESET_PROGRESS' })}>
+                Restart Treatment
+              </Button>
+
+              <Text fw={600}>Recording</Text>
               
               <Button
                 variant={treatment.isRecording ? 'light' : 'filled'}
@@ -117,9 +124,9 @@ export default function ResearchScreen({
                 {treatment.isRecording ? 'Stop Recording' : 'Record'}
               </Button>
               
-              <Button mt="md" onClick={() => treatment.dispatch({ type: 'RESET_PROGRESS' })}>
-                Restart Treatment
-              </Button>
+              <SimpleTimer />
+
+              
 
               {/* < Stepper active={treatment.state.stage} orientation="vertical" mt="md" size="sm" radius="xl" color={(treatment.state.stage === TreatmentStage.COMPLETE) ? "green" : "blue"} styles={{ step: { cursor: "default" } }}>
                 <Stepper.Step label="Position 1" description="45 degrees left" />
@@ -144,6 +151,7 @@ export default function ResearchScreen({
               <Group justify="space-between">
                 <Text fw={600}>Canal Alignment</Text>
                 <Text size="sm">{(treatment.alignmentRef!.current * 100).toFixed(0)}%</Text>
+                <Switch mt="md" defaultChecked label="Show arrows" onChange={() => treatment.setShowGuidanceArrows(!treatment.showGuidanceArrows)}/>
               </Group>
               {/* <Text fw={600}>Canal Alignment</Text> */}
               
