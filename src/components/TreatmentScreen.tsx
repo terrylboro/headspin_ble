@@ -14,6 +14,7 @@ import {
   Slider,
   Switch,
 } from '@mantine/core';
+import { useState } from 'react';
 
 import HeadRendering from  './HeadRendering';
 import CanalRendering from './CanalRendering';
@@ -38,10 +39,34 @@ export default function TreatmentScreen({
 }: TreatmentScreenProps) {
 
   const treatment =  useTreatment();
+  const [selectedHoldDuration, setSelectedHoldDuration] = useState<HoldDurationType>(
+    treatment.state.holdDurationSec === 5 ? 45 : treatment.state.holdDurationSec
+  );
+  const [isShortHoldDemo, setIsShortHoldDemo] = useState(false);
 
   function calibrateOrientation() {
         const current = treatment.matrixRef.current.clone();
         treatment.offsetMatrixRef.current.copy(current).invert();
+  }
+
+  function handleShortHoldDemoToggle() {
+    setIsShortHoldDemo((isEnabled) => {
+      const nextIsEnabled = !isEnabled;
+      treatment.dispatch({
+        type: 'SET_HOLD_DURATION',
+        holdDuration: nextIsEnabled ? 5 : selectedHoldDuration,
+      });
+      return nextIsEnabled;
+    });
+  }
+
+  function handleHoldDurationChange(value: number) {
+    const holdDuration = value as HoldDurationType;
+    setSelectedHoldDuration(holdDuration);
+
+    if (!isShortHoldDemo) {
+      treatment.dispatch({ type: 'SET_HOLD_DURATION', holdDuration });
+    }
   }
 
   return (
@@ -59,25 +84,39 @@ export default function TreatmentScreen({
         <Box style={{ flex: 1, minWidth: 0, display: 'flex' }}>
           <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 480, height: '100%' }}>
             <Stack h="100%">
-              <Text fw={600}>Control</Text>
-
-              <Text fw={600} >Hold time</Text>
+              <Group justify="space-between" align="stretch">
+                <Stack>
+                  <Text fw={600}>Control</Text>
+                  <Text fw={600} >Hold time</Text>
+                </Stack>
+                
+                <Button size="xs" w={90} h={72}
+                  variant={isShortHoldDemo ? "outline" : "light"}
+                  color={isShortHoldDemo ? "green" : "blue"}
+                  aria-pressed={isShortHoldDemo}
+                  onClick={handleShortHoldDemoToggle}
+                  styles={{label: { whiteSpace: 'normal', textAlign: 'center', lineHeight: 1.15,},}}
+                >
+                  Demo: Short Hold
+                </Button>
+              </Group>
+              
               <Slider
-                  defaultValue={45}
+                  value={selectedHoldDuration}
                   min={30} max={60}
                   step={15}
                   marks={sliderMarks}
                   label={(val) => sliderMarks.find((mark) => mark.value === val)!.label} 
-                  onChange={(value) => treatment.dispatch({type: 'SET_HOLD_DURATION', holdDuration: value as HoldDurationType})}
+                  onChange={handleHoldDurationChange}
               />
 
               {/* <Switch mt="md" defaultChecked label="Show arrows" onChange={() => treatment.setShowGuidanceArrows(!treatment.showGuidanceArrows)}/> */}
 
-              <Button mt="md" onClick={() => treatment.dispatch({ type: 'SET_HOLD_DURATION', holdDuration: 5 as HoldDurationType  })}>
-                Short Hold
+              <Button mt="md" onClick={() => treatment.dispatch({ type: 'PROGRESS' })}>
+                Progress Position
               </Button>
               
-              <Button mt="md" onClick={() => treatment.dispatch({ type: 'RESET_PROGRESS' })}>
+              <Button onClick={() => treatment.dispatch({ type: 'RESET_PROGRESS' })}>
                 Restart Treatment
               </Button>
 
