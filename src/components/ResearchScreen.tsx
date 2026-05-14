@@ -42,11 +42,6 @@ export default function ResearchScreen({
 
   const treatment = useTreatment();
 
-  function calibrateOrientation() {
-        const current = treatment.matrixRef.current.clone();
-        treatment.offsetMatrixRef.current.copy(current).invert();
-  }
-
   return (
     <Stack h="100%">
 

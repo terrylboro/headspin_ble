@@ -14,23 +14,19 @@ import ResearchScreenTestPanel from './test/ResearchScreenTestPanel';
 // Mantine UI imports
 import {
   AppShell,
-  Badge,
-  Box,
   Button,
-  Card,
-  Group,
-  MantineProvider,
-  Progress,
-  Stack,
-  Text,
-  Title,
+  Modal,
   useMantineTheme,
 } from '@mantine/core';
+
 import StateMachineTestPanel from './test/StateMachineTestPanel';
 import CalibrationScreen from './components/CalibrationScreen';
 import ResearchScreen from './components/ResearchScreen';
+import GyroscopeCalibrationScreen from './components/GyroscopeCalibrationScreen';
 
 type Screen = 'setup' | 'calibrate' | 'treatment' | 'research';
+
+
 
 
 function App(): JSX.Element { 
@@ -41,6 +37,8 @@ function App(): JSX.Element {
   const [selectedCanals, setSelectedCanals] = useState<string[]>([]);
 
   const testMode = false;
+  // To control calibration popup
+  const [calibrationOpen, setCalibrationOpen] = useState(false);
 
  
   // Mantine theming
@@ -58,9 +56,18 @@ function App(): JSX.Element {
           backgroundColor: theme.colors.blue[6],
           color: theme.white,
         }}>
-        <TopBar setScreen={setScreen} />
+        <TopBar setScreen={setScreen} setCalibrationOpen={setCalibrationOpen} />
+
       </AppShell.Header>
 
+      <Modal
+        opened={calibrationOpen}
+        onClose={() => setCalibrationOpen(false)}
+        title="Gyroscope calibration"
+        centered
+      >
+        <GyroscopeCalibrationScreen onComplete={() => setCalibrationOpen(false)} />
+    </Modal>
       
 
     <AppShell.Main

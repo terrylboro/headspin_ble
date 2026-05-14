@@ -16,7 +16,7 @@ type LiveChartCardProps = {
   orientationRef: React.MutableRefObject<OrientationSnapshot>;
 };
 
-type OrientationSnapshot = Omit<ChartSample, 'sample'>;
+export type OrientationSnapshot = Omit<ChartSample, 'sample'>;
 
 function toDegrees(valueInRadians: number) {
   return Number(((valueInRadians * 180) / Math.PI).toFixed(2));

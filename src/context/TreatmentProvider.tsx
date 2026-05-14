@@ -9,7 +9,7 @@ import React, {
   useReducer,
 } from 'react';
 // import * as THREE from 'three';
-import { Matrix4, Quaternion } from 'three';
+import { Euler, Matrix4, Quaternion } from 'three';
 import { useBleDevice } from './BleProvider';
 import { decodeNumericIMUPacket } from '../utils/imuDecoder';
 
@@ -63,6 +63,10 @@ type TreatmentContextValue = {
   setIsTreating: (value: boolean) => void;
 
   latestSampleText: string;
+  latestImuSample: LatestImuSample | null;
+  gyroscopeOffsets: GyroscopeOffsets;
+  setGyroscopeOffsets: (offsets: GyroscopeOffsets) => void;
+  clearGyroscopeOffsets: () => void;
 
   orientationRef: React.MutableRefObject<{
     roll: number;
@@ -97,6 +101,22 @@ type RecordedImuSample = {
   yaw: number;
 };
 
+export type GyroscopeOffsets = {
+  gx: number;
+  gy: number;
+  gz: number;
+};
+
+export type LatestImuSample = {
+  timestamp: number;
+  ax: number;
+  ay: number;
+  az: number;
+  gx: number;
+  gy: number;
+  gz: number;
+};
+
 const TreatmentContext = createContext<TreatmentContextValue | null>(null);
 
 /**
@@ -126,6 +146,12 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
   const [isTreating, setIsTreating] = useState(false);
 
   const [latestSampleText, setLatestSampleText] = useState('Waiting for data');
+  const [latestImuSample, setLatestImuSample] = useState<LatestImuSample | null>(null);
+  const [gyroscopeOffsets, setGyroscopeOffsetsState] = useState<GyroscopeOffsets>({
+    gx: 0,
+    gy: 0,
+    gz: 0,
+  });
 
   const [showGuidanceArrows, setShowGuidanceArrows] = useState(true);
 
@@ -135,6 +161,11 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
   const offsetMatrixRef = useRef(new Matrix4());
   const recordedSamplesRef = useRef<RecordedImuSample[]>([]);
   const recordingStartTimestampRef = useRef<number | null>(null);
+  const gyroscopeOffsetsRef = useRef<GyroscopeOffsets>({
+    gx: 0,
+    gy: 0,
+    gz: 0,
+  });
   const orientationRef = useRef({
     roll: 0,
     pitch: 0,
@@ -196,6 +227,15 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
 
     holdStartRef.current = null;
   }, []);
+
+  const setGyroscopeOffsets = useCallback((offsets: GyroscopeOffsets) => {
+    gyroscopeOffsetsRef.current = offsets;
+    setGyroscopeOffsetsState(offsets);
+  }, []);
+
+  const clearGyroscopeOffsets = useCallback(() => {
+    setGyroscopeOffsets({ gx: 0, gy: 0, gz: 0 });
+  }, [setGyroscopeOffsets]);
 
   const downloadRecording = useCallback((samples: RecordedImuSample[]) => {
     if (samples.length === 0) {
@@ -273,6 +313,21 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
 
     const dataArr = decodeNumericIMUPacket(latestMessage.data);
 
+    setLatestImuSample({
+      timestamp: latestMessage.timestamp,
+      ax: dataArr[0],
+      ay: dataArr[1],
+      az: dataArr[2],
+      gx: dataArr[3],
+      gy: dataArr[4],
+      gz: dataArr[5],
+    });
+
+    const currentGyroscopeOffsets = gyroscopeOffsetsRef.current;
+    dataArr[3] -= currentGyroscopeOffsets.gx;
+    dataArr[4] -= currentGyroscopeOffsets.gy;
+    dataArr[5] -= currentGyroscopeOffsets.gz;
+
     // console.log(dataArr);
 
     
@@ -310,11 +365,16 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
          */
         matrixRef.current.copy(mat);
 
+        const correctedQuaternion = new Quaternion();
+        const correctedMatrix = offsetMatrixRef.current.clone().multiply(matrixRef.current);
+        changeQuaternionBase(correctedMatrix, correctedQuaternion);
+        const correctedEuler = new Euler().setFromQuaternion(correctedQuaternion, 'XYZ');
+
         setLatestSampleText(`Received data: ${dataArr.map((v) => v.toFixed(2)).join(' | ')} | ${filtPos.roll.toFixed(3)} | ${filtPos.pitch.toFixed(3)} | ${filtPos.yaw.toFixed(3)}`);
 
-        orientationRef.current.roll = filtPos.roll;
-        orientationRef.current.pitch = filtPos.pitch;
-        orientationRef.current.yaw = filtPos.yaw;
+        orientationRef.current.roll = correctedEuler.x;
+        orientationRef.current.pitch = correctedEuler.y;
+        orientationRef.current.yaw = correctedEuler.z;
 
         if (isRecording) {
           if (recordingStartTimestampRef.current === null) {
@@ -330,9 +390,9 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
             gx: dataArr[3],
             gy: dataArr[4],
             gz: dataArr[5],
-            roll: filtPos.roll * 180 / Math.PI,
-            pitch: filtPos.pitch * 180 / Math.PI,
-            yaw: filtPos.yaw * 180 / Math.PI,
+            roll: orientationRef.current.roll * 180 / Math.PI,
+            pitch: orientationRef.current.pitch * 180 / Math.PI,
+            yaw: orientationRef.current.yaw * 180 / Math.PI,
           });
         }
 
@@ -383,6 +443,10 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
       setIsTreating,
 
       latestSampleText,
+      latestImuSample,
+      gyroscopeOffsets,
+      setGyroscopeOffsets,
+      clearGyroscopeOffsets,
 
       orientationRef,
       isRecording,
@@ -408,6 +472,10 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
       dispatch,
       isTreating,
       latestSampleText,
+      latestImuSample,
+      gyroscopeOffsets,
+      setGyroscopeOffsets,
+      clearGyroscopeOffsets,
       orientationRef,
       isRecording,
       startRecording,
