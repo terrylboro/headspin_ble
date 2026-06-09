@@ -13,6 +13,7 @@ type UseBleDeviceOptions = {
 export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
   const [deviceName, setDeviceName] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
+  const [connecting, setConnecting] = useState(false);
 
   const [serviceUUID, setServiceUUID] = useState(
     options?.initialServiceUUID ?? '12345678-1234-5678-1234-56789abcdef0'
@@ -53,9 +54,11 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
 
   const connect = useCallback(async () => {
     setError(null);
+    setConnecting(true);
 
     if (!navigator.bluetooth) {
       setError('Web Bluetooth API not available in this browser. Use Chrome or Edge.');
+      setConnecting(false);
       return false;
     }
 
@@ -137,6 +140,8 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
       setError(e?.message || String(e));
       setConnected(false);
       return false;
+    } finally {
+      setConnecting(false);
     }
   }, [serviceUUID, charUUID, onCharacteristicValueChanged, appendMessage]);
 
@@ -188,6 +193,7 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
   return {
     deviceName,
     connected,
+    connecting,
     serviceUUID,
     setServiceUUID,
     charUUID,
