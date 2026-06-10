@@ -23,6 +23,7 @@ import StateMachineTestPanel from './test/StateMachineTestPanel';
 import CalibrationScreen from './components/CalibrationScreen';
 import ResearchScreen from './components/ResearchScreen';
 import GyroscopeCalibrationScreen from './components/GyroscopeCalibrationScreen';
+import { truncate } from 'node:fs';
 
 type Screen = 'setup' | 'calibrate' | 'treatment' | 'research';
 
@@ -36,7 +37,7 @@ function App(): JSX.Element {
   const [screen, setScreen] = useState<Screen>('setup');
   const [selectedCanals, setSelectedCanals] = useState<string[]>([]);
 
-  const testMode = false;
+  const testMode = truncate;
   // To control calibration popup
   const [calibrationOpen, setCalibrationOpen] = useState(false);
 

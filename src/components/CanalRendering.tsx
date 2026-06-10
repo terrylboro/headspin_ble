@@ -13,6 +13,7 @@ import { TreatmentStage } from "../types/treatmentTypes";
 import { canalDirections } from "../utils/canalDirections";
 import { createThickArrow } from "../custom/thickArrow";
 import { useSound } from "use-sound";
+import { getHighlightedMeshPart } from "../utils/meshPartDisplay";
 
 
 // {canal, ear, affectedCanal, matrixRef, offsetMatrixRef, stage, alignmentRef, alignedRef}: Props
@@ -27,6 +28,7 @@ const CanalRendering = () => {
     const [playAligned] = useSound(process.env.PUBLIC_URL + "/sounds/aligned.mp3")
     const [playNotAligned] = useSound(process.env.PUBLIC_URL + "/sounds/naligned.mp3")
     const [playNext] = useSound(process.env.PUBLIC_URL + "/sounds/stagedone.mp3")
+    const highlightedMeshPart = getHighlightedMeshPart(state.affectedCanal, state.stage, state.isAligned)
 
     // Scene setting variables
     const camera = useRef<THREE.Camera>()
@@ -149,7 +151,7 @@ const CanalRendering = () => {
                     loadedMesh.applyMatrix4(new THREE.Matrix4().makeScale(1, -1, 1))
                 }
                 canalGroup.current.add(loadedMesh)
-                meshParts.current.push(loadedMesh)
+                meshParts.current[i] = loadedMesh
             })
         }
 
@@ -161,7 +163,10 @@ const CanalRendering = () => {
             const t = clock.getElapsedTime();
             const opacity = 0.95 + 0.3 * Math.sin(t * 4);
 
-            if (meshParts.current[meshPartsLength[state.affectedCanal ? state.affectedCanal : 5] - 1]) {
+            const meshCount = meshPartsLength[state.affectedCanal ? state.affectedCanal : 5];
+            const meshesLoaded = meshParts.current.length >= meshCount && meshParts.current.slice(0, meshCount).every(Boolean);
+
+            if (meshesLoaded) {
 
                 // Rotate the group
                 const qB = new THREE.Quaternion();
@@ -246,7 +251,24 @@ const CanalRendering = () => {
 
 
     return (
-            <div id="canalCanvasContainer" style={{height: "100%", aspectRatio: '1 / 1', alignItems: "center", backgroundColor: BACKGR_COLOUR_CSS}}>
+            <div id="canalCanvasContainer" style={{height: "100%", aspectRatio: '1 / 1', alignItems: "center", backgroundColor: BACKGR_COLOUR_CSS, position: "relative"}}>
+            <div
+                style={{
+                    position: "absolute",
+                    top: 8,
+                    left: 8,
+                    zIndex: 1,
+                    padding: "6px 8px",
+                    borderRadius: 6,
+                    background: "rgba(255, 255, 255, 0.88)",
+                    color: "#222222",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    lineHeight: 1.3,
+                }}
+            >
+                Mesh: {highlightedMeshPart.partName} | Part: {highlightedMeshPart.partNumber} | Colour: {highlightedMeshPart.colourName}
+            </div>
             <canvas ref={canvasRef}
                 style={{ width: "100%", height: "100%", display: "block", margin: "0 auto" }}
             />

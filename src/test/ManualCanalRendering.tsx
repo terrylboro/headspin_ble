@@ -12,6 +12,7 @@ import { TreatmentStage } from "../types/treatmentTypes";
 
 import { createThickArrow } from "../custom/thickArrow";
 import LiveWebcam from "../components/LiveWebcam";
+import { getHighlightedMeshPart } from "../utils/meshPartDisplay";
 
 
 const ManualCanalRendering = () => {
@@ -50,6 +51,7 @@ const ManualCanalRendering = () => {
     const [x, setX] = useState(0);
     const [y, setY] = useState(0);
     const [z, setZ] = useState(-1);
+    const highlightedMeshPart = getHighlightedMeshPart(state.affectedCanal, state.stage, state.isAligned, true)
 
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -272,7 +274,7 @@ const ManualCanalRendering = () => {
                 }
                 // scene.current!.add(loadedMesh)
                 canalGroup.current.add(loadedMesh)
-                meshParts.current.push(loadedMesh)
+                meshParts.current[i] = loadedMesh
             })
         }
 
@@ -285,7 +287,10 @@ const ManualCanalRendering = () => {
 
             // console.log(meshParts.current[meshPartsLength[state.affectedCanal ? state.affectedCanal : 5] ])
 
-            if (meshParts.current[meshPartsLength[state.affectedCanal ? state.affectedCanal : 5] -1]) {
+            const meshCount = meshPartsLength[state.affectedCanal ? state.affectedCanal : 5];
+            const meshesLoaded = meshParts.current.length >= meshCount && meshParts.current.slice(0, meshCount).every(Boolean);
+
+            if (meshesLoaded) {
 
             // Rotate the group
             const qB = new THREE.Quaternion();
@@ -395,7 +400,12 @@ const ManualCanalRendering = () => {
                 
                 <Stack mt="md" gap="sm">
 
-                    <canvas ref={canvasRef} />
+                    <Stack gap={4}>
+                        <Text size="sm" fw={600}>
+                            Mesh: {highlightedMeshPart.partName} | Part: {highlightedMeshPart.partNumber} | Colour: {highlightedMeshPart.colourName}
+                        </Text>
+                        <canvas ref={canvasRef} />
+                    </Stack>
 
 
                     <Text fw={600}>Yaw</Text>
