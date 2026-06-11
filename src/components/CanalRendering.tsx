@@ -202,14 +202,6 @@ const CanalRendering = () => {
                     // Handle case where canal loses alignment
                     dispatch({ type: 'ALIGNMENT_EXIT'})
                 }
-    
-                // if (state.stage === TreatmentStage.COMPLETE) {
-                //     const material = new THREE.MeshStandardMaterial({color: GREEN_COLOUR, side: THREE.DoubleSide, flatShading: true})
-                //     meshParts.current.forEach((mesh) => {
-                //         mesh.material = material
-                //     })
-                //     renderer.current!.render(scene.current!, camera.current!)
-                // } 
                 
                 // else {
                 if (state.isAligned) {

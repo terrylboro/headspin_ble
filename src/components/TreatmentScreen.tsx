@@ -6,21 +6,17 @@ import {
   Progress,
   Stack,
   Text,
-  Title,
   Stepper,
-  Grid,
   Flex,
   Box,
   Slider,
-  Switch,
+  Image,
 } from '@mantine/core';
 import { useState } from 'react';
 
 import HeadRendering from  './HeadRendering';
 import CanalRendering from './CanalRendering';
 import { useTreatment } from '../context/TreatmentProvider';
-import ManualHeadRendering from '../test/ManualHeadRendering';
-import ManualCanalRendering from '../test/ManualCanalRendering';
 import { TreatmentStage, HoldDurationType } from '../types/treatmentTypes';
 import AlignmentProgress from '../custom/alignmentProgress';
 
@@ -28,6 +24,25 @@ const sliderMarks = [
   { value: 30, label: '30s' },
   { value: 45, label: '45s' },
   { value: 60, label: '60s' },
+];
+
+const treatmentSteps = [
+  {
+    label: 'Position 1',
+    imageSrc: process.env.PUBLIC_URL + '/diagrams/Position 1 AI Cropped.png',
+  },
+  {
+    label: 'Position 2',
+    imageSrc: process.env.PUBLIC_URL + '/diagrams/Position 2 AI Cropped.png',
+  },
+  {
+    label: 'Position 3',
+    imageSrc: process.env.PUBLIC_URL + '/diagrams/Position 3 AI Cropped.png',
+  },
+  {
+    label: 'Position 4',
+    imageSrc: process.env.PUBLIC_URL + '/diagrams/End Position AI.png',
+  },
 ];
 
 type TreatmentScreenProps = {
@@ -70,10 +85,10 @@ export default function TreatmentScreen({
   }
 
   return (
-    <Stack h="100%">
+    <Stack h="100%" style={{ minHeight: 0 }}>
 
       {/* <Group align="stretch" grow style={{ flex: 1 }}> */}
-      <Flex gap="xl" wrap="nowrap" w="100%" align="stretch">
+      <Flex gap="xl" wrap="nowrap" w="100%" h="100%" align="stretch" style={{ minHeight: 0 }}>
 
         {/* <Card withBorder shadow="sm" radius="md">
         <Text fw={600}>Latest data</Text>
@@ -82,8 +97,8 @@ export default function TreatmentScreen({
         </Card> */}
 
         <Box style={{ flex: 1, minWidth: 0, display: 'flex' }}>
-          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 480, height: '100%' }}>
-            <Stack h="100%">
+          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 480, height: '100%', overflow: 'hidden' }}>
+            <Stack h="100%" style={{ minHeight: 0 }}>
               <Group justify="space-between" align="stretch">
                 <Stack>
                   <Text fw={600}>Control</Text>
@@ -120,12 +135,54 @@ export default function TreatmentScreen({
                 Restart Treatment
               </Button>
 
-              < Stepper active={treatment.state.stage} orientation="vertical" mt="md" size="sm" radius="xl" color={(treatment.state.stage === TreatmentStage.COMPLETE) ? "green" : "blue"} styles={{ step: { cursor: "default" } }}>
-                <Stepper.Step label="Position 1" description="45 degrees left" />
-                <Stepper.Step label="Position 2" description="45 degrees right" />
-                <Stepper.Step label="Position 3" description="135 degrees right" />
-                <Stepper.Step label="Position 4" description="Upright, chin tucked" />
-              </Stepper>
+              <Box style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+                <Stepper
+                  active={treatment.state.stage}
+                  orientation="vertical"
+                  mt="md"
+                  size="sm"
+                  radius="xl"
+                  color={(treatment.state.stage === TreatmentStage.COMPLETE) ? "green" : "blue"}
+                  styles={{ step: { cursor: "default" }, content: { paddingTop: 12 } }}
+                >
+                  {treatmentSteps.map((step, index) => (
+                    <Stepper.Step
+                      key={step.label}
+                      label={step.label}
+                      description={
+                        <span style={{ display: 'block', marginTop: 8, width: '100%' }}>
+                          {treatment.state.stage === index && (
+                            <span
+                              style={{
+                                display: 'block',
+                                width: '100%',
+                                height: 'clamp(220px, 34vh, 420px)',
+                                borderRadius: 8,
+                                overflow: 'hidden',
+                                border: '1px solid var(--mantine-color-gray-3)',
+                                background: 'var(--mantine-color-gray-0)',
+                              }}
+                            >
+                              <Image
+                                src={step.imageSrc}
+                                alt={step.label}
+                                h="100%"
+                                w="100%"
+                                fit="contain"
+                              />
+                            </span>
+                          )}
+                        </span>
+                      }
+                    />
+                  ))}
+                  <Stepper.Completed>
+                    <Text size="sm" c="dimmed">
+                      Treatment complete
+                    </Text>
+                  </Stepper.Completed>
+                </Stepper>
+              </Box>
 
               
 
