@@ -177,8 +177,8 @@ export default function TreatmentScreen({
                     />
                   ))}
                   <Stepper.Completed>
-                    <Text size="sm" c="dimmed">
-                      Treatment complete
+                    <Text size="xl" >
+                      End of treatment
                     </Text>
                   </Stepper.Completed>
                 </Stepper>

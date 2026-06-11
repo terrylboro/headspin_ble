@@ -117,6 +117,72 @@ export type LatestImuSample = {
   gz: number;
 };
 
+const GYROSCOPE_OFFSETS_STORAGE_KEY = 'headspin_ble_gyroscope_offsets';
+
+function isGyroscopeOffsets(value: unknown): value is GyroscopeOffsets {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const offsets = value as Partial<GyroscopeOffsets>;
+  return (
+    typeof offsets.gx === 'number' &&
+    typeof offsets.gy === 'number' &&
+    typeof offsets.gz === 'number'
+  );
+}
+
+function readStoredGyroscopeOffsets(): GyroscopeOffsets {
+  if (typeof window === 'undefined') {
+    return { gx: 0, gy: 0, gz: 0 };
+  }
+
+  try {
+    const storedOffsets = window.localStorage.getItem(GYROSCOPE_OFFSETS_STORAGE_KEY);
+    if (!storedOffsets) {
+      return { gx: 0, gy: 0, gz: 0 };
+    }
+
+    const parsedOffsets = JSON.parse(storedOffsets);
+    return isGyroscopeOffsets(parsedOffsets) ? parsedOffsets : { gx: 0, gy: 0, gz: 0 };
+  } catch {
+    return { gx: 0, gy: 0, gz: 0 };
+  }
+}
+
+function writeStoredGyroscopeOffsets(offsets: GyroscopeOffsets) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.localStorage.setItem(
+    GYROSCOPE_OFFSETS_STORAGE_KEY,
+    JSON.stringify(offsets)
+  );
+}
+
+function removeStoredGyroscopeOffsets() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.localStorage.removeItem(GYROSCOPE_OFFSETS_STORAGE_KEY);
+}
+
+function applyGyroscopeOffsets(
+  sample: number[],
+  offsets: GyroscopeOffsets
+) {
+  return [
+    sample[0],
+    sample[1],
+    sample[2],
+    sample[3] - offsets.gx,
+    sample[4] - offsets.gy,
+    sample[5] - offsets.gz,
+  ];
+}
+
 const TreatmentContext = createContext<TreatmentContextValue | null>(null);
 
 /**
@@ -130,6 +196,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
 
   // Instantiate the reducer to manage the app state
   const [state, dispatch] = useReducer(treatmentReducer, initialState);
+  const initialGyroscopeOffsets = useMemo(readStoredGyroscopeOffsets, []);
 
   // Access BLE data from provider
   const ble = useBleDevice();
@@ -147,11 +214,9 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
 
   const [latestSampleText, setLatestSampleText] = useState('Waiting for data');
   const [latestImuSample, setLatestImuSample] = useState<LatestImuSample | null>(null);
-  const [gyroscopeOffsets, setGyroscopeOffsetsState] = useState<GyroscopeOffsets>({
-    gx: 0,
-    gy: 0,
-    gz: 0,
-  });
+  const [gyroscopeOffsets, setGyroscopeOffsetsState] = useState<GyroscopeOffsets>(
+    initialGyroscopeOffsets
+  );
 
   const [showGuidanceArrows, setShowGuidanceArrows] = useState(true);
 
@@ -161,11 +226,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
   const offsetMatrixRef = useRef(new Matrix4());
   const recordedSamplesRef = useRef<RecordedImuSample[]>([]);
   const recordingStartTimestampRef = useRef<number | null>(null);
-  const gyroscopeOffsetsRef = useRef<GyroscopeOffsets>({
-    gx: 0,
-    gy: 0,
-    gz: 0,
-  });
+  const gyroscopeOffsetsRef = useRef<GyroscopeOffsets>(initialGyroscopeOffsets);
   const orientationRef = useRef({
     roll: 0,
     pitch: 0,
@@ -231,11 +292,15 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
   const setGyroscopeOffsets = useCallback((offsets: GyroscopeOffsets) => {
     gyroscopeOffsetsRef.current = offsets;
     setGyroscopeOffsetsState(offsets);
+    writeStoredGyroscopeOffsets(offsets);
   }, []);
 
   const clearGyroscopeOffsets = useCallback(() => {
-    setGyroscopeOffsets({ gx: 0, gy: 0, gz: 0 });
-  }, [setGyroscopeOffsets]);
+    const emptyOffsets = { gx: 0, gy: 0, gz: 0 };
+    gyroscopeOffsetsRef.current = emptyOffsets;
+    setGyroscopeOffsetsState(emptyOffsets);
+    removeStoredGyroscopeOffsets();
+  }, []);
 
   const downloadRecording = useCallback((samples: RecordedImuSample[]) => {
     if (samples.length === 0) {
@@ -311,22 +376,22 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
     if (lastProcessedTimestampRef.current === latestMessage.timestamp) return;
     lastProcessedTimestampRef.current = latestMessage.timestamp;
 
-    const dataArr = decodeNumericIMUPacket(latestMessage.data);
+    const rawDataArr = decodeNumericIMUPacket(latestMessage.data);
 
     setLatestImuSample({
       timestamp: latestMessage.timestamp,
-      ax: dataArr[0],
-      ay: dataArr[1],
-      az: dataArr[2],
-      gx: dataArr[3],
-      gy: dataArr[4],
-      gz: dataArr[5],
+      ax: rawDataArr[0],
+      ay: rawDataArr[1],
+      az: rawDataArr[2],
+      gx: rawDataArr[3],
+      gy: rawDataArr[4],
+      gz: rawDataArr[5],
     });
 
-    const currentGyroscopeOffsets = gyroscopeOffsetsRef.current;
-    dataArr[3] -= currentGyroscopeOffsets.gx;
-    dataArr[4] -= currentGyroscopeOffsets.gy;
-    dataArr[5] -= currentGyroscopeOffsets.gz;
+    const dataArr = applyGyroscopeOffsets(
+      rawDataArr,
+      gyroscopeOffsetsRef.current
+    );
 
     // console.log(dataArr);
 
