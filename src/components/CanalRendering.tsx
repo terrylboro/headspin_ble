@@ -252,23 +252,7 @@ const CanalRendering = () => {
 
     return (
             <div id="canalCanvasContainer" style={{height: "100%", aspectRatio: '1 / 1', alignItems: "center", backgroundColor: BACKGR_COLOUR_CSS, position: "relative"}}>
-            <div
-                style={{
-                    position: "absolute",
-                    top: 8,
-                    left: 8,
-                    zIndex: 1,
-                    padding: "6px 8px",
-                    borderRadius: 6,
-                    background: "rgba(255, 255, 255, 0.88)",
-                    color: "#222222",
-                    fontSize: 14,
-                    fontWeight: 600,
-                    lineHeight: 1.3,
-                }}
-            >
-                Mesh: {highlightedMeshPart.partName} | Part: {highlightedMeshPart.partNumber} | Colour: {highlightedMeshPart.colourName}
-            </div>
+            
             <canvas ref={canvasRef}
                 style={{ width: "100%", height: "100%", display: "block", margin: "0 auto" }}
             />
