@@ -6,7 +6,7 @@ import { BLUE_COLOUR, ORANGE_COLOUR, BROWN_COLOUR, BACKGR_COLOUR, RED_COLOUR, BA
 import { changeQuaternionBase } from "../utils/changeBase";
 import {applyYawOffset} from "../utils/applyYawOffset"
 import { useTreatment } from "../context/TreatmentProvider";
-import { Button, Stack } from "@mantine/core";
+import { Text } from "@mantine/core";
 
 // interface Props {
 //     ear: "left" | "right" | "unselected"
@@ -20,7 +20,10 @@ type HeadRenderingProps = {
 // const HeadRendering = ({ear, matrixRef, offsetMatrixRef}: Props) => {
 const HeadRendering = ({calibrateMode} : HeadRenderingProps) => {
 
-    const { matrixRef, offsetMatrixRef, affectedEar } = useTreatment();
+    const { matrixRef, offsetMatrixRef, state } = useTreatment();
+    const selectedEarText = state.affectedEar
+        ? `${state.affectedEar[0].toUpperCase()}${state.affectedEar.slice(1)} ear selected`
+        : 'No ear selected';
 
     const camera = useRef<THREE.Camera>()
     const scene = useRef<THREE.Scene>()
@@ -72,12 +75,14 @@ const HeadRendering = ({calibrateMode} : HeadRenderingProps) => {
 
         // Load Ear Mesh
         const loader = new PLYLoader()
-        loader.load(process.env.PUBLIC_URL + "/rh_meshes/capsule_3x.ply", (geometry) => {
+        let earMeshPath;
+        earMeshPath = (state.affectedEar !== "right") ? (process.env.PUBLIC_URL + "/rh_meshes/capsule_3x.ply") : (process.env.PUBLIC_URL + "/new_right_meshes/capsule.ply");
+        loader.load(earMeshPath, (geometry) => {
 
             const material = new THREE.MeshStandardMaterial({color: BLUE_COLOUR, flatShading: true})
             const loadedMesh = new THREE.Mesh(geometry.center(), material)
 
-            loadedMesh.position.set(0, affectedEar === "left" ? -3.5 : 3.5, 0)
+            loadedMesh.position.set(0, state.affectedEar === "left" ? 3.5 : -3.5, 0)
             headGroup.current!.add(loadedMesh);
         })
 
@@ -113,11 +118,26 @@ const HeadRendering = ({calibrateMode} : HeadRenderingProps) => {
             scene.current!.clear() 
             meshParts.current = [] // flush any previous loadings
         }
-    }, [affectedEar, matrixRef, offsetMatrixRef])
+    }, [state.affectedEar, matrixRef, offsetMatrixRef])
 
 
     return (
-    <div id="headCanvasContainer" style={{ height: "100%", aspectRatio: "1 / 1", alignItems: "center", backgroundColor: "#000000"}}>
+    <div id="headCanvasContainer" style={{ height: "100%", aspectRatio: "1 / 1", alignItems: "center", backgroundColor: "#000000", position: "relative"}}>
+        {calibrateMode && (
+            <Text
+                size="sm"
+                c="white"
+                fw={600}
+                style={{
+                    position: "absolute",
+                    top: 12,
+                    left: 12,
+                    zIndex: 1,
+                }}
+            >
+                {selectedEarText}
+            </Text>
+        )}
         <canvas ref={canvasRef} id={"headCanvas"}
             style={{ width: "100%", height: "100%", display: "block", margin: "0 auto" }}
         />

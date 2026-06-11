@@ -24,6 +24,7 @@ import CalibrationScreen from './components/CalibrationScreen';
 import ResearchScreen from './components/ResearchScreen';
 import GyroscopeCalibrationScreen from './components/GyroscopeCalibrationScreen';
 import { truncate } from 'node:fs';
+import HeadCanalAlignmentTestPanel from './test/HeadCanalAlignmentTestPanel';
 
 type Screen = 'setup' | 'calibrate' | 'treatment' | 'research';
 
@@ -37,7 +38,7 @@ function App(): JSX.Element {
   const [screen, setScreen] = useState<Screen>('setup');
   const [selectedCanals, setSelectedCanals] = useState<string[]>([]);
 
-  const testMode = true;
+  const testMode = true; // Set to true to enable test mode (bypasses setup and calibration)
   // To control calibration popup
   const [calibrationOpen, setCalibrationOpen] = useState(false);
 
@@ -84,13 +85,14 @@ function App(): JSX.Element {
 
       {
       testMode ? (
-          <ResearchScreenTestPanel
-            bleStatus={ble.connected ? 'connected' : 'disconnected'}
-            deviceName={ble.deviceName}
-            bleError={ble.error}
-            onConnect={ble.connect}
-            onDisconnect={ble.disconnect}
-          />
+          // <ResearchScreenTestPanel
+          //   bleStatus={ble.connected ? 'connected' : 'disconnected'}
+          //   deviceName={ble.deviceName}
+          //   bleError={ble.error}
+          //   onConnect={ble.connect}
+          //   onDisconnect={ble.disconnect}
+          // />
+          <HeadCanalAlignmentTestPanel />
         
       ) : screen === 'setup' ? (
         <SetupScreen

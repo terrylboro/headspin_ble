@@ -21,7 +21,10 @@ export default function CalibrationScreen({
   onContinue,
 }: CalibrationScreenProps) {
 
-  const { matrixRef, offsetMatrixRef} =  useTreatment();
+  const { matrixRef, offsetMatrixRef, state} =  useTreatment();
+  const selectedEarText = state.affectedEar
+    ? `${state.affectedEar[0].toUpperCase()}${state.affectedEar.slice(1)} ear selected`
+    : 'No ear selected';
 
   function calibrateOrientation() {
         const current = matrixRef.current.clone();
@@ -41,6 +44,7 @@ export default function CalibrationScreen({
           <Card withBorder shadow="sm" radius="md" style={{ flex: 2, minHeight: 480 }}>
             <Stack h="100%" align="center" justify="center">
               <Text fw={600}>Check calibration</Text>
+              <Text size="sm" c="dimmed">{selectedEarText}</Text>
 
               <HeadRendering calibrateMode={true} />
 
