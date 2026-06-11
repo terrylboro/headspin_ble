@@ -71,6 +71,20 @@ const ManualCanalRendering = () => {
 
     const stage4ArrowRef = useRef<THREE.Group | null>(null);
 
+    function setArrowOpacity(arrow: THREE.Group | null, opacity: number) {
+        arrow?.traverse((child) => {
+            if (!(child instanceof THREE.Mesh)) {
+                return;
+            }
+
+            const materials = Array.isArray(child.material) ? child.material : [child.material];
+            materials.forEach((material) => {
+                material.transparent = true;
+                material.opacity = opacity;
+            });
+        });
+    }
+
     // Encode the canal directions in the local frame (i.e. relative to whole mesh) by segment and canal
     const canalDirections = {
         "posterior": {
@@ -185,8 +199,8 @@ const ManualCanalRendering = () => {
 
         // Add helper arrows
         stage1ArrowRef.current = createThickArrow(
-            (state.affectedEar === "left") ? canalDirections["posterior"].directions[0].clone() : canalDirections["posterior"].directions[0].clone().setY(canalDirections["posterior"].directions[0].y * -1),
-            (state.affectedEar === "left") ? canalDirections["posterior"].origins[0].clone() : canalDirections["posterior"].origins[0].clone().setY(canalDirections["posterior"].origins[0].y * -1),
+            (state.affectedEar !== "right") ? canalDirections["posterior"].directions[0].clone() : canalDirections["posterior"].directions[0].clone().setY(canalDirections["posterior"].directions[0].y * -1),
+            (state.affectedEar !== "right") ? canalDirections["posterior"].origins[0].clone() : canalDirections["posterior"].origins[0].clone().setY(canalDirections["posterior"].origins[0].y * -1),
             10,
             ORANGE_COLOUR,
             alignmentRef.current
@@ -194,8 +208,8 @@ const ManualCanalRendering = () => {
         canalGroup.current.add(stage1ArrowRef.current);
 
         stage2ArrowRef.current = createThickArrow(
-            (state.affectedEar === "left") ? canalDirections["posterior"].directions[1].clone() : canalDirections["posterior"].directions[1].clone().setY(canalDirections["posterior"].directions[1].y * -1),
-            (state.affectedEar === "left") ? canalDirections["posterior"].origins[1].clone() : canalDirections["posterior"].origins[1].clone().setY(canalDirections["posterior"].origins[1].y * -1),
+            (state.affectedEar !== "right") ? canalDirections["posterior"].directions[1].clone() : canalDirections["posterior"].directions[1].clone().setY(canalDirections["posterior"].directions[1].y * -1),
+            (state.affectedEar !== "right") ? canalDirections["posterior"].origins[1].clone() : canalDirections["posterior"].origins[1].clone().setY(canalDirections["posterior"].origins[1].y * -1),
             10,
             ORANGE_COLOUR,
             alignmentRef.current
@@ -208,9 +222,10 @@ const ManualCanalRendering = () => {
             // new THREE.Vector3(-0.7, -1, -0.2).normalize(),
             // new THREE.Vector3(1.9, 4, 3.5),//.normalize(),
 
-            
-            (state.affectedEar === "left") ? canalDirections["posterior"].directions[2].clone() : canalDirections["posterior"].directions[2].clone().setY(canalDirections["posterior"].directions[2].y * -1),
-            (state.affectedEar === "left") ? canalDirections["posterior"].origins[2].clone() : canalDirections["posterior"].origins[2].clone().setY(canalDirections["posterior"].origins[2].y * -1),
+            // Align the arrows according to affected ear by inverting the Y component for right ear
+            // This code assumes the default canal rendering is left ear
+            (state.affectedEar !== "right") ? canalDirections["posterior"].directions[2].clone() : canalDirections["posterior"].directions[2].clone().setY(canalDirections["posterior"].directions[2].y * -1),
+            (state.affectedEar !== "right") ? canalDirections["posterior"].origins[2].clone() : canalDirections["posterior"].origins[2].clone().setY(canalDirections["posterior"].origins[2].y * -1),
             // canalDirections["posterior"].directions[2],
             // (canalDirections["posterior"].origins[2]), //.addScaledVector(canalDirections["posterior"].directions[2], 1), // extend backwards from origin to avoid overlap with mesh
             10,
@@ -220,8 +235,8 @@ const ManualCanalRendering = () => {
         canalGroup.current.add(stage3ArrowRef.current);
 
         stage4ArrowRef.current = createThickArrow(
-            (state.affectedEar === "left") ? canalDirections["posterior"].directions[3].clone() : canalDirections["posterior"].directions[3].clone().setY(canalDirections["posterior"].directions[3].y * -1),
-            (state.affectedEar === "left") ? canalDirections["posterior"].origins[3].clone() : canalDirections["posterior"].origins[3].clone().setY(canalDirections["posterior"].origins[3].y * -1),
+            (state.affectedEar !== "right") ? canalDirections["posterior"].directions[3].clone() : canalDirections["posterior"].directions[3].clone().setY(canalDirections["posterior"].directions[3].y * -1),
+            (state.affectedEar !== "right") ? canalDirections["posterior"].origins[3].clone() : canalDirections["posterior"].origins[3].clone().setY(canalDirections["posterior"].origins[3].y * -1),
             
             7,
             (alignedRef.current) ? GREEN_COLOUR : ORANGE_COLOUR,
@@ -283,7 +298,7 @@ const ManualCanalRendering = () => {
 
             // Clock for pulsing effects
             const t = clock.getElapsedTime();
-            const opacity = 0.95 + 0.3 * Math.sin(t * 4);
+            const opacity = 0.55 + 0.45 * Math.sin(t * 4);
 
             // console.log(meshParts.current[meshPartsLength[state.affectedCanal ? state.affectedCanal : 5] ])
 
@@ -320,11 +335,19 @@ const ManualCanalRendering = () => {
                 dispatch({ type: 'ALIGNMENT_ENTER' })
             }
 
+            const stageArrows = [
+                stage1ArrowRef.current,
+                stage2ArrowRef.current,
+                stage3ArrowRef.current,
+                stage4ArrowRef.current,
+            ];
+
             if (state.stage === TreatmentStage.COMPLETE) {
                 const material = new THREE.MeshStandardMaterial({color: GREEN_COLOUR, side: THREE.DoubleSide, flatShading: true})
                 meshParts.current.forEach((mesh) => {
                     mesh.material = material
                 })
+                stageArrows.forEach((arrow) => setArrowOpacity(arrow, 1));
                 renderer.current!.render(scene.current!, camera.current!)
             } 
             
@@ -338,15 +361,12 @@ const ManualCanalRendering = () => {
                     meshParts.current[segmentID!].material = material
                 }
 
-            // Make the arrow pulse
-            const arrowMesh = stage4ArrowRef.current;
-            arrowMesh?.traverse((child) => {
-                if ((child as THREE.Mesh).material) {
-                    const mat = (child as THREE.Mesh).material as THREE.Material & { opacity?: number };
-                    if ('opacity' in mat) {
-                        mat.opacity = opacity;
-                    }
-                }
+            // Make only the arrow for the current stage pulse.
+            stageArrows.forEach((arrow, index) => {
+                setArrowOpacity(
+                    arrow,
+                    state.stage === index ? opacity : 1
+                );
             });
             }
 
