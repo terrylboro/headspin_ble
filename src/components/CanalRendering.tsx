@@ -16,7 +16,7 @@ import { useSound } from "use-sound";
 import { getHighlightedMeshPart } from "../utils/meshPartDisplay";
 
 // Set camera position and rotation constants for the scene
-const CAMERA_POSITION = new THREE.Vector3(-40, 0, 0);
+const CAMERA_POSITION = new THREE.Vector3(-50, 0, 0);
 const CAMERA_ROTATION = new THREE.Euler(Math.PI / 2, -Math.PI / 2, 0, 'XYZ');
 const CAMERA_NEAR = 0.1;
 const CAMERA_FAR = 1000;
@@ -150,12 +150,28 @@ const CanalRendering = () => {
         // Add canalGroup which allows arrows to be grouped with mesh
         sceneInstance.add(canalGroup.current);
 
+        let resizeFrame: number | null = null;
+        let lastRendererSize = { width: 0, height: 0 };
+
         // Resize window to fit mesh well
         function resizeRenderer() {
-            const size = Math.max(1, Math.min(container.clientWidth, container.clientHeight));
-            rendererInstance.setSize(size, size, false);
-            camera.aspect = 1;
-            camera.updateProjectionMatrix();
+            if (resizeFrame !== null) {
+                cancelAnimationFrame(resizeFrame);
+            }
+
+            resizeFrame = requestAnimationFrame(() => {
+                resizeFrame = null;
+
+                const size = Math.max(1, Math.min(container.clientWidth, container.clientHeight));
+                if (lastRendererSize.width === size && lastRendererSize.height === size) {
+                    return;
+                }
+
+                lastRendererSize = { width: size, height: size };
+                rendererInstance.setSize(size, size, false);
+                camera.aspect = 1;
+                camera.updateProjectionMatrix();
+            });
         }
 
         resizeRenderer();
@@ -289,6 +305,9 @@ const CanalRendering = () => {
 
         return () => {
             cancelAnimationFrame(loop) 
+            if (resizeFrame !== null) {
+                cancelAnimationFrame(resizeFrame);
+            }
             resizeObserver.disconnect();
             sceneInstance.clear()
             rendererInstance.dispose()
@@ -301,10 +320,10 @@ const CanalRendering = () => {
 
 
     return (
-            <div id="canalCanvasContainer" style={{height: "100%", aspectRatio: '1 / 1', alignItems: "center", backgroundColor: BACKGR_COLOUR_CSS, position: "relative"}}>
+            <div id="canalCanvasContainer" style={{flex: 1, minHeight: 0, width: "100%", height: "100%", maxHeight: "100%", maxWidth: "100%", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: BACKGR_COLOUR_CSS, position: "relative", overflow: "hidden"}}>
             
             <canvas ref={canvasRef}
-                style={{ width: "100%", height: "100%", display: "block", margin: "0 auto" }}
+                style={{ width: "auto", height: "100%", maxWidth: "100%", maxHeight: "100%", aspectRatio: "1 / 1", display: "block" }}
             />
         </div>
         

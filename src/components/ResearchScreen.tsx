@@ -43,9 +43,18 @@ export default function ResearchScreen({
   const treatment = useTreatment();
 
   return (
-    <Stack h="100%">
+    <Box
+      style={{
+        height: 'calc(100vh - 60px - 32px)',
+        minHeight: 0,
+        overflow: 'hidden',
+        display: 'grid',
+        gridTemplateRows: 'minmax(0, 0.9fr) minmax(0, 1.1fr)',
+        gap: 16,
+      }}
+    >
 
-      <Flex gap="xl" wrap="nowrap" w="100%" align="stretch">
+      <Flex gap="xl" wrap="nowrap" w="100%" align="stretch" style={{ minHeight: 0, overflow: 'hidden' }}>
         <Box style={{ flex: 4, minWidth: 0, display: 'flex' }}>
           <LiveChartCard
             title="Orientation Data Stream"
@@ -55,11 +64,13 @@ export default function ResearchScreen({
           />
         </Box>
         <Box style={{ flex: 1, minWidth: 0, display: 'flex' }}>
-          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 200, height: '100%' }}>
-            <Stack h="100%">
+          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 0, height: '100%', overflow: 'hidden' }}>
+            <Stack h="100%" style={{ minHeight: 0 }}>
               <Text fw={600}>Head Position</Text>
 
-              <HeadRendering calibrateMode={false} />
+              <Box style={{ flex: 1, minHeight: 0, display: 'flex', justifyContent: 'center' }}>
+                <HeadRendering calibrateMode={false} />
+              </Box>
 
             </Stack>
           </Card>
@@ -69,7 +80,7 @@ export default function ResearchScreen({
       
 
 
-      <Flex gap="xl" wrap="nowrap" w="100%" align="stretch">
+      <Flex gap="xl" wrap="nowrap" w="100%" align="stretch" style={{ minHeight: 0, overflow: 'hidden' }}>
 
         {/* <Card withBorder shadow="sm" radius="md">
         <Text fw={600}>Latest data</Text>
@@ -78,8 +89,8 @@ export default function ResearchScreen({
         </Card> */}
 
         <Box style={{ flex: 1, minWidth: 0, display: 'flex' }}>
-          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 480, height: '100%' }}>
-            <Stack h="100%">
+          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 0, height: '100%', overflow: 'hidden' }}>
+            <Stack h="100%" style={{ minHeight: 0 }}>
               <Text fw={600}>Stage Progress</Text>
 
               {/* <Text fw={600} >Hold time</Text>
@@ -141,8 +152,8 @@ export default function ResearchScreen({
         </Box>
 
         <Box style={{ flex: 2, minWidth: 0, display: 'flex' }}>
-          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 480, height: '100%' }}>
-            <Stack h="100%" >
+          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 0, height: '100%', overflow: 'hidden' }}>
+            <Stack h="100%" style={{ minHeight: 0 }}>
               <Group justify="space-between">
                 <Text fw={600}>Canal Alignment</Text>
                 <Text size="sm">{(treatment.alignmentRef!.current * 100).toFixed(0)}%</Text>
@@ -154,6 +165,8 @@ export default function ResearchScreen({
               <div
                 style={{
                   flex: 1,
+                  minHeight: 0,
+                  overflow: 'hidden',
                   background: 'BACKGR_COLOUR_CSS',
                   borderRadius: 8,
                   display: 'flex',
@@ -186,8 +199,8 @@ export default function ResearchScreen({
         </Box> */}
 
         <Box style={{ flex: 2, minWidth: 0, display: 'flex' }}>
-          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 480, height: '100%' }}>
-            <Stack h="100%" >
+          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 0, height: '100%', overflow: 'hidden' }}>
+            <Stack h="100%" style={{ minHeight: 0 }}>
               <Text fw={600}>Canal Video</Text>
               <LiveWebcam height={"100%"} />
 
@@ -212,7 +225,7 @@ export default function ResearchScreen({
       {/* </Card> */}
 
       
-    </Stack>
+    </Box>
   );
 }
 
