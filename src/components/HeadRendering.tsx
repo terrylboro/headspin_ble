@@ -17,6 +17,17 @@ type HeadRenderingProps = {
     calibrateMode: boolean
 }
 
+const CAMERA_NEAR = 0.1;
+const CAMERA_FAR = 1000;
+
+function applyFixedCameraPose(camera: THREE.PerspectiveCamera, position: THREE.Vector3, rotation: THREE.Euler) {
+    camera.position.copy(position);
+    camera.rotation.copy(rotation);
+    camera.near = CAMERA_NEAR;
+    camera.far = CAMERA_FAR;
+    camera.updateProjectionMatrix();
+}
+
 // const HeadRendering = ({ear, matrixRef, offsetMatrixRef}: Props) => {
 const HeadRendering = ({calibrateMode} : HeadRenderingProps) => {
 
@@ -25,7 +36,7 @@ const HeadRendering = ({calibrateMode} : HeadRenderingProps) => {
         ? `${state.affectedEar[0].toUpperCase()}${state.affectedEar.slice(1)} ear selected`
         : 'No ear selected';
 
-    const camera = useRef<THREE.Camera>()
+    const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
     const scene = useRef<THREE.Scene>()
     const renderer = useRef<THREE.WebGLRenderer>()
     const meshParts = useRef<THREE.Mesh[]>([])
@@ -49,10 +60,12 @@ const HeadRendering = ({calibrateMode} : HeadRenderingProps) => {
         scene.current.background = new THREE.Color(BACKGR_COLOUR)
 
         // Camera initialisation
-        camera.current = new THREE.PerspectiveCamera(12, 1)
-        calibrateMode ? camera.current.position.set(100, 0, 0) : camera.current.position.set(-100, 0, 0) 
-        camera.current.lookAt(0, 0, 0)
-        calibrateMode ? camera.current.rotation.z = Math.PI / 2 : camera.current.rotation.z = -Math.PI / 2;
+        const camera = new THREE.PerspectiveCamera(12, 1)
+        cameraRef.current = camera
+        // If we are performing the manoeuvre, we want to see the back of head
+        const CAMERA_POSITION = calibrateMode ? new THREE.Vector3(100, 0, 0) : new THREE.Vector3(-100, 0, 0) ;
+        const CAMERA_ROTATION = calibrateMode ? new THREE.Euler(Math.PI / 2, Math.PI / 2, 0, 'XYZ') : new THREE.Euler(Math.PI / 2, -Math.PI / 2, 0, 'XYZ');
+        applyFixedCameraPose(camera, CAMERA_POSITION, CAMERA_ROTATION);
 
 
         // Add lights
@@ -108,7 +121,7 @@ const HeadRendering = ({calibrateMode} : HeadRenderingProps) => {
             // Applying offset
             // applyYawOffset(offsetMatrixRef.current.clone(), qB)
             headGroup.current.setRotationFromQuaternion(qB);
-            renderer.current!.render(scene.current!, camera.current!)
+            renderer.current!.render(scene.current!, cameraRef.current!)
             // }
             loop = requestAnimationFrame(animate)
         }

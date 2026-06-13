@@ -38,7 +38,7 @@ function App(): JSX.Element {
   const [screen, setScreen] = useState<Screen>('setup');
   const [selectedCanals, setSelectedCanals] = useState<string[]>([]);
 
-  const testMode = true; // Set to true to enable test mode (bypasses setup and calibration)
+  const testMode = false; // Set to true to enable test mode (bypasses setup and calibration)
   // To control calibration popup
   const [calibrationOpen, setCalibrationOpen] = useState(false);
 

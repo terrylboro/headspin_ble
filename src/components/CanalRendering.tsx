@@ -15,6 +15,34 @@ import { createThickArrow } from "../custom/thickArrow";
 import { useSound } from "use-sound";
 import { getHighlightedMeshPart } from "../utils/meshPartDisplay";
 
+// Set camera position and rotation constants for the scene
+const CAMERA_POSITION = new THREE.Vector3(-40, 0, 0);
+const CAMERA_ROTATION = new THREE.Euler(Math.PI / 2, -Math.PI / 2, 0, 'XYZ');
+const CAMERA_NEAR = 0.1;
+const CAMERA_FAR = 1000;
+
+function applyFixedCameraPose(camera: THREE.PerspectiveCamera) {
+  camera.position.copy(CAMERA_POSITION);
+  camera.rotation.copy(CAMERA_ROTATION);
+  camera.near = CAMERA_NEAR;
+  camera.far = CAMERA_FAR;
+  camera.updateProjectionMatrix();
+}
+
+function disposeObject(object: THREE.Object3D) {
+  object.traverse((child) => {
+    if (!(child instanceof THREE.Mesh)) {
+      return;
+    }
+
+    child.geometry.dispose();
+
+    const materials = Array.isArray(child.material) ? child.material : [child.material];
+    materials.forEach((material) => material.dispose());
+  });
+}
+
+
 
 // {canal, ear, affectedCanal, matrixRef, offsetMatrixRef, stage, alignmentRef, alignedRef}: Props
 const CanalRendering = () => {
@@ -31,9 +59,9 @@ const CanalRendering = () => {
     const highlightedMeshPart = getHighlightedMeshPart(state.affectedCanal, state.stage, state.isAligned)
 
     // Scene setting variables
-    const camera = useRef<THREE.Camera>()
+    const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
     const scene = useRef<THREE.Scene>()
-    const renderer = useRef<THREE.WebGLRenderer>()
+    const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
     const meshParts = useRef<THREE.Mesh[]>([])
 
     const canalColours = {"posterior": BLUE_COLOUR, "anterior": ORANGE_COLOUR, "lateral": BROWN_COLOUR, "all": 0, "unselected": 0x333333}
@@ -69,11 +97,12 @@ const CanalRendering = () => {
     useEffect(() => {
 
         if (!canvasRef.current) return;
-        renderer.current = new THREE.WebGLRenderer({canvas: canvasRef.current, antialias: true})
+        const rendererInstance = new THREE.WebGLRenderer({canvas: canvasRef.current, antialias: true})
+        rendererRef.current = rendererInstance;
         const container = document.getElementById("canalCanvasContainer") as HTMLDivElement;
         // const size = active ? document.documentElement.clientWidth * 0.207 : 0
-        // renderer.current.setSize(size, size)
-        renderer.current.setSize(container.clientWidth, container.clientHeight, false)
+        // rendererInstance.setSize(size, size)
+        rendererInstance.setSize(container.clientWidth, container.clientHeight, false)
 
         // Clear previous canal from scene
         clearCanalGroup()
@@ -81,47 +110,59 @@ const CanalRendering = () => {
 
 
         // Scene initialisation
-        scene.current = new THREE.Scene()
-        scene.current.background = new THREE.Color(BACKGR_COLOUR)
+        const sceneInstance = new THREE.Scene()
+        scene.current = sceneInstance
+        sceneInstance.background = new THREE.Color(BACKGR_COLOUR)
 
         // Camera initialisation
-        camera.current = new THREE.PerspectiveCamera(15, 1)
-
-        // camera.current.rotation.y = Math.PI;
-
-        camera.current.position.set(40, 0, 0) 
-        camera.current.lookAt(0, 0, 0)
-
-        camera.current.rotation.z = -Math.PI / 2;
-
-        
+        const camera = new THREE.PerspectiveCamera(12, 1)
+        cameraRef.current = camera
+        applyFixedCameraPose(camera);
 
 
-        // Centre the meshes on the origin
+        // // camera.current.rotation.y = Math.PI;
+        // camera.current.position.set(40, 0, 0)
+        // camera.current.lookAt(0, 0, 0)
+        // camera.current.rotation.z = -Math.PI / 2;
+        // // Centre the meshes on the origin
         canalGroup.current.position.set(0, 0, 0);
 
 
         // Add lights
         const sectionHighlight = new THREE.AmbientLight(0xffffff, 0.8)
-        scene.current.add(sectionHighlight)
+        sceneInstance.add(sectionHighlight)
 
         const pointLight1 = new THREE.PointLight(0xffffff, 200)
         pointLight1.castShadow = true
         pointLight1.position.set(0, 0, 35)
-        scene.current.add(pointLight1)
+        sceneInstance.add(pointLight1)
 
         const pointLight2 = new THREE.PointLight(0xffffff, 1300)
         pointLight2.castShadow = true
         pointLight2.position.set(0, 15, 8)
-        scene.current.add(pointLight2)
+        sceneInstance.add(pointLight2)
 
         const pointLight3 = new THREE.PointLight(0xffffff, 200)
         pointLight3.castShadow = true
         pointLight3.position.set(0, -20, 0)
-        scene.current.add(pointLight3)
+        sceneInstance.add(pointLight3)
 
         // Add canalGroup which allows arrows to be grouped with mesh
-        scene.current!.add(canalGroup.current);
+        sceneInstance.add(canalGroup.current);
+
+        // Resize window to fit mesh well
+        function resizeRenderer() {
+            const size = Math.max(1, Math.min(container.clientWidth, container.clientHeight));
+            rendererInstance.setSize(size, size, false);
+            camera.aspect = 1;
+            camera.updateProjectionMatrix();
+        }
+
+        resizeRenderer();
+        const resizeObserver = new ResizeObserver(resizeRenderer);
+        resizeObserver.observe(container);
+
+        disposeObject(canalGroup.current);
 
         if (showGuidanceArrows) {
             if (state.stage !== TreatmentStage.COMPLETE) {
@@ -143,7 +184,7 @@ const CanalRendering = () => {
         let color = 0
         for (let i = 0; i < meshPartsLength[state.affectedCanal ? state.affectedCanal : 5]; i++) {
             // const meshPath = "rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply"
-            
+
             // const meshPath = (state.affectedEar !== "right") ? (process.env.PUBLIC_URL + "/rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply") : (process.env.PUBLIC_URL + "/right_rh_meshes/" + state.affectedCanal + "_" + i.toString() + "_right" + ".ply");
             const meshPath = (state.affectedEar !== "right") ? (process.env.PUBLIC_URL + "/rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply") : (process.env.PUBLIC_URL + "/new_right_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply");
 
@@ -154,11 +195,11 @@ const CanalRendering = () => {
 
                 const material = new THREE.MeshStandardMaterial({color: color, side: THREE.DoubleSide, flatShading: true})
                 const loadedMesh = new THREE.Mesh(geometry, material)
-                
+
                 loadedMesh.applyMatrix4(new THREE.Matrix4().makeScale(1, 1, 1))
                 if (state.affectedEar === "right") {
                     // loadedMesh.applyMatrix4(new THREE.Matrix4().makeScale(1, -1, 1))
-                    loadedMesh.applyMatrix4(new THREE.Matrix4().makeRotationZ(Math.PI))
+                    // loadedMesh.applyMatrix4(new THREE.Matrix4().makeRotationZ(Math.PI))
                     // loadedMesh.applyMatrix4(new THREE.Matrix4().makeRotationY(Math.PI))
                 } else {
                     // loadedMesh.applyMatrix4(new THREE.Matrix4().makeScale(1, 1, -1))
@@ -239,17 +280,20 @@ const CanalRendering = () => {
                     }
                 }
             });
-    
-                
-    
-            renderer.current!.render(scene.current!, camera.current!)
+
+
+            rendererInstance.render(sceneInstance, camera)
             }
             loop = requestAnimationFrame(animate)
         }
 
         return () => {
             cancelAnimationFrame(loop) 
-            scene.current!.clear()
+            resizeObserver.disconnect();
+            sceneInstance.clear()
+            rendererInstance.dispose()
+            rendererRef.current = null;
+            cameraRef.current = null;
             meshParts.current = [] // flush any previous loadings
         }
 
