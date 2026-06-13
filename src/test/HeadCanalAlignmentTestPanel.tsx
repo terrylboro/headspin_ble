@@ -14,18 +14,34 @@ import {
 import { BACKGR_COLOUR, BLUE_COLOUR, ORANGE_COLOUR } from '../utils/config';
 
 const CANAL_MESH_FILENAMES = {
-  left: ["/rh_meshes/posterior_0.ply", "/rh_meshes/posterior_1.ply", "/rh_meshes/posterior_2.ply", "/rh_meshes/posterior_3.ply", "/rh_meshes/posterior_4.ply" 
+  left: [
+    "rh_meshes/posterior_0.ply",
+    "rh_meshes/posterior_1.ply",
+    "rh_meshes/posterior_2.ply",
+    "rh_meshes/posterior_3.ply",
+    "rh_meshes/posterior_4.ply",
   ],
-  right: [(process.env.PUBLIC_URL + "/new_right_meshes/capsule.ply")]
+  right: [
+    "new_right_meshes/posterior_0.ply",
+    "new_right_meshes/posterior_1.ply",
+    "new_right_meshes/posterior_2.ply",
+    "new_right_meshes/posterior_3.ply",
+    "new_right_meshes/posterior_4.ply",
+  ],
 };
 const CAPSULE_MESH_FILENAMES = {
-  left: (process.env.PUBLIC_URL + "/rh_meshes/capsule_3x.ply"),
-  right: (process.env.PUBLIC_URL + "/new_right_meshes/capsule.ply")
+  left: "rh_meshes/capsule_3x.ply",
+  right: "new_right_meshes/capsule.ply"
 };
-const CAMERA_POSITION = new THREE.Vector3(-45, 0, 0);
-const CAMERA_ROTATION = new THREE.Euler(0, -Math.PI / 2, 0, 'XYZ');
-const CAMERA_NEAR = 0.1;
-const CAMERA_FAR = 1000;
+const CAPSULE_CAMERA_POSITION = new THREE.Vector3(-45, 0, 0);
+const CAPSULE_CAMERA_ROTATION = new THREE.Euler(0, -Math.PI / 2, 0, 'XYZ');
+const CAPSULE_CAMERA_NEAR = 0.1;
+const CAPSULE_CAMERA_FAR = 1000;
+
+const CANAL_CAMERA_POSITION = new THREE.Vector3(45, 0, 0);
+const CANAL_CAMERA_ROTATION = new THREE.Euler(0, Math.PI / 2, 0, 'XYZ');
+const CANAL_CAMERA_NEAR = 0.1;
+const CANAL_CAMERA_FAR = 1000;
 
 type EarSide = 'left' | 'right';
 
@@ -46,11 +62,15 @@ function getPublicMeshPath(filename: string) {
     return '';
   }
 
-  if (filename.startsWith('/') || filename.startsWith('http')) {
+  const publicUrl = process.env.PUBLIC_URL.replace(/\/+$/, '');
+
+  if (filename.startsWith('http') || (publicUrl && filename.startsWith(publicUrl))) {
     return filename;
   }
 
-  return `${process.env.PUBLIC_URL}/${filename}`;
+  const cleanFilename = filename.replace(/^\/+/, '');
+
+  return `${publicUrl}/${cleanFilename}`;
 }
 
 function disposeObject(object: THREE.Object3D) {
@@ -66,12 +86,31 @@ function disposeObject(object: THREE.Object3D) {
   });
 }
 
-function applyFixedCameraPose(camera: THREE.PerspectiveCamera) {
-  camera.position.copy(CAMERA_POSITION);
-  camera.rotation.copy(CAMERA_ROTATION);
-  camera.near = CAMERA_NEAR;
-  camera.far = CAMERA_FAR;
+function applyFixedCameraPose(camera: THREE.PerspectiveCamera, meshType: 'canal' | 'capsule' = 'canal') {
+  if (meshType === 'capsule') {
+    camera.position.copy(CAPSULE_CAMERA_POSITION);
+    camera.rotation.copy(CAPSULE_CAMERA_ROTATION);
+    camera.near = CAPSULE_CAMERA_NEAR;
+    camera.far = CAPSULE_CAMERA_FAR;
+  } else {
+    camera.position.copy(CANAL_CAMERA_POSITION);
+    camera.rotation.copy(CANAL_CAMERA_ROTATION);
+    camera.near = CANAL_CAMERA_NEAR;
+    camera.far = CANAL_CAMERA_FAR;
+    camera.rotation.z = Math.PI / 2;
+  }
   camera.updateProjectionMatrix();
+}
+
+function centerMeshGroup(meshGroup: THREE.Group) {
+  const box = new THREE.Box3().setFromObject(meshGroup);
+
+  if (box.isEmpty()) {
+    return;
+  }
+
+  const center = box.getCenter(new THREE.Vector3());
+  meshGroup.position.sub(center);
 }
 
 function MeshViewer({
@@ -114,7 +153,13 @@ function MeshViewer({
     cameraRef.current = camera;
 
     scene.background = new THREE.Color(BACKGR_COLOUR);
-    applyFixedCameraPose(camera);
+    if (title === 'Canal') {
+      applyFixedCameraPose(camera, 'canal');
+    } else if (title === 'Capsule') {
+      applyFixedCameraPose(camera, 'capsule');
+    } else {
+      applyFixedCameraPose(camera);
+    }
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.7));
 
@@ -141,11 +186,14 @@ function MeshViewer({
 
     disposeObject(meshGroup);
     meshGroup.clear();
+    meshGroup.position.set(0, 0, 0);
 
     if (meshPaths.length > 0) {
       setLoadError(null);
 
       const loader = new PLYLoader();
+      let loadedCount = 0;
+
       meshPaths.forEach((meshPath) => {
         loader.load(meshPath, (geometry) => {
           const material = new THREE.MeshStandardMaterial({
@@ -156,6 +204,11 @@ function MeshViewer({
           const mesh = new THREE.Mesh(geometry, material);
 
           meshGroup.add(mesh);
+          loadedCount += 1;
+
+          if (loadedCount === meshPaths.length) {
+            centerMeshGroup(meshGroup);
+          }
         }, undefined, () => {
           setLoadError(`Could not load ${meshPath}`);
         });
@@ -190,14 +243,15 @@ function MeshViewer({
   }, [rotationDeg, side]);
 
   return (
-    <Card withBorder shadow="sm" radius="md" h="100%">
-      <Stack h="100%">
+    <Card withBorder shadow="sm" radius="md" h="100%" style={{ minHeight: 0, overflow: 'hidden' }}>
+      <Stack h="100%" style={{ minHeight: 0 }}>
         <Text fw={600}>{title}</Text>
         <Box
           ref={containerRef}
           style={{
             flex: 1,
-            minHeight: 360,
+            minHeight: 0,
+            maxHeight: '100%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -213,7 +267,7 @@ function MeshViewer({
           )}
           <canvas
             ref={canvasRef}
-            style={{ width: '100%', height: '100%', display: 'block' }}
+            style={{ width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%', display: 'block' }}
           />
         </Box>
       </Stack>
@@ -235,7 +289,7 @@ export default function HeadCanalAlignmentTestPanel() {
   }
 
   return (
-    <Stack h="100%" p="md" gap="md">
+    <Stack h="100%" p="md" gap="md" style={{ minHeight: 0, overflow: 'hidden' }}>
       <Group justify="space-between" align="center">
         <Text fw={700}>Head/canal alignment test</Text>
         <Switch
@@ -245,7 +299,7 @@ export default function HeadCanalAlignmentTestPanel() {
         />
       </Group>
 
-      <Group grow align="stretch" style={{ flex: 1, minHeight: 0 }}>
+      <Group grow align="stretch" style={{ flex: 1, minHeight: 0, maxHeight: 'min(52vh, 420px)' }}>
         <MeshViewer
           title="Canal"
           filenames={CANAL_MESH_FILENAMES[side]}
