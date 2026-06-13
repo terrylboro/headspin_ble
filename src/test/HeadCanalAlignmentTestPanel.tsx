@@ -33,15 +33,11 @@ const CAPSULE_MESH_FILENAMES = {
   left: "rh_meshes/capsule_3x.ply",
   right: "new_right_meshes/capsule.ply"
 };
-const CAPSULE_CAMERA_POSITION = new THREE.Vector3(-45, 0, 0);
-const CAPSULE_CAMERA_ROTATION = new THREE.Euler(0, -Math.PI / 2, 0, 'XYZ');
-const CAPSULE_CAMERA_NEAR = 0.1;
-const CAPSULE_CAMERA_FAR = 1000;
-
-const CANAL_CAMERA_POSITION = new THREE.Vector3(45, 0, 0);
-const CANAL_CAMERA_ROTATION = new THREE.Euler(0, Math.PI / 2, 0, 'XYZ');
-const CANAL_CAMERA_NEAR = 0.1;
-const CANAL_CAMERA_FAR = 1000;
+const CAMERA_POSITION = new THREE.Vector3(100, 0, 0);
+// const CAMERA_ROTATION = new THREE.Euler(0, Math.PI / 2, 0, 'XYZ');
+const CAMERA_ROTATION = new THREE.Euler(Math.PI / 2, Math.PI / 2, 0, 'XYZ');
+const CAMERA_NEAR = 0.1;
+const CAMERA_FAR = 1000;
 
 type EarSide = 'left' | 'right';
 
@@ -86,19 +82,11 @@ function disposeObject(object: THREE.Object3D) {
   });
 }
 
-function applyFixedCameraPose(camera: THREE.PerspectiveCamera, meshType: 'canal' | 'capsule' = 'canal') {
-  if (meshType === 'capsule') {
-    camera.position.copy(CAPSULE_CAMERA_POSITION);
-    camera.rotation.copy(CAPSULE_CAMERA_ROTATION);
-    camera.near = CAPSULE_CAMERA_NEAR;
-    camera.far = CAPSULE_CAMERA_FAR;
-  } else {
-    camera.position.copy(CANAL_CAMERA_POSITION);
-    camera.rotation.copy(CANAL_CAMERA_ROTATION);
-    camera.near = CANAL_CAMERA_NEAR;
-    camera.far = CANAL_CAMERA_FAR;
-    camera.rotation.z = Math.PI / 2;
-  }
+function applyFixedCameraPose(camera: THREE.PerspectiveCamera) {
+  camera.position.copy(CAMERA_POSITION);
+  camera.rotation.copy(CAMERA_ROTATION);
+  camera.near = CAMERA_NEAR;
+  camera.far = CAMERA_FAR;
   camera.updateProjectionMatrix();
 }
 
@@ -153,13 +141,7 @@ function MeshViewer({
     cameraRef.current = camera;
 
     scene.background = new THREE.Color(BACKGR_COLOUR);
-    if (title === 'Canal') {
-      applyFixedCameraPose(camera, 'canal');
-    } else if (title === 'Capsule') {
-      applyFixedCameraPose(camera, 'capsule');
-    } else {
-      applyFixedCameraPose(camera);
-    }
+    applyFixedCameraPose(camera);
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.7));
 
@@ -206,6 +188,7 @@ function MeshViewer({
           meshGroup.add(mesh);
           loadedCount += 1;
 
+          // Ensure the mesh is placed at the centre of the screen
           if (loadedCount === meshPaths.length) {
             centerMeshGroup(meshGroup);
           }
@@ -289,8 +272,18 @@ export default function HeadCanalAlignmentTestPanel() {
   }
 
   return (
-    <Stack h="100%" p="md" gap="md" style={{ minHeight: 0, overflow: 'hidden' }}>
-      <Group justify="space-between" align="center">
+    <Box
+      p="md"
+      style={{
+        height: 'calc(100vh - var(--app-shell-header-height, 0px))',
+        minHeight: 0,
+        overflow: 'hidden',
+        display: 'grid',
+        gridTemplateRows: 'auto minmax(0, 1fr) auto',
+        gap: 16,
+      }}
+    >
+      <Group justify="space-between" align="center" style={{ minHeight: 0 }}>
         <Text fw={700}>Head/canal alignment test</Text>
         <Switch
           checked={side === 'right'}
@@ -299,7 +292,7 @@ export default function HeadCanalAlignmentTestPanel() {
         />
       </Group>
 
-      <Group grow align="stretch" style={{ flex: 1, minHeight: 0, maxHeight: 'min(52vh, 420px)' }}>
+      <Group grow align="stretch" style={{ minHeight: 0, height: '100%', overflow: 'hidden' }}>
         <MeshViewer
           title="Canal"
           filenames={CANAL_MESH_FILENAMES[side]}
@@ -316,22 +309,36 @@ export default function HeadCanalAlignmentTestPanel() {
         />
       </Group>
 
-      <Card withBorder shadow="sm" radius="md">
-        <Stack gap="sm">
+      <Card withBorder shadow="sm" radius="md" style={{ flexShrink: 0 }}>
+        <Stack gap="xs">
           <Group justify="space-between">
             <Text fw={600}>Euler angles</Text>
             <Button size="xs" variant="light" onClick={resetRotation}>
               Reset
             </Button>
           </Group>
-          <Text size="sm" fw={600}>X Euler angle</Text>
-          <Slider label={(value) => `${value} deg`} value={x} onChange={setX} min={-180} max={180} step={1} />
-          <Text size="sm" fw={600}>Y Euler angle</Text>
-          <Slider label={(value) => `${value} deg`} value={y} onChange={setY} min={-180} max={180} step={1} />
-          <Text size="sm" fw={600}>Z Euler angle</Text>
-          <Slider label={(value) => `${value} deg`} value={z} onChange={setZ} min={-180} max={180} step={1} />
+          <Box
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+              gap: 16,
+            }}
+          >
+            <Box>
+              <Text size="sm" fw={600}>X Euler angle</Text>
+              <Slider label={(value) => `${value} deg`} value={x} onChange={setX} min={-180} max={180} step={1} />
+            </Box>
+            <Box>
+              <Text size="sm" fw={600}>Y Euler angle</Text>
+              <Slider label={(value) => `${value} deg`} value={y} onChange={setY} min={-180} max={180} step={1} />
+            </Box>
+            <Box>
+              <Text size="sm" fw={600}>Z Euler angle</Text>
+              <Slider label={(value) => `${value} deg`} value={z} onChange={setZ} min={-180} max={180} step={1} />
+            </Box>
+          </Box>
         </Stack>
       </Card>
-    </Stack>
+    </Box>
   );
 }
