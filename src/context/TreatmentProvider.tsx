@@ -187,39 +187,6 @@ const TreatmentContext = createContext<TreatmentContextValue | null>(null);
 
 const BLE_BUTTON_PROGRESS_COMMAND = 1;
 const BLE_BUTTON_RETURN_COMMAND = 2;
-const GYROSCOPE_OFFSETS_STORAGE_KEY = 'headspin_ble_gyroscope_offsets';
-
-const DEFAULT_GYROSCOPE_OFFSETS: GyroscopeOffsets = {
-  gx: 0,
-  gy: 0,
-  gz: 0,
-};
-
-function readStoredGyroscopeOffsets(): GyroscopeOffsets {
-  try {
-    const storedOffsets = window.localStorage.getItem(GYROSCOPE_OFFSETS_STORAGE_KEY);
-    if (!storedOffsets) {
-      return DEFAULT_GYROSCOPE_OFFSETS;
-    }
-
-    const parsedOffsets = JSON.parse(storedOffsets) as Partial<GyroscopeOffsets>;
-    if (
-      typeof parsedOffsets.gx === 'number' &&
-      typeof parsedOffsets.gy === 'number' &&
-      typeof parsedOffsets.gz === 'number'
-    ) {
-      return {
-        gx: parsedOffsets.gx,
-        gy: parsedOffsets.gy,
-        gz: parsedOffsets.gz,
-      };
-    }
-  } catch {
-    // Fall back to zero offsets if stored data is unavailable or malformed.
-  }
-
-  return DEFAULT_GYROSCOPE_OFFSETS;
-}
 
 /**
  * Replace this with your real treatment rule.
@@ -251,11 +218,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
   const [latestSampleText, setLatestSampleText] = useState('Waiting for data');
   const [latestImuSample, setLatestImuSample] = useState<LatestImuSample | null>(null);
   const [gyroscopeOffsets, setGyroscopeOffsetsState] = useState<GyroscopeOffsets>(
-<<<<<<< Updated upstream
     initialGyroscopeOffsets
-=======
-    readStoredGyroscopeOffsets
->>>>>>> Stashed changes
   );
 
   const [showGuidanceArrows, setShowGuidanceArrows] = useState(true);
@@ -266,11 +229,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
   const offsetMatrixRef = useRef(new Matrix4());
   const recordedSamplesRef = useRef<RecordedImuSample[]>([]);
   const recordingStartTimestampRef = useRef<number | null>(null);
-<<<<<<< Updated upstream
   const gyroscopeOffsetsRef = useRef<GyroscopeOffsets>(initialGyroscopeOffsets);
-=======
-  const gyroscopeOffsetsRef = useRef<GyroscopeOffsets>(gyroscopeOffsets);
->>>>>>> Stashed changes
   const orientationRef = useRef({
     roll: 0,
     pitch: 0,
@@ -359,7 +318,6 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
   const setGyroscopeOffsets = useCallback((offsets: GyroscopeOffsets) => {
     gyroscopeOffsetsRef.current = offsets;
     setGyroscopeOffsetsState(offsets);
-<<<<<<< Updated upstream
     writeStoredGyroscopeOffsets(offsets);
   }, []);
 
@@ -369,25 +327,6 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
     setGyroscopeOffsetsState(emptyOffsets);
     removeStoredGyroscopeOffsets();
   }, []);
-=======
-
-    try {
-      window.localStorage.setItem(GYROSCOPE_OFFSETS_STORAGE_KEY, JSON.stringify(offsets));
-    } catch {
-      // Keep the in-memory offsets even if browser storage is unavailable.
-    }
-  }, []);
-
-  const clearGyroscopeOffsets = useCallback(() => {
-    setGyroscopeOffsets(DEFAULT_GYROSCOPE_OFFSETS);
-
-    try {
-      window.localStorage.removeItem(GYROSCOPE_OFFSETS_STORAGE_KEY);
-    } catch {
-      // ignore
-    }
-  }, [setGyroscopeOffsets]);
->>>>>>> Stashed changes
 
   const downloadRecording = useCallback((samples: RecordedImuSample[]) => {
     if (samples.length === 0) {
