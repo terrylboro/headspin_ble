@@ -31,6 +31,7 @@ export type Action =
   | { type: 'ALIGNMENT_ENTER'}
   | { type: 'ALIGNMENT_EXIT'}
   | { type: 'PROGRESS'; }
+  | { type: 'RETURN_TO_PREVIOUS_STAGE' }
   | { type: 'TIMER_TICK'; now: number }
   | { type: 'RESET_PROGRESS' }
   | { type: 'RESET' };

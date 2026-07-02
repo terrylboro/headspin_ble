@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export type ReceivedMessage = {
+  id: number;
   timestamp: number;
   data: DataView;
+  source: 'imu' | 'button';
 };
+
+export type ButtonCommand = 'progress' | 'return';
+
+const BUTTON_CHAR_UUID = '12345678-1234-5678-1234-56789abcdef4';
 
 type UseBleDeviceOptions = {
   initialServiceUUID?: string;
@@ -24,20 +30,29 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
 
   const [messages, setMessages] = useState<ReceivedMessage[]>([]);
   const [latestMessage, setLatestMessage] = useState<ReceivedMessage | null>(null);
+  const [latestButtonMessage, setLatestButtonMessage] = useState<ReceivedMessage | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const deviceRef = useRef<BluetoothDevice | null>(null);
   const characteristicRef = useRef<BluetoothRemoteGATTCharacteristic | null>(null);
+  const buttonCharacteristicRef = useRef<BluetoothRemoteGATTCharacteristic | null>(null);
   const disconnectHandlerRef = useRef<((event: Event) => void) | null>(null);
+  const messageIdRef = useRef(0);
 
-  const appendMessage = useCallback((value: DataView) => {
+  const appendMessage = useCallback((value: DataView, source: ReceivedMessage['source']) => {
 
     const msg = {
+    id: messageIdRef.current,
     timestamp: Date.now(),
     data: value,
+    source,
     };
+    messageIdRef.current += 1;
 
     setLatestMessage(msg);
+    if (source === 'button') {
+      setLatestButtonMessage(msg);
+    }
 
     setMessages((prev) => {
       const next = [...prev, msg];
@@ -45,10 +60,18 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
     });
   }, []);
 
+  /* Handle button press characteristics */
+  const onButtonCharacteristicValueChanged = useCallback((event: Event) => {
+    const target = event.target as BluetoothRemoteGATTCharacteristic;
+    if (target?.value) {
+      appendMessage(target.value, 'button');
+    }
+  }, [appendMessage]);
+
   const onCharacteristicValueChanged = useCallback((event: Event) => {
     const target = event.target as BluetoothRemoteGATTCharacteristic;
     if (target?.value) {
-      appendMessage(target.value);
+      appendMessage(target.value, 'imu');
     }
   }, [appendMessage]);
 
@@ -131,7 +154,26 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
         await chosenCharacteristic.startNotifications();
       } else if (chosenCharacteristic.properties.read) {
         const value = await chosenCharacteristic.readValue();
-        appendMessage(value);
+        appendMessage(value, 'imu');
+      }
+
+      try {
+        const buttonCharacteristic = await service.getCharacteristic(BUTTON_CHAR_UUID);
+        buttonCharacteristicRef.current = buttonCharacteristic;
+
+        if (buttonCharacteristic.properties.notify || buttonCharacteristic.properties.indicate) {
+          buttonCharacteristic.addEventListener(
+            'characteristicvaluechanged',
+            onButtonCharacteristicValueChanged as EventListener
+          );
+          await buttonCharacteristic.startNotifications();
+        } else if (buttonCharacteristic.properties.read) {
+          const value = await buttonCharacteristic.readValue();
+          appendMessage(value, 'button');
+        }
+      } catch (buttonError: any) {
+        setError(buttonError?.message || String(buttonError));
+        return false;
       }
 
       setConnected(true);
@@ -143,10 +185,30 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
     } finally {
       setConnecting(false);
     }
-  }, [serviceUUID, charUUID, onCharacteristicValueChanged, appendMessage]);
+  }, [
+    serviceUUID,
+    charUUID,
+    onCharacteristicValueChanged,
+    onButtonCharacteristicValueChanged,
+    appendMessage,
+  ]);
 
   const disconnect = useCallback(async () => {
     try {
+      if (buttonCharacteristicRef.current) {
+        try {
+          await buttonCharacteristicRef.current.stopNotifications();
+        } catch {
+          // ignore
+        }
+
+        buttonCharacteristicRef.current.removeEventListener(
+          'characteristicvaluechanged',
+          onButtonCharacteristicValueChanged as EventListener
+        );
+        buttonCharacteristicRef.current = null;
+      }
+
       if (characteristicRef.current) {
         try {
           await characteristicRef.current.stopNotifications();
@@ -178,7 +240,7 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
     } catch {
       // ignore
     }
-  }, [onCharacteristicValueChanged]);
+  }, [onCharacteristicValueChanged, onButtonCharacteristicValueChanged]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
@@ -200,6 +262,7 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
     setCharUUID,
     messages,
     latestMessage,
+    latestButtonMessage,
     error,
     connect,
     disconnect,

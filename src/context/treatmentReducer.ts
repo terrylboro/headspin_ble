@@ -5,6 +5,17 @@ import useSound from "use-sound"
 const ONE_MILLISECOND = 1000;
 // For audio
 
+function resetTimerProgress(state: TreatmentState): TreatmentState {
+  return {
+    ...state,
+    lastTickTime: null,
+    isAligned: false,
+    timerOn: false,
+    timerElapsedTime: 0,
+    stageProgress: 0,
+  };
+}
+
 
 export const initialState: TreatmentState = {
   stage: TreatmentStage.STAGE_1,
@@ -49,7 +60,16 @@ export function treatmentReducer(
       else return { ...state, stageProgress: 1 };
 
     case 'PROGRESS':
-      return { ...state, stage: (state.stage < 3) ? (state.stage + 1) : TreatmentStage.COMPLETE };
+      return resetTimerProgress({
+        ...state,
+        stage: (state.stage < 3) ? (state.stage + 1) : TreatmentStage.COMPLETE,
+      });
+
+    case 'RETURN_TO_PREVIOUS_STAGE':
+      return resetTimerProgress({
+        ...state,
+        stage: (state.stage > 0) ? (state.stage - 1) : TreatmentStage.STAGE_1,
+      });
 
     case 'TIMER_TICK': {
       if (state.lastTickTime === null) {
