@@ -219,10 +219,9 @@ export default function TreatmentScreen({
               </div>
 
               <Group justify="space-between" align="center" wrap="nowrap" mb="xs">
-                <Text fw={600} style={{ flexShrink: 0 }}>Progress</Text>
+                <Text fw={600} style={{ flexShrink: 0 }}>Time in Position</Text>
 
                 <Group gap="sm" wrap="nowrap" style={{ flex: '0 1 70%', minWidth: 0 }}>
-                  <Text size="sm" fw={600} style={{ flexShrink: 0 }}>Hold time</Text>
                   <Slider
                     value={selectedHoldDuration}
                     min={30}
