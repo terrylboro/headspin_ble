@@ -110,7 +110,7 @@ export default function ResearchScreen({
               </Button>
 
               <Button onClick={() => treatment.dispatch({ type: 'RESET_PROGRESS' })}>
-                Restart Treatment
+                Restart Manoeuvre
               </Button>
 
               <Text fw={600}>Recording</Text>

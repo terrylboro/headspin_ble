@@ -34,14 +34,14 @@ type TreatmentSide = 'left' | 'right';
 
 const epleyInstructions: Record<TreatmentSide, string[]> = {
   left: [
-    'Sit the patient upright on the treatment bed. Turn their head 45° to the left.',
+    'Sit the patient upright on the bed. Turn their head 45° to the left.',
     'Lie the patient back on the bed quickly so their shoulders are touching the bed. Keep the head reclined and looking 45° to the left. Hold for around 30 seconds or until nystagmus subsides.',
     "Turn the patient's head 90° to the right without raising it. Their head will now be looking 45° to the right. Hold for around 30 seconds or until nystagmus subsides.",
     "Turn the patient's head and body another 90° to the right, so they are now looking 45° from the floor. Hold for around 30 seconds or until nystagmus subsides.",
     'Sit the patient up on the right side, keeping their chin tucked.',
   ],
   right: [
-    'Sit the patient upright on the treatment bed. Turn their head 45° to the right.',
+    'Sit the patient upright on the bed. Turn their head 45° to the right.',
     'Lie the patient back on the bed quickly so their shoulders are touching the bed. Keep the head reclined and looking 45° to the right. Hold for around 30 seconds or until nystagmus subsides.',
     "Turn the patient's head 90° to the left without raising it. Their head will now be looking 45° to the left. Hold for around 30 seconds or until nystagmus subsides.",
     "Turn the patient's head and body another 90° to the left, so they are now looking 45° from the floor. Hold for around 30 seconds or until nystagmus subsides.",
@@ -89,7 +89,7 @@ export default function SetupScreen({
             { label: 'Left', value: 'left' },
             { label: 'Right', value: 'right' },
           ]}
-          aria-label="Epley manoeuvre treatment side"
+          aria-label="Epley manoeuvre affected ear"
         />
       </Group>
       <SimpleGrid cols={5} spacing="sm">
@@ -153,7 +153,7 @@ export default function SetupScreen({
                     Connect device
                   </Title>
                   <Text c="dimmed" size="sm">
-                    Connect to your Bluetooth device before starting treatment.
+                    Connect to your Bluetooth device before starting the manoeuvre.
                   </Text>
                 </Box>
 

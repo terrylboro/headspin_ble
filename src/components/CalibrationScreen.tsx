@@ -78,7 +78,7 @@ export default function CalibrationScreen({
         <InfoCard
           title="Get ready"
           imageSrc={`${process.env.PUBLIC_URL}/diagrams/Calibration Get Ready Side Profile ${affectedEarImageLabel}.png`}
-          textBody="Sit the patient upright with their legs on the treatment bed. Ensure they are looking straight ahead, then press either the big button on the device or the Start button below to start."
+          textBody="Sit the patient upright with their legs on the bed. Ensure they are looking straight ahead, then press either the big button on the device or the Start button below to begin the manoeuvre."
         />
       </SimpleGrid>
 

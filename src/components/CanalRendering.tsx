@@ -275,7 +275,17 @@ const CanalRendering = () => {
                 }
                 
                 // else {
-                if (state.isAligned) {
+                if (state.stage === TreatmentStage.COMPLETE) {
+                    meshParts.current.forEach((mesh) => {
+                        const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+                        materials.forEach((material) => {
+                            if (material instanceof THREE.MeshStandardMaterial) {
+                                material.color.setHex(GREEN_COLOUR)
+                            }
+                        })
+                    })
+                }
+                else if (state.isAligned) {
                     const material = new THREE.MeshStandardMaterial({color: GREEN_COLOUR, side: THREE.DoubleSide, flatShading: true})
                     meshParts.current[segmentID!].material = material
                 } 

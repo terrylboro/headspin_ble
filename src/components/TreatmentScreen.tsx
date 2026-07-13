@@ -11,8 +11,9 @@ import {
   Box,
   Slider,
   Image,
+  Modal,
 } from '@mantine/core';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import HeadRendering from  './HeadRendering';
 import CanalRendering from './CanalRendering';
@@ -26,22 +27,20 @@ const sliderMarks = [
   { value: 60, label: '60s' },
 ];
 
+const SHOW_SHORT_HOLD_DEMO = false;
+
 const treatmentSteps = [
   {
     label: 'Position 1',
-    imageSrc: process.env.PUBLIC_URL + '/diagrams/Position 1 AI Cropped.png',
   },
   {
     label: 'Position 2',
-    imageSrc: process.env.PUBLIC_URL + '/diagrams/Position 2 AI Cropped.png',
   },
   {
     label: 'Position 3',
-    imageSrc: process.env.PUBLIC_URL + '/diagrams/Position 3 AI Cropped.png',
   },
   {
     label: 'Position 4',
-    imageSrc: process.env.PUBLIC_URL + '/diagrams/End Position AI.png',
   },
 ];
 
@@ -58,6 +57,12 @@ export default function TreatmentScreen({
     treatment.state.holdDurationSec === 5 ? 45 : treatment.state.holdDurationSec
   );
   const [isShortHoldDemo, setIsShortHoldDemo] = useState(false);
+  const [completionModalOpened, setCompletionModalOpened] = useState(false);
+  const affectedEarImageLabel = treatment.state.affectedEar === 'right' ? 'Right' : 'Left';
+
+  useEffect(() => {
+    setCompletionModalOpened(treatment.state.stage === TreatmentStage.COMPLETE);
+  }, [treatment.state.stage]);
 
   function calibrateOrientation() {
         const current = treatment.matrixRef.current.clone();
@@ -87,6 +92,18 @@ export default function TreatmentScreen({
   return (
     <Stack h="100%" style={{ minHeight: 0 }}>
 
+      <Modal
+        opened={completionModalOpened}
+        onClose={() => setCompletionModalOpened(false)}
+        title="Manoeuvre complete"
+        centered
+        size="lg"
+      >
+        <Text size="xl" fw={600} ta="center" py="lg">
+          Manoeuvre completed - continue to hold here until dizziness subsides
+        </Text>
+      </Modal>
+
       {/* <Group align="stretch" grow style={{ flex: 1 }}> */}
       <Flex gap="xl" wrap="nowrap" w="100%" h="100%" align="stretch" style={{ minHeight: 0 }}>
 
@@ -100,20 +117,19 @@ export default function TreatmentScreen({
           <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 480, height: '100%', overflow: 'hidden' }}>
             <Stack h="100%" style={{ minHeight: 0 }}>
               <Group justify="space-between" align="stretch">
-                <Stack>
-                  <Text fw={600}>Control</Text>
-                  <Text fw={600} >Hold time</Text>
-                </Stack>
+                <Text fw={600}>Hold time</Text>
                 
-                <Button size="xs" w={90} h={72}
-                  variant={isShortHoldDemo ? "outline" : "light"}
-                  color={isShortHoldDemo ? "green" : "blue"}
-                  aria-pressed={isShortHoldDemo}
-                  onClick={handleShortHoldDemoToggle}
-                  styles={{label: { whiteSpace: 'normal', textAlign: 'center', lineHeight: 1.15,},}}
-                >
-                  Demo: Short Hold
-                </Button>
+                {SHOW_SHORT_HOLD_DEMO && (
+                  <Button size="xs" w={90} h={72}
+                    variant={isShortHoldDemo ? "outline" : "light"}
+                    color={isShortHoldDemo ? "green" : "blue"}
+                    aria-pressed={isShortHoldDemo}
+                    onClick={handleShortHoldDemoToggle}
+                    styles={{label: { whiteSpace: 'normal', textAlign: 'center', lineHeight: 1.15,},}}
+                  >
+                    Demo: Short Hold
+                  </Button>
+                )}
               </Group>
               
               <Slider
@@ -132,7 +148,7 @@ export default function TreatmentScreen({
               </Button>
               
               <Button onClick={() => treatment.dispatch({ type: 'RESET_PROGRESS' })}>
-                Restart Treatment
+                Restart Manoeuvre
               </Button>
 
               <Box style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
@@ -164,7 +180,7 @@ export default function TreatmentScreen({
                               }}
                             >
                               <Image
-                                src={step.imageSrc}
+                                src={`${process.env.PUBLIC_URL}/diagrams/Position ${index + 1} ${affectedEarImageLabel}.png`}
                                 alt={step.label}
                                 h="100%"
                                 w="100%"
@@ -178,7 +194,7 @@ export default function TreatmentScreen({
                   ))}
                   <Stepper.Completed>
                     <Text size="xl" >
-                      End of treatment
+                      End of manoeuvre
                     </Text>
                   </Stepper.Completed>
                 </Stepper>
