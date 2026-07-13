@@ -46,6 +46,7 @@ export default function TreatmentScreen({
   const [completionModalOpened, setCompletionModalOpened] = useState(false);
   const affectedEarImageLabel = treatment.state.affectedEar === 'right' ? 'Right' : 'Left';
   const isComplete = treatment.state.stage === TreatmentStage.COMPLETE;
+  const isPositionTimeComplete = !isComplete && treatment.state.stageProgress >= 1;
   const currentPositionIndex = Math.min(treatment.state.stage, POSITION_COUNT - 1);
 
   useEffect(() => {
@@ -246,10 +247,33 @@ export default function TreatmentScreen({
                   )}
                 </Group>
               </Group>
-              < Progress value={treatment.state.stageProgress * 100}
-                color={treatment.state.stage === TreatmentStage.COMPLETE ? "green" : "blue"}
-                animated = {treatment.state.stage === TreatmentStage.COMPLETE}
-                mt="xs" size="xl" radius="xl" style={{ flexShrink: 0 }} />
+              <Box mt="xs" pos="relative" style={{ flexShrink: 0 }}>
+                <Progress
+                  value={treatment.state.stageProgress * 100}
+                  color={isComplete || isPositionTimeComplete ? "green" : "blue"}
+                  animated={isComplete || isPositionTimeComplete}
+                  size="xl"
+                  radius="xl"
+                />
+                {isPositionTimeComplete && (
+                  <Text
+                    size="sm"
+                    fw={700}
+                    c="white"
+                    ta="center"
+                    pos="absolute"
+                    inset={0}
+                    style={{
+                      display: 'grid',
+                      placeItems: 'center',
+                      lineHeight: 1,
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    Progress when dizziness subsides
+                  </Text>
+                )}
+              </Box>
             </Stack>
           </Card>
         </Box>
