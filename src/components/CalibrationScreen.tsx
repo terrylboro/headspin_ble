@@ -23,8 +23,11 @@ export default function CalibrationScreen({
   onContinue,
 }: CalibrationScreenProps) {
 
-  const { latestImuSample, calibrateOffset } = useTreatment();
+  const { latestImuSample, calibrateOffset, state } = useTreatment();
   const [orientationError, setOrientationError] = useState<string | null>(null);
+  // The original "Left" assets face right, while the mirrored "Right" assets
+  // face left. Select by facing direction so it matches the affected ear.
+  const affectedEarImageLabel = state.affectedEar === 'right' ? 'Left' : 'Right';
 
   function handleStart() {
     setOrientationError(null);
@@ -68,14 +71,14 @@ export default function CalibrationScreen({
       <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="xl" style={{ flex: 1 }}>
         <InfoCard
           title="Place the device"
-          imageSrc={`${process.env.PUBLIC_URL}/diagrams/HeadSpin Device Placement.png`}
-          textBody="Place the device on the patient, with the device next to their ear."
+          imageSrc={`${process.env.PUBLIC_URL}/diagrams/HeadSpin Device Placement ${affectedEarImageLabel}.png`}
+          textBody="Place the device on the patient, ensuring the device is sat next to their affected ear."
         />
 
         <InfoCard
           title="Get ready"
-          imageSrc={`${process.env.PUBLIC_URL}/diagrams/Calibration Get Ready Side Profile v2.png`}
-          textBody="Sit the patient upright with their legs on the treatment bed. Ensure they are looking straight ahead, then press Start to calibrate the headset and begin treatment."
+          imageSrc={`${process.env.PUBLIC_URL}/diagrams/Calibration Get Ready Side Profile ${affectedEarImageLabel}.png`}
+          textBody="Sit the patient upright with their legs on the treatment bed. Ensure they are looking straight ahead, then press either the big button on the device or the Start button below to start."
         />
       </SimpleGrid>
 
