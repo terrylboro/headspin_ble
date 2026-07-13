@@ -2,21 +2,20 @@ import {
   Button,
   Card,
   Group,
-  MultiSelect,
   Stack,
   Text,
   Title,
-  Alert,
   Grid,
   Box,
   useMantineTheme,
   Modal,
-  Image,
   SimpleGrid,
   ActionIcon,
+  SegmentedControl,
 } from '@mantine/core';
 
 import { useDisclosure } from '@mantine/hooks';
+import { useState } from 'react';
 
 import { SelectCanalButton } from '../custom/canalButton';
 import { useTreatment } from '../context/TreatmentProvider';
@@ -29,6 +28,25 @@ type SetupScreenProps = {
   onConnect: () => void;
   onDisconnect: () => void;
   onContinue: () => void;
+};
+
+type TreatmentSide = 'left' | 'right';
+
+const epleyInstructions: Record<TreatmentSide, string[]> = {
+  left: [
+    'Sit the patient upright on the treatment bed. Turn their head 45° to the left.',
+    'Lie the patient back on the bed quickly so their shoulders are touching the bed. Keep the head reclined and looking 45° to the left. Hold for around 30 seconds or until nystagmus subsides.',
+    "Turn the patient's head 90° to the right without raising it. Their head will now be looking 45° to the right. Hold for around 30 seconds or until nystagmus subsides.",
+    "Turn the patient's head and body another 90° to the right, so they are now looking 45° from the floor. Hold for around 30 seconds or until nystagmus subsides.",
+    'Sit the patient up on the right side, keeping their chin tucked.',
+  ],
+  right: [
+    'Sit the patient upright on the treatment bed. Turn their head 45° to the right.',
+    'Lie the patient back on the bed quickly so their shoulders are touching the bed. Keep the head reclined and looking 45° to the right. Hold for around 30 seconds or until nystagmus subsides.',
+    "Turn the patient's head 90° to the left without raising it. Their head will now be looking 45° to the left. Hold for around 30 seconds or until nystagmus subsides.",
+    "Turn the patient's head and body another 90° to the left, so they are now looking 45° from the floor. Hold for around 30 seconds or until nystagmus subsides.",
+    'Sit the patient up on the left side, keeping their chin tucked.',
+  ],
 };
 
 export default function SetupScreen({
@@ -45,17 +63,44 @@ export default function SetupScreen({
 
    const [opened, { open, close }] = useDisclosure(false);
    const [infoOpened, { open : infoOpen, close : infoClose }] = useDisclosure(false);
+   const [refresherSide, setRefresherSide] = useState<TreatmentSide>('right');
+
+   const openRefresher = () => {
+     setRefresherSide(state.affectedEar ?? 'right');
+     open();
+   };
+
+   const sideLabel = refresherSide === 'left' ? 'Left' : 'Right';
+   const instructions = epleyInstructions[refresherSide];
 
   return (
     <>
 
     <Modal styles={{title: {fontSize: 56, fontWeight: 600}}}size="calc(100vw - 20px)" opened={opened} onClose={close} title="How to Perform the Epley Manoeuvre"  transitionProps={{ transition: 'fade', duration: 200 }}>
+      <Group justify="center" mb="lg" gap="md">
+        <Text fw={600} size="lg">
+          Affected ear:
+        </Text>
+        <SegmentedControl
+          size="lg"
+          value={refresherSide}
+          onChange={(value) => setRefresherSide(value as TreatmentSide)}
+          data={[
+            { label: 'Left', value: 'left' },
+            { label: 'Right', value: 'right' },
+          ]}
+          aria-label="Epley manoeuvre treatment side"
+        />
+      </Group>
       <SimpleGrid cols={5} spacing="sm">
-        <InfoCard title="Preparation" imageSrc={process.env.PUBLIC_URL + '/diagrams/Position 0 From Back.png'} textBody="Sit the patient upright on the treatment bed. Turn their head 45° to the right."  />
-        <InfoCard title="Position 1" imageSrc={process.env.PUBLIC_URL + '/diagrams/Position 1 Right.png'} textBody="Lie the patient back on the bed quickly so their shoulders are touching the bed. Keep the head reclined and looking 45° to the right. Hold for around 30 seconds or when nystagmus subsides." />
-        <InfoCard title="Position 2" imageSrc={process.env.PUBLIC_URL + '/diagrams/Position 2 AI Cropped.png'} textBody="Turn the patient's head 90° to the left without raising it. Their head will now be looking 45° to the left. Hold for around 30 seconds or when nystagmus subsides."  />
-        <InfoCard title="Position 3" imageSrc={process.env.PUBLIC_URL + '/diagrams/Position 3 Right.png'} textBody="Turn the patient's head and body another 90° to the left, so they are now looking 45° from the floor. Hold for around 30 seconds or when nystagmus subsides."  />
-        <InfoCard title="Position 4" imageSrc={process.env.PUBLIC_URL + '/diagrams/Position 4 Right.png'} textBody="Sit the patient up on the left side, keeping their chin tucked."  />
+        {instructions.map((textBody, index) => (
+          <InfoCard
+            key={index}
+            title={index === 0 ? 'Preparation' : `Position ${index}`}
+            imageSrc={`${process.env.PUBLIC_URL}/diagrams/Position ${index} ${sideLabel}.png`}
+            textBody={textBody}
+          />
+        ))}
       </SimpleGrid>
       
     </Modal>
@@ -141,7 +186,7 @@ export default function SetupScreen({
                         </ActionIcon>
                       </Group>
                       
-                      <Button variant="outline" onClick={open}>
+                      <Button variant="outline" onClick={openRefresher}>
                         Need a refresher?
                       </Button>
                     </Group>
