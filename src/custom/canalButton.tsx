@@ -4,6 +4,7 @@ type SelectCardButtonProps = {
   label: string;
   imageSrc: string;
   selected: boolean;
+  disabled?: boolean;
   onClick?: () => void;
 };
 
@@ -11,11 +12,13 @@ export function SelectCanalButton({
   label,
   imageSrc,
   selected = false,
+  disabled = false,
   onClick,
 }: SelectCardButtonProps) {
   return (
     <UnstyledButton
       onClick={onClick}
+      disabled={disabled}
       style={{ width: '100%', display: 'block' }}
     >
       <Card
@@ -28,7 +31,8 @@ export function SelectCanalButton({
           borderColor: selected ? '#228be6' : undefined,
           boxShadow: selected ? '0 0 0 2px rgba(34, 139, 230, 0.25)' : undefined,
           transform: selected ? 'translateY(-1px)' : undefined,
-          cursor: 'pointer',
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          opacity: disabled ? 0.45 : 1,
         }}
       >
         <Stack gap="xs" align="center">

@@ -200,8 +200,8 @@ export default function SetupScreen({
                 <Stack gap="md">
                   <Group wrap="nowrap" grow>
                     <SelectCanalButton label="Posterior" imageSrc={process.env.PUBLIC_URL + "/Posterior Canal Selected.png"} selected={state.affectedCanal === 'posterior'} onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'posterior' })}/>
-                    <SelectCanalButton label="Anterior" imageSrc={process.env.PUBLIC_URL + "/Anterior Canal Selected.png"} selected={state.affectedCanal === 'anterior'} onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'anterior' })}/>
-                    <SelectCanalButton label="Lateral" imageSrc={process.env.PUBLIC_URL + "/Lateral Canal Selected.png"} selected={state.affectedCanal === 'lateral'} onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'lateral' })}/>
+                    <SelectCanalButton label="Anterior" imageSrc={process.env.PUBLIC_URL + "/Anterior Canal Selected.png"} selected={state.affectedCanal === 'anterior'} disabled onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'anterior' })}/>
+                    <SelectCanalButton label="Lateral" imageSrc={process.env.PUBLIC_URL + "/Lateral Canal Selected.png"} selected={state.affectedCanal === 'lateral'} disabled onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'lateral' })}/>
                   </Group>
                 </Stack>
               </Stack>
