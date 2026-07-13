@@ -6,7 +6,6 @@ import {
   Progress,
   Stack,
   Text,
-  Stepper,
   Flex,
   Box,
   Slider,
@@ -29,20 +28,7 @@ const sliderMarks = [
 
 const SHOW_SHORT_HOLD_DEMO = false;
 
-const treatmentSteps = [
-  {
-    label: 'Position 1',
-  },
-  {
-    label: 'Position 2',
-  },
-  {
-    label: 'Position 3',
-  },
-  {
-    label: 'Position 4',
-  },
-];
+const POSITION_COUNT = 4;
 
 type TreatmentScreenProps = {
   onBack: () => void;
@@ -59,6 +45,8 @@ export default function TreatmentScreen({
   const [isShortHoldDemo, setIsShortHoldDemo] = useState(false);
   const [completionModalOpened, setCompletionModalOpened] = useState(false);
   const affectedEarImageLabel = treatment.state.affectedEar === 'right' ? 'Right' : 'Left';
+  const isComplete = treatment.state.stage === TreatmentStage.COMPLETE;
+  const currentPositionIndex = Math.min(treatment.state.stage, POSITION_COUNT - 1);
 
   useEffect(() => {
     setCompletionModalOpened(treatment.state.stage === TreatmentStage.COMPLETE);
@@ -90,7 +78,10 @@ export default function TreatmentScreen({
   }
 
   return (
-    <Stack h="100%" style={{ minHeight: 0 }}>
+    <Stack
+      h="calc(100vh - 92px)"
+      style={{ minHeight: 0, overflow: 'hidden' }}
+    >
 
       <Modal
         opened={completionModalOpened}
@@ -105,7 +96,14 @@ export default function TreatmentScreen({
       </Modal>
 
       {/* <Group align="stretch" grow style={{ flex: 1 }}> */}
-      <Flex gap="xl" wrap="nowrap" w="100%" h="100%" align="stretch" style={{ minHeight: 0 }}>
+      <Flex
+        gap="md"
+        wrap="nowrap"
+        w="100%"
+        h="100%"
+        align="stretch"
+        style={{ minHeight: 0, overflow: 'hidden' }}
+      >
 
         {/* <Card withBorder shadow="sm" radius="md">
         <Text fw={600}>Latest data</Text>
@@ -114,95 +112,77 @@ export default function TreatmentScreen({
         </Card> */}
 
         <Box style={{ flex: 1, minWidth: 0, display: 'flex' }}>
-          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 480, height: '100%', overflow: 'hidden' }}>
-            <Stack h="100%" style={{ minHeight: 0 }}>
-              <Group justify="space-between" align="stretch">
-                <Text fw={600}>Hold time</Text>
-                
-                {SHOW_SHORT_HOLD_DEMO && (
-                  <Button size="xs" w={90} h={72}
-                    variant={isShortHoldDemo ? "outline" : "light"}
-                    color={isShortHoldDemo ? "green" : "blue"}
-                    aria-pressed={isShortHoldDemo}
-                    onClick={handleShortHoldDemoToggle}
-                    styles={{label: { whiteSpace: 'normal', textAlign: 'center', lineHeight: 1.15,},}}
-                  >
-                    Demo: Short Hold
-                  </Button>
-                )}
-              </Group>
-              
-              <Slider
-                  value={selectedHoldDuration}
-                  min={30} max={60}
-                  step={15}
-                  marks={sliderMarks}
-                  label={(val) => sliderMarks.find((mark) => mark.value === val)!.label} 
-                  onChange={handleHoldDurationChange}
-              />
-
+          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 0, height: '100%', overflow: 'hidden' }}>
+            <Stack h="100%" gap="sm" style={{ minHeight: 0 }}>
               {/* <Switch mt="md" defaultChecked label="Show arrows" onChange={() => treatment.setShowGuidanceArrows(!treatment.showGuidanceArrows)}/> */}
 
-              <Group grow mt="md">
+              <Group justify="space-between" align="flex-end" wrap="nowrap">
+                <Box>
+                  <Text fw={700} size="lg">
+                    Position {currentPositionIndex + 1} of {POSITION_COUNT}
+                  </Text>
+                  {isComplete && (
+                    <Text size="sm" c="green.7" fw={600}>
+                      Final position complete
+                    </Text>
+                  )}
+                </Box>
+              </Group>
+
+              <Group gap={6} wrap="nowrap" aria-label={`Position ${currentPositionIndex + 1} of ${POSITION_COUNT}`}>
+                {Array.from({ length: POSITION_COUNT }, (_, index) => {
+                  const isCompletedPosition = isComplete || index < currentPositionIndex;
+                  const isCurrentPosition = !isComplete && index === currentPositionIndex;
+
+                  return (
+                    <Box
+                      key={index}
+                      style={{
+                        flex: 1,
+                        height: 8,
+                        borderRadius: 999,
+                        background: isCompletedPosition
+                          ? 'var(--mantine-color-green-6)'
+                          : isCurrentPosition
+                            ? 'var(--mantine-color-blue-6)'
+                            : 'var(--mantine-color-gray-3)',
+                      }}
+                    />
+                  );
+                })}
+              </Group>
+
+              <Box
+                style={{
+                  flex: 1,
+                  minHeight: 0,
+                  overflow: 'hidden',
+                  borderRadius: 8,
+                  border: '1px solid var(--mantine-color-gray-3)',
+                  background: 'var(--mantine-color-gray-0)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Image
+                  src={`${process.env.PUBLIC_URL}/diagrams/Position ${currentPositionIndex + 1} ${affectedEarImageLabel}.png`}
+                  alt={`Position ${currentPositionIndex + 1}`}
+                  h="100%"
+                  w="100%"
+                  fit="contain"
+                />
+              </Box>
+
+              <Group grow>
                 <Button onClick={() => treatment.dispatch({ type: 'RETURN_TO_PREVIOUS_STAGE' })}>
-                  Previous Position
+                  Previous
                 </Button>
 
                 <Button onClick={() => treatment.dispatch({ type: 'PROGRESS' })}>
-                  Progress Position
+                  Next
                 </Button>
               </Group>
-
-              <Box style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-                <Stepper
-                  active={treatment.state.stage}
-                  orientation="vertical"
-                  mt="md"
-                  size="sm"
-                  radius="xl"
-                  color={(treatment.state.stage === TreatmentStage.COMPLETE) ? "green" : "blue"}
-                  styles={{ step: { cursor: "default" }, content: { paddingTop: 12 } }}
-                >
-                  {treatmentSteps.map((step, index) => (
-                    <Stepper.Step
-                      key={step.label}
-                      label={step.label}
-                      description={
-                        <span style={{ display: 'block', marginTop: 8, width: '100%' }}>
-                          {treatment.state.stage === index && (
-                            <span
-                              style={{
-                                display: 'block',
-                                width: '100%',
-                                height: 'clamp(220px, 34vh, 420px)',
-                                borderRadius: 8,
-                                overflow: 'hidden',
-                                border: '1px solid var(--mantine-color-gray-3)',
-                                background: 'var(--mantine-color-gray-0)',
-                              }}
-                            >
-                              <Image
-                                src={`${process.env.PUBLIC_URL}/diagrams/Position ${index + 1} ${affectedEarImageLabel}.png`}
-                                alt={step.label}
-                                h="100%"
-                                w="100%"
-                                fit="contain"
-                              />
-                            </span>
-                          )}
-                        </span>
-                      }
-                    />
-                  ))}
-                  <Stepper.Completed>
-                    <Text size="xl" >
-                      End of manoeuvre
-                    </Text>
-                  </Stepper.Completed>
-                </Stepper>
-              </Box>
-
-              
 
               {/* <Button mt="md" onClick={() => {}}>
                 Record
@@ -213,8 +193,8 @@ export default function TreatmentScreen({
         </Box>
 
         <Box style={{ flex: 2, minWidth: 0, display: 'flex' }}>
-          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 480, height: '100%' }}>
-            <Stack h="100%" >
+          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 0, height: '100%', overflow: 'hidden' }}>
+            <Stack h="100%" style={{ minHeight: 0 }}>
               <Group justify="space-between">
                 <Text fw={600}>Canal Alignment</Text>
                 <Text size="sm">{(treatment.alignmentRef!.current * 100).toFixed(0)}%</Text>
@@ -225,6 +205,8 @@ export default function TreatmentScreen({
               <div
                 style={{
                   flex: 1,
+                  minHeight: 0,
+                  overflow: 'hidden',
                   background: 'BACKGR_COLOUR_CSS',
                   borderRadius: 8,
                   display: 'flex',
@@ -236,21 +218,51 @@ export default function TreatmentScreen({
                 <CanalRendering/>
               </div>
 
-              <Text fw={600}>Progress</Text>
+              <Group justify="space-between" align="center" wrap="nowrap" mb="xs">
+                <Text fw={600} style={{ flexShrink: 0 }}>Progress</Text>
+
+                <Group gap="sm" wrap="nowrap" style={{ flex: '0 1 70%', minWidth: 0 }}>
+                  <Text size="sm" fw={600} style={{ flexShrink: 0 }}>Hold time</Text>
+                  <Slider
+                    value={selectedHoldDuration}
+                    min={30}
+                    max={60}
+                    step={15}
+                    marks={sliderMarks}
+                    label={(val) => sliderMarks.find((mark) => mark.value === val)!.label}
+                    onChange={handleHoldDurationChange}
+                    style={{ flex: 1, minWidth: 120 }}
+                  />
+
+                  {SHOW_SHORT_HOLD_DEMO && (
+                    <Button size="xs" w={90} h={72}
+                      variant={isShortHoldDemo ? "outline" : "light"}
+                      color={isShortHoldDemo ? "green" : "blue"}
+                      aria-pressed={isShortHoldDemo}
+                      onClick={handleShortHoldDemoToggle}
+                      styles={{label: { whiteSpace: 'normal', textAlign: 'center', lineHeight: 1.15,},}}
+                    >
+                      Demo: Short Hold
+                    </Button>
+                  )}
+                </Group>
+              </Group>
               < Progress value={treatment.state.stageProgress * 100}
                 color={treatment.state.stage === TreatmentStage.COMPLETE ? "green" : "blue"}
                 animated = {treatment.state.stage === TreatmentStage.COMPLETE}
-                mt="xs" size="xl" radius="xl" />
+                mt="xs" size="xl" radius="xl" style={{ flexShrink: 0 }} />
             </Stack>
           </Card>
         </Box>
 
         <Box style={{ flex: 2, minWidth: 0, display: 'flex' }}>
-          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 480, height: '100%' }}>
-            <Stack h="100%" >
+          <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 0, height: '100%', overflow: 'hidden' }}>
+            <Stack h="100%" style={{ minHeight: 0 }}>
               <Text fw={600}>Head Position</Text>
 
-              <HeadRendering calibrateMode={false} />
+              <Box style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+                <HeadRendering calibrateMode={false} />
+              </Box>
 
             </Stack>
           </Card>
