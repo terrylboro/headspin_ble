@@ -143,13 +143,15 @@ export default function TreatmentScreen({
 
               {/* <Switch mt="md" defaultChecked label="Show arrows" onChange={() => treatment.setShowGuidanceArrows(!treatment.showGuidanceArrows)}/> */}
 
-              <Button mt="md" onClick={() => treatment.dispatch({ type: 'PROGRESS' })}>
-                Progress Position
-              </Button>
-              
-              <Button onClick={() => treatment.dispatch({ type: 'RESET_PROGRESS' })}>
-                Restart Manoeuvre
-              </Button>
+              <Group grow mt="md">
+                <Button onClick={() => treatment.dispatch({ type: 'RETURN_TO_PREVIOUS_STAGE' })}>
+                  Previous Position
+                </Button>
+
+                <Button onClick={() => treatment.dispatch({ type: 'PROGRESS' })}>
+                  Progress Position
+                </Button>
+              </Group>
 
               <Box style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
                 <Stepper

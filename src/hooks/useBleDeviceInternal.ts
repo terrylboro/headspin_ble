@@ -236,7 +236,13 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
 
       deviceRef.current = null;
       setConnected(false);
+      setConnecting(false);
       setDeviceName(null);
+      setMessages([]);
+      setLatestMessage(null);
+      setLatestButtonMessage(null);
+      setError(null);
+      messageIdRef.current = 0;
     } catch {
       // ignore
     }

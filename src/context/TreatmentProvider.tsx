@@ -302,17 +302,32 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
   }, []);
 
   const resetTreatment = useCallback(() => {
+    dispatch({ type: 'RESET' });
+    setAffectedEar(null);
+    setAffectedCanal('posterior');
+    setSelectedCanals([]);
     setIsTreating(false);
-
-    // setAlignment('idle');
-    setResetTime(Date.now());
+    setIsRecording(false);
+    setShowGuidanceArrows(true);
+    setResetTime(null);
     setStageProgress(0);
     setLatestSampleText('Waiting for data');
+    setLatestImuSample(null);
 
     matrixRef.current.identity();
     offsetMatrixRef.current.identity();
+    orientationRef.current = { roll: 0, pitch: 0, yaw: 0 };
+    alignmentRef.current = 0;
+    alignedRef.current = false;
 
     holdStartRef.current = null;
+    recordedSamplesRef.current = [];
+    recordingStartTimestampRef.current = null;
+    lastProcessedMessageIdRef.current = null;
+    lastProcessedButtonMessageIdRef.current = null;
+
+    madgwickRef.current = new MadgwickFilter(1/256, 0.1);
+    madgwickRef.current.init(0, 0, 9.81);
   }, []);
 
   const setGyroscopeOffsets = useCallback((offsets: GyroscopeOffsets) => {

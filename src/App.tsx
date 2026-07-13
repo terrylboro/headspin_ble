@@ -5,6 +5,7 @@ import './App.css';
 import SetupScreen from './components/SetupScreen';
 import TreatmentScreen from './components/TreatmentScreen';
 import { useBleDevice } from './context/BleProvider';
+import { useTreatment } from './context/TreatmentProvider';
 
 import TopBar from './components/TopBar';
 
@@ -34,6 +35,7 @@ type Screen = 'setup' | 'gyroscope-calibration' | 'calibrate' | 'treatment' | 'r
 function App(): JSX.Element { 
 
   const ble = useBleDevice();
+  const treatment = useTreatment();
 
   const [screen, setScreen] = useState<Screen>('setup');
   const [selectedCanals, setSelectedCanals] = useState<string[]>([]);
@@ -45,6 +47,15 @@ function App(): JSX.Element {
  
   // Mantine theming
   const theme = useMantineTheme();
+
+  async function handleSystemReset() {
+    setCalibrationOpen(false);
+    setSelectedCanals([]);
+    await ble.disconnect();
+    treatment.resetTreatment();
+    treatment.clearGyroscopeOffsets();
+    setScreen('setup');
+  }
 
   return (
       <AppShell
@@ -58,7 +69,11 @@ function App(): JSX.Element {
           backgroundColor: theme.colors.blue[6],
           color: theme.white,
         }}>
-        <TopBar setScreen={setScreen} setCalibrationOpen={setCalibrationOpen} />
+        <TopBar
+          setScreen={setScreen}
+          setCalibrationOpen={setCalibrationOpen}
+          onReset={handleSystemReset}
+        />
 
       </AppShell.Header>
 
