@@ -26,7 +26,7 @@ import GyroscopeCalibrationScreen from './components/GyroscopeCalibrationScreen'
 import { truncate } from 'node:fs';
 import HeadCanalAlignmentTestPanel from './test/HeadCanalAlignmentTestPanel';
 
-type Screen = 'setup' | 'calibrate' | 'treatment' | 'research';
+type Screen = 'setup' | 'gyroscope-calibration' | 'calibrate' | 'treatment' | 'research';
 
 
 
@@ -101,7 +101,11 @@ function App(): JSX.Element {
           bleError={ble.error}
           onConnect={ble.connect}
           onDisconnect={ble.disconnect}
-          onContinue={() => setScreen('calibrate')}
+          onContinue={() => setScreen('gyroscope-calibration')}
+        />
+      ) : screen === 'gyroscope-calibration' ? (
+        <GyroscopeCalibrationScreen
+          onComplete={() => setScreen('calibrate')}
         />
       ) : screen === 'research' ? (
         <ResearchScreen
@@ -115,7 +119,7 @@ function App(): JSX.Element {
         />
       ) : (
           <CalibrationScreen
-            onBack={() => setScreen('setup')}
+            onBack={() => setScreen('gyroscope-calibration')}
             onContinue={() => setScreen('treatment')}
         />
       )}

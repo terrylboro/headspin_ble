@@ -1,17 +1,17 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Badge,
   Button,
+  Box,
   Card,
   Group,
-  Progress,
-  SimpleGrid,
+  Image,
   Stack,
+  Title,
   Text,
 } from '@mantine/core';
 import { useTreatment, GyroscopeOffsets } from '../context/TreatmentProvider';
 
-const CALIBRATION_DURATION_MS = 5000;
+const CALIBRATION_DURATION_MS = 3000;
 
 type GyroscopeSample = {
   gx: number;
@@ -46,69 +46,38 @@ function calculateGyroscopeOffsets(samples: GyroscopeSample[]): GyroscopeOffsets
   };
 }
 
-function formatOffset(value: number) {
-  return `${value >= 0 ? '+' : ''}${value.toFixed(4)}`;
-}
-
 export default function GyroscopeCalibrationScreen({
   onComplete,
 }: GyroscopeCalibrationScreenProps) {
   const {
     latestImuSample,
-    gyroscopeOffsets,
     setGyroscopeOffsets,
-    clearGyroscopeOffsets,
   } = useTreatment();
 
   const [isCalibrating, setIsCalibrating] = useState(false);
-  const [elapsedMs, setElapsedMs] = useState(0);
   const [lastResult, setLastResult] = useState<GyroscopeOffsets | null>(null);
-  const [statusText, setStatusText] = useState('Ready to calibrate');
 
   const samplesRef = useRef<GyroscopeSample[]>([]);
-  const startedAtRef = useRef<number | null>(null);
   const lastSampleTimestampRef = useRef<number | null>(null);
-
-  const progress = Math.min((elapsedMs / CALIBRATION_DURATION_MS) * 100, 100);
-  const sampleCount = samplesRef.current.length;
-
-  const displayedOffsets = useMemo(
-    () => lastResult ?? gyroscopeOffsets,
-    [gyroscopeOffsets, lastResult]
-  );
 
   const finishCalibration = useCallback(() => {
     const samples = samplesRef.current;
-    startedAtRef.current = null;
     setIsCalibrating(false);
-    setElapsedMs(CALIBRATION_DURATION_MS);
 
     if (samples.length === 0) {
-      setStatusText('No gyroscope samples received');
       return;
     }
 
     const nextOffsets = calculateGyroscopeOffsets(samples);
     setGyroscopeOffsets(nextOffsets);
     setLastResult(nextOffsets);
-    setStatusText(`Calibration complete from ${samples.length} samples`);
   }, [setGyroscopeOffsets]);
 
   function startCalibration() {
     samplesRef.current = [];
-    startedAtRef.current = Date.now();
     lastSampleTimestampRef.current = null;
-    setElapsedMs(0);
     setLastResult(null);
-    setStatusText('Keep the headset completely still');
     setIsCalibrating(true);
-  }
-
-  function handleClearOffsets() {
-    clearGyroscopeOffsets();
-    setLastResult(null);
-    setElapsedMs(0);
-    setStatusText('Offsets cleared');
   }
 
   useEffect(() => {
@@ -133,74 +102,49 @@ export default function GyroscopeCalibrationScreen({
       return;
     }
 
-    const intervalId = window.setInterval(() => {
-      if (startedAtRef.current === null) {
-        return;
-      }
+    const timeoutId = window.setTimeout(finishCalibration, CALIBRATION_DURATION_MS);
 
-      const nextElapsedMs = Date.now() - startedAtRef.current;
-      setElapsedMs(Math.min(nextElapsedMs, CALIBRATION_DURATION_MS));
-
-      if (nextElapsedMs >= CALIBRATION_DURATION_MS) {
-        finishCalibration();
-      }
-    }, 50);
-
-    return () => window.clearInterval(intervalId);
+    return () => window.clearTimeout(timeoutId);
   }, [finishCalibration, isCalibrating]);
 
   return (
-    <Card withBorder shadow="sm" radius="md">
-      <Stack>
-        <Group justify="space-between">
-          <Text fw={600}>Gyroscope calibration</Text>
-          <Badge color={isCalibrating ? 'blue' : lastResult ? 'green' : 'gray'}>
-            {isCalibrating ? 'Calibrating' : lastResult ? 'Complete' : 'Idle'}
-          </Badge>
-        </Group>
+    <Card
+      withBorder
+      shadow="sm"
+      radius="md"
+      p="lg"
+      maw={760}
+      w="100%"
+      h="calc(100vh - 92px)"
+      mx="auto"
+      style={{ overflow: 'hidden' }}
+    >
+      <Stack gap="lg" h="100%">
+        <Title order={3} ta="left">
+          Leave the device on a flat surface and press Calibrate.
+        </Title>
 
-        <Text size="sm" c="dimmed">
-          Place the headset on a still surface, then capture five seconds of data.
+        < Text ta="left" color="dimmed">
+          The device will calibrate itself for a few seconds. If it gets knocked or moved, press Recalibrate and wait again, otherwise press Proceed.
         </Text>
 
-        <Progress value={progress} animated={isCalibrating} />
+        <Box style={{ flex: 1, minHeight: 0, overflow: 'hidden', borderRadius: 8 }}>
+          <Image
+            src={`${process.env.PUBLIC_URL}/diagrams/Gyroscope Calibration Flat Surface.png`}
+            alt="HeadSpin device placed flat on a stable surface"
+            w="100%"
+            h="100%"
+            fit="cover"
+          />
+        </Box>
 
-        <Group justify="space-between">
-          <Text size="sm">{statusText}</Text>
-          <Text size="sm" c="dimmed">
-            {(Math.max(CALIBRATION_DURATION_MS - elapsedMs, 0) / 1000).toFixed(1)}s
-          </Text>
-        </Group>
-
-        <SimpleGrid cols={3}>
-          <Stack gap={2}>
-            <Text size="xs" c="dimmed">X offset</Text>
-            <Text fw={600}>{formatOffset(displayedOffsets.gx)}</Text>
-          </Stack>
-          <Stack gap={2}>
-            <Text size="xs" c="dimmed">Y offset</Text>
-            <Text fw={600}>{formatOffset(displayedOffsets.gy)}</Text>
-          </Stack>
-          <Stack gap={2}>
-            <Text size="xs" c="dimmed">Z offset</Text>
-            <Text fw={600}>{formatOffset(displayedOffsets.gz)}</Text>
-          </Stack>
-        </SimpleGrid>
-
-        <Text size="xs" c="dimmed">
-          Samples captured: {sampleCount}
-        </Text>
-
-        <Group grow>
-          <Button onClick={startCalibration} loading={isCalibrating}>
-            {lastResult ? 'Recalibrate' : 'Start calibration'}
-          </Button>
-          <Button variant="light" onClick={handleClearOffsets} disabled={isCalibrating}>
-            Clear offsets
+        <Group grow wrap="nowrap">
+          <Button size="lg" onClick={startCalibration} loading={isCalibrating}>
+            {lastResult ? 'Recalibrate' : 'Calibrate'}
           </Button>
           {onComplete && (
-            <Button variant="default" onClick={onComplete} disabled={isCalibrating}>
-              Done
+            <Button size="lg" color="green" onClick={onComplete} disabled={isCalibrating || !lastResult}>
+              Proceed
             </Button>
           )}
         </Group>

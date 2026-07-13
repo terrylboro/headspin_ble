@@ -102,6 +102,10 @@ export default function SetupScreen({
           />
         ))}
       </SimpleGrid>
+
+      <Text fw={600} size="lg">
+          The recommended hold duration for each position is 30 seconds after nystagmus or patient dizziness has resolved.
+        </Text>
       
     </Modal>
 
@@ -231,7 +235,7 @@ export default function SetupScreen({
                     <Button color={state.affectedEar === "left" ? theme.colors.green[6] : theme.colors.gray[6]} fullWidth size="xl" onClick={() => dispatch({ type: 'SELECT_EAR', ear: 'left' })}>
                       Left
                     </Button>
-                    <Button color={state.affectedEar === "right" ? theme.colors.red[6] : theme.colors.gray[6]} fullWidth size="xl" onClick={() => dispatch({ type: 'SELECT_EAR', ear: 'right' })}>
+                    <Button color={state.affectedEar === "right" ? theme.colors.green[6] : theme.colors.gray[6]} fullWidth size="xl" onClick={() => dispatch({ type: 'SELECT_EAR', ear: 'right' })}>
                       Right
                     </Button>
                 </Stack>
