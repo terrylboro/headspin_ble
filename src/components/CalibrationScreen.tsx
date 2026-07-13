@@ -1,12 +1,17 @@
+import { useState } from 'react';
 import {
+  Alert,
   Button,
-  Group,
   SimpleGrid,
   Stack,
 } from '@mantine/core';
+import { MathUtils, Vector3 } from 'three';
 
 import { useTreatment } from '../context/TreatmentProvider';
 import { InfoCard } from '../custom/infoCard';
+
+const UPRIGHT_TOLERANCE_DEGREES = 30;
+const WORLD_UP_AXIS = new Vector3(0, 0, 1);
 
 type CalibrationScreenProps = {
   onBack: () => void;
@@ -18,11 +23,43 @@ export default function CalibrationScreen({
   onContinue,
 }: CalibrationScreenProps) {
 
-  const { matrixRef, offsetMatrixRef } = useTreatment();
+  const { latestImuSample, calibrateOffset } = useTreatment();
+  const [orientationError, setOrientationError] = useState<string | null>(null);
 
-  function calibrateOrientation() {
-        const current = matrixRef.current.clone();
-        offsetMatrixRef.current.copy(current).invert();
+  function handleStart() {
+    setOrientationError(null);
+
+    if (!latestImuSample) {
+      setOrientationError('Waiting for orientation data from the device.');
+      return;
+    }
+
+    // Use the latest gravity reading rather than the filtered orientation matrix.
+    // This responds immediately when the clinician removes and replaces the device;
+    // the orientation filter can otherwise retain the previous inverted pose briefly.
+    const deviceUp = new Vector3(
+      -latestImuSample.ay,
+      -latestImuSample.az,
+      latestImuSample.ax
+    );
+
+    if (deviceUp.lengthSq() === 0) {
+      setOrientationError('Waiting for a valid orientation reading from the device.');
+      return;
+    }
+
+    deviceUp.normalize();
+    const uprightThreshold = Math.cos(MathUtils.degToRad(UPRIGHT_TOLERANCE_DEGREES));
+
+    if (deviceUp.dot(WORLD_UP_AXIS) < uprightThreshold) {
+      setOrientationError(
+        'The device does not appear to be upright. Check its position on the patient and ensure they are sitting upright and looking straight ahead.'
+      );
+      return;
+    }
+
+    calibrateOffset();
+    onContinue();
   }
 
 
@@ -38,18 +75,19 @@ export default function CalibrationScreen({
         <InfoCard
           title="Get ready"
           imageSrc={`${process.env.PUBLIC_URL}/diagrams/Calibration Get Ready Side Profile v2.png`}
-          textBody="Sit the patient upright with their legs on the treatment bed. Ensure they are looking straight ahead, then press the Recentre button to calibrate the headset."
+          textBody="Sit the patient upright with their legs on the treatment bed. Ensure they are looking straight ahead, then press Start to calibrate the headset and begin treatment."
         />
       </SimpleGrid>
 
-      <Group grow>
-        <Button size="lg" onClick={calibrateOrientation}>
-          Recentre
-        </Button>
-        <Button size="lg" color="green" onClick={onContinue}>
-          Start Treatment
-        </Button>
-      </Group>
+      {orientationError && (
+        <Alert color="red" title="Check device orientation">
+          {orientationError}
+        </Alert>
+      )}
+
+      <Button size="lg" color="green" fullWidth onClick={handleStart}>
+        Start
+      </Button>
     </Stack>
   );
 }
