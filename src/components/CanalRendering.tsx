@@ -265,22 +265,21 @@ const CanalRendering = () => {
                 alignmentRef!.current = canalAlignRes.score
                 alignedRef!.current = canalAlignRes.isAligned
 
-                const thirdMeshMaterial = meshParts.current[3]?.material
-                if (thirdMeshMaterial) {
-                    const shouldShowThrough =
-                        state.stage === TreatmentStage.STAGE_1 && canalAlignRes.score >= 0.7
-                    const materials = Array.isArray(thirdMeshMaterial)
-                        ? thirdMeshMaterial
-                        : [thirdMeshMaterial]
+                const dimOtherMeshes =
+                    state.stage === TreatmentStage.STAGE_1 && canalAlignRes.score > 0.85
+
+                meshParts.current.forEach((mesh, index) => {
+                    const shouldDim = dimOtherMeshes && index !== 1
+                    const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
 
                     materials.forEach((material) => {
-                        const transparencyChanged = material.transparent !== shouldShowThrough
-                        material.transparent = shouldShowThrough
-                        material.opacity = shouldShowThrough ? 0.3 : 1
-                        material.depthWrite = !shouldShowThrough
+                        const transparencyChanged = material.transparent !== shouldDim
+                        material.transparent = shouldDim
+                        material.opacity = shouldDim ? 0.3 : 1
+                        material.depthWrite = !shouldDim
                         if (transparencyChanged) material.needsUpdate = true
                     })
-                }
+                })
     
                 if (alignedRef!.current && !state.isAligned) {
                     // Handle the case where the canal becomes aligned
