@@ -164,15 +164,15 @@ export default function TreatmentScreen({
                   overflow: 'hidden',
                   borderRadius: 8,
                   border: '1px solid var(--mantine-color-gray-3)',
-                  background: 'var(--mantine-color-gray-0)',
+                  background: 'var(--mantine-color-white)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
                 <Stack h="100%" w="100%" gap="xs" style={{ minHeight: 0 }}>
-                  <Stack gap={2} style={{ flex: 1, minHeight: 0 }}>
-                    <Text size="xs" c="dimmed" ta="center" lh={1}>
+                  <Stack gap={2} style={{ flex: hasSideProfileImage ? 3 : 1, minHeight: 0 }}>
+                    <Text size="xs" ta="left" lh={1} px="xs">
                       Back View
                     </Text>
                     <Image
@@ -185,8 +185,8 @@ export default function TreatmentScreen({
                   </Stack>
 
                   {hasSideProfileImage && (
-                    <Stack gap={2} style={{ flex: 1, minHeight: 0 }}>
-                      <Text size="xs" c="dimmed" ta="center" lh={1}>
+                    <Stack gap={2} style={{ flex: 2, minHeight: 0 }}>
+                      <Text size="xs" ta="left" lh={1} px="xs">
                         Side View
                       </Text>
                       <Image
