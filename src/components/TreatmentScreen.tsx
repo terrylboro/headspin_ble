@@ -8,7 +8,6 @@ import {
   Text,
   Flex,
   Box,
-  Slider,
   Image,
   Modal,
 } from '@mantine/core';
@@ -17,16 +16,8 @@ import { useEffect, useState } from 'react';
 import HeadRendering from  './HeadRendering';
 import CanalRendering from './CanalRendering';
 import { useTreatment } from '../context/TreatmentProvider';
-import { TreatmentStage, HoldDurationType } from '../types/treatmentTypes';
+import { TreatmentStage } from '../types/treatmentTypes';
 import AlignmentProgress from '../custom/alignmentProgress';
-
-const sliderMarks = [
-  { value: 30, label: '30s' },
-  { value: 45, label: '45s' },
-  { value: 60, label: '60s' },
-];
-
-const SHOW_SHORT_HOLD_DEMO = false;
 
 const POSITION_COUNT = 4;
 
@@ -39,10 +30,6 @@ export default function TreatmentScreen({
 }: TreatmentScreenProps) {
 
   const treatment =  useTreatment();
-  const [selectedHoldDuration, setSelectedHoldDuration] = useState<HoldDurationType>(
-    treatment.state.holdDurationSec === 5 ? 45 : treatment.state.holdDurationSec
-  );
-  const [isShortHoldDemo, setIsShortHoldDemo] = useState(false);
   const [completionModalOpened, setCompletionModalOpened] = useState(false);
   const affectedEarImageLabel = treatment.state.affectedEar === 'right' ? 'Right' : 'Left';
   const isComplete = treatment.state.stage === TreatmentStage.COMPLETE;
@@ -60,26 +47,6 @@ export default function TreatmentScreen({
   function calibrateOrientation() {
         const current = treatment.matrixRef.current.clone();
         treatment.offsetMatrixRef.current.copy(current).invert();
-  }
-
-  function handleShortHoldDemoToggle() {
-    setIsShortHoldDemo((isEnabled) => {
-      const nextIsEnabled = !isEnabled;
-      treatment.dispatch({
-        type: 'SET_HOLD_DURATION',
-        holdDuration: nextIsEnabled ? 5 : selectedHoldDuration,
-      });
-      return nextIsEnabled;
-    });
-  }
-
-  function handleHoldDurationChange(value: number) {
-    const holdDuration = value as HoldDurationType;
-    setSelectedHoldDuration(holdDuration);
-
-    if (!isShortHoldDemo) {
-      treatment.dispatch({ type: 'SET_HOLD_DURATION', holdDuration });
-    }
   }
 
   return (
@@ -245,40 +212,12 @@ export default function TreatmentScreen({
                 <CanalRendering/>
               </div>
 
-              <Group justify="space-between" align="center" wrap="nowrap" mb="xs">
-                <Text fw={600} style={{ flexShrink: 0 }}>Time in Position</Text>
-
-                <Group gap="sm" wrap="nowrap" style={{ flex: '0 1 70%', minWidth: 0 }}>
-                  <Slider
-                    value={selectedHoldDuration}
-                    min={30}
-                    max={60}
-                    step={15}
-                    marks={sliderMarks}
-                    label={(val) => sliderMarks.find((mark) => mark.value === val)!.label}
-                    onChange={handleHoldDurationChange}
-                    style={{ flex: 1, minWidth: 120 }}
-                  />
-
-                  {SHOW_SHORT_HOLD_DEMO && (
-                    <Button size="xs" w={90} h={72}
-                      variant={isShortHoldDemo ? "outline" : "light"}
-                      color={isShortHoldDemo ? "green" : "blue"}
-                      aria-pressed={isShortHoldDemo}
-                      onClick={handleShortHoldDemoToggle}
-                      styles={{label: { whiteSpace: 'normal', textAlign: 'center', lineHeight: 1.15,},}}
-                    >
-                      Demo: Short Hold
-                    </Button>
-                  )}
-                </Group>
-              </Group>
               <Box mt="xs" pos="relative" style={{ flexShrink: 0 }}>
                 <Progress
                   value={treatment.state.stageProgress * 100}
                   color={isComplete || isPositionTimeComplete ? "green" : "blue"}
                   animated={isComplete || isPositionTimeComplete}
-                  size="xl"
+                  size={28}
                   radius="xl"
                 />
                 {isPositionTimeComplete && (

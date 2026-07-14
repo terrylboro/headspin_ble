@@ -72,7 +72,7 @@ export default function CalibrationScreen({
         <InfoCard
           title="Place the device"
           imageSrc={`${process.env.PUBLIC_URL}/diagrams/HeadSpin Device Placement ${affectedEarImageLabel}.png`}
-          textBody="Place the device on the patient, ensuring the device is sat next to their affected ear."
+          textBody="Place the device on the patient, ensuring the device is sat next to their affected ear. Adjust the timer slider in the top bar to select 30 seconds, 45 seconds or 60 seconds reminders for each position."
         />
 
         <InfoCard

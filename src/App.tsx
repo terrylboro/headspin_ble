@@ -73,6 +73,7 @@ function App(): JSX.Element {
           setScreen={setScreen}
           setCalibrationOpen={setCalibrationOpen}
           onReset={handleSystemReset}
+          showTimerSlider={screen === 'calibrate' || screen === 'treatment'}
         />
 
       </AppShell.Header>

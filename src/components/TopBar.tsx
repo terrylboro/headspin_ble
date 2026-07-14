@@ -1,15 +1,35 @@
-import { Box, Button, Group, Text, Title } from '@mantine/core';
+import { Box, Button, Group, Slider, Text, Title } from '@mantine/core';
+import { useTreatment } from '../context/TreatmentProvider';
+import { HoldDurationType } from '../types/treatmentTypes';
 
 const SHOW_ADVANCED_CONTROLS = false;
 const PLACEHOLDER_BATTERY_PERCENTAGE = 75;
+const sliderMarks = [
+  { value: 30, label: '30s' },
+  { value: 45, label: '45s' },
+  { value: 60, label: '60s' },
+];
 
 type TopBarProps = {
     setScreen: (screen: 'setup' | 'treatment' | 'research') => void;
     setCalibrationOpen: (open: boolean) => void;
     onReset: () => void;
+    showTimerSlider: boolean;
 };
 
-export default function TopBar({ setScreen, setCalibrationOpen, onReset }: TopBarProps) {
+export default function TopBar({ setScreen, setCalibrationOpen, onReset, showTimerSlider }: TopBarProps) {
+  const treatment = useTreatment();
+  const selectedHoldDuration = treatment.state.holdDurationSec === 5
+    ? 45
+    : treatment.state.holdDurationSec;
+
+  function handleHoldDurationChange(value: number) {
+    treatment.dispatch({
+      type: 'SET_HOLD_DURATION',
+      holdDuration: value as HoldDurationType,
+    });
+  }
+
   return (
     <Group justify="space-between" h="100%" px="md">
       <Title order={3}>HeadSpin</Title>
@@ -18,6 +38,30 @@ export default function TopBar({ setScreen, setCalibrationOpen, onReset }: TopBa
         <Badge color="green">Streaming</Badge>
       </Group> */}
       <Group gap="md" wrap="nowrap">
+        {showTimerSlider && (
+          <Group gap="sm" wrap="nowrap" mr="md">
+            <Text size="sm" fw={600} ta="center" style={{ whiteSpace: 'nowrap' }} component="p">
+              Adjust
+              <br />
+              Timer
+            </Text>
+            <Slider
+              value={selectedHoldDuration}
+              min={30}
+              max={60}
+              step={15}
+              marks={sliderMarks}
+              label={(value) => sliderMarks.find((mark) => mark.value === value)?.label}
+              onChange={handleHoldDurationChange}
+              w={220}
+              color="green"
+              styles={{
+                markLabel: { color: 'var(--mantine-color-white)', fontSize: 10 },
+              }}
+            />
+          </Group>
+        )}
+
         {SHOW_ADVANCED_CONTROLS && <Button color="green" onClick={() => setCalibrationOpen(true)}>
             Correct Drift
           </Button>}
@@ -66,7 +110,9 @@ export default function TopBar({ setScreen, setCalibrationOpen, onReset }: TopBa
               }}
             />
           </Group>
-          <Text size="sm" fw={600}>{PLACEHOLDER_BATTERY_PERCENTAGE}%</Text>
+          <Text size="sm" fw={600} c="gray.8">
+            {PLACEHOLDER_BATTERY_PERCENTAGE}%
+          </Text>
         </Group>
 
         <Button color="green" onClick={onReset}>
