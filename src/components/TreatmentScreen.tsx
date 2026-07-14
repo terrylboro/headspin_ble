@@ -48,6 +48,10 @@ export default function TreatmentScreen({
   const isComplete = treatment.state.stage === TreatmentStage.COMPLETE;
   const isPositionTimeComplete = !isComplete && treatment.state.stageProgress >= 1;
   const currentPositionIndex = Math.min(treatment.state.stage, POSITION_COUNT - 1);
+  const currentPositionNumber = currentPositionIndex + 1;
+  const hasSideProfileImage = currentPositionNumber <= 3;
+  const originalPositionImageSrc = `${process.env.PUBLIC_URL}/diagrams/Position ${currentPositionNumber} ${affectedEarImageLabel}.png`;
+  const sideProfileImageSrc = `${process.env.PUBLIC_URL}/diagrams/Position ${currentPositionNumber} ${affectedEarImageLabel} Side Profile.png`;
 
   useEffect(() => {
     setCompletionModalOpened(treatment.state.stage === TreatmentStage.COMPLETE);
@@ -112,7 +116,7 @@ export default function TreatmentScreen({
         <Text>{treatment.latestSampleText}</Text>
         </Card> */}
 
-        <Box style={{ flex: 1, minWidth: 0, display: 'flex' }}>
+        <Box style={{ flex: 3, minWidth: 0, display: 'flex' }}>
           <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 0, height: '100%', overflow: 'hidden' }}>
             <Stack h="100%" gap="sm" style={{ minHeight: 0 }}>
               {/* <Switch mt="md" defaultChecked label="Show arrows" onChange={() => treatment.setShowGuidanceArrows(!treatment.showGuidanceArrows)}/> */}
@@ -166,13 +170,35 @@ export default function TreatmentScreen({
                   justifyContent: 'center',
                 }}
               >
-                <Image
-                  src={`${process.env.PUBLIC_URL}/diagrams/Position ${currentPositionIndex + 1} ${affectedEarImageLabel}.png`}
-                  alt={`Position ${currentPositionIndex + 1}`}
-                  h="100%"
-                  w="100%"
-                  fit="contain"
-                />
+                <Stack h="100%" w="100%" gap="xs" style={{ minHeight: 0 }}>
+                  <Stack gap={2} style={{ flex: 1, minHeight: 0 }}>
+                    <Text size="xs" c="dimmed" ta="center" lh={1}>
+                      Back View
+                    </Text>
+                    <Image
+                      src={originalPositionImageSrc}
+                      alt={`Position ${currentPositionNumber} ${affectedEarImageLabel.toLowerCase()} overhead view`}
+                      style={{ flex: 1, minHeight: 0 }}
+                      w="100%"
+                      fit="contain"
+                    />
+                  </Stack>
+
+                  {hasSideProfileImage && (
+                    <Stack gap={2} style={{ flex: 1, minHeight: 0 }}>
+                      <Text size="xs" c="dimmed" ta="center" lh={1}>
+                        Side View
+                      </Text>
+                      <Image
+                        src={sideProfileImageSrc}
+                        alt={`Position ${currentPositionNumber} ${affectedEarImageLabel.toLowerCase()} side profile`}
+                        style={{ flex: 1, minHeight: 0 }}
+                        w="100%"
+                        fit="contain"
+                      />
+                    </Stack>
+                  )}
+                </Stack>
               </Box>
 
               <Group grow>
@@ -193,7 +219,7 @@ export default function TreatmentScreen({
           </Card>
         </Box>
 
-        <Box style={{ flex: 2, minWidth: 0, display: 'flex' }}>
+        <Box style={{ flex: 3.5, minWidth: 0, display: 'flex' }}>
           <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 0, height: '100%', overflow: 'hidden' }}>
             <Stack h="100%" style={{ minHeight: 0 }}>
               <Group justify="space-between">
@@ -278,7 +304,7 @@ export default function TreatmentScreen({
           </Card>
         </Box>
 
-        <Box style={{ flex: 2, minWidth: 0, display: 'flex' }}>
+        <Box style={{ flex: 3.5, minWidth: 0, display: 'flex' }}>
           <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 0, height: '100%', overflow: 'hidden' }}>
             <Stack h="100%" style={{ minHeight: 0 }}>
               <Text fw={600}>Head Position</Text>
