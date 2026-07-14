@@ -209,7 +209,11 @@ const CanalRendering = () => {
 
                 color = canalColours["unselected"]
 
-                const material = new THREE.MeshStandardMaterial({color: color, side: THREE.DoubleSide, flatShading: true})
+                const material = new THREE.MeshStandardMaterial({
+                    color,
+                    side: THREE.DoubleSide,
+                    flatShading: true,
+                })
                 const loadedMesh = new THREE.Mesh(geometry, material)
 
                 loadedMesh.applyMatrix4(new THREE.Matrix4().makeScale(1, 1, 1))
@@ -260,6 +264,23 @@ const CanalRendering = () => {
     
                 alignmentRef!.current = canalAlignRes.score
                 alignedRef!.current = canalAlignRes.isAligned
+
+                const thirdMeshMaterial = meshParts.current[3]?.material
+                if (thirdMeshMaterial) {
+                    const shouldShowThrough =
+                        state.stage === TreatmentStage.STAGE_1 && canalAlignRes.score >= 0.7
+                    const materials = Array.isArray(thirdMeshMaterial)
+                        ? thirdMeshMaterial
+                        : [thirdMeshMaterial]
+
+                    materials.forEach((material) => {
+                        const transparencyChanged = material.transparent !== shouldShowThrough
+                        material.transparent = shouldShowThrough
+                        material.opacity = shouldShowThrough ? 0.3 : 1
+                        material.depthWrite = !shouldShowThrough
+                        if (transparencyChanged) material.needsUpdate = true
+                    })
+                }
     
                 if (alignedRef!.current && !state.isAligned) {
                     // Handle the case where the canal becomes aligned
