@@ -29,6 +29,20 @@ import HeadCanalAlignmentTestPanel from './test/HeadCanalAlignmentTestPanel';
 
 type Screen = 'setup' | 'gyroscope-calibration' | 'calibrate' | 'treatment' | 'research';
 
+const POWER_DOWN_BYTE = 0xf0;
+const POWER_DOWN_TEXT = '0xF0';
+
+function isPowerDownNotification(value: DataView): boolean {
+  const bytes = new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+
+  if (bytes.some((byte) => byte === POWER_DOWN_BYTE)) {
+    return true;
+  }
+
+  const text = new TextDecoder().decode(bytes).trim();
+  return text.toUpperCase().includes(POWER_DOWN_TEXT.toUpperCase());
+}
+
 
 
 
@@ -43,6 +57,15 @@ function App(): JSX.Element {
   const testMode = false; // Set to true to enable test mode (bypasses setup and calibration)
   // To control calibration popup
   const [calibrationOpen, setCalibrationOpen] = useState(false);
+  const [powerDownNotificationOpen, setPowerDownNotificationOpen] = useState(false);
+
+  useEffect(() => {
+    const message = ble.latestButtonMessage;
+
+    if (message && isPowerDownNotification(message.data)) {
+      setPowerDownNotificationOpen(true);
+    }
+  }, [ble.latestButtonMessage]);
 
  
   // Mantine theming
@@ -55,6 +78,14 @@ function App(): JSX.Element {
     treatment.resetTreatment();
     treatment.clearGyroscopeOffsets();
     setScreen('setup');
+  }
+
+  async function handleReconnect() {
+    const connected = await ble.connect();
+
+    if (connected) {
+      setPowerDownNotificationOpen(false);
+    }
   }
 
   return (
@@ -86,6 +117,31 @@ function App(): JSX.Element {
       >
         <GyroscopeCalibrationScreen onComplete={() => setCalibrationOpen(false)} />
     </Modal>
+
+      <Modal
+        opened={powerDownNotificationOpen}
+        onClose={() => setPowerDownNotificationOpen(false)}
+        title="Device powering down"
+        centered
+      >
+        <p>
+          The Bluetooth device is powering down. Turn it back on, then reconnect to
+          continue without losing the current treatment selections or progress.
+        </p>
+        <Button
+          fullWidth
+          loading={ble.connecting}
+          disabled={ble.connected}
+          onClick={handleReconnect}
+        >
+          {ble.connected ? 'Waiting for device to power down' : 'Reconnect device'}
+        </Button>
+        {ble.error && (
+          <p style={{ color: 'var(--mantine-color-red-7)' }} role="alert">
+            {ble.error}
+          </p>
+        )}
+      </Modal>
       
 
     <AppShell.Main

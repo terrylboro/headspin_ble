@@ -49,6 +49,13 @@ const epleyInstructions: Record<TreatmentSide, string[]> = {
   ],
 };
 
+const getEpleyImageSrc = (position: number, sideLabel: string) => {
+  const fullBedPositions = new Set([1, 2, 3]);
+  const fullBedLabel = fullBedPositions.has(position) ? ' Full Bed' : '';
+
+  return `${process.env.PUBLIC_URL}/diagrams/Position ${position}${fullBedLabel} ${sideLabel}.png`;
+};
+
 export default function SetupScreen({
   bleStatus,
   deviceName,
@@ -97,7 +104,7 @@ export default function SetupScreen({
           <InfoCard
             key={index}
             title={index === 0 ? 'Preparation' : `Position ${index}`}
-            imageSrc={`${process.env.PUBLIC_URL}/diagrams/Position ${index} ${sideLabel}.png`}
+            imageSrc={getEpleyImageSrc(index, sideLabel)}
             textBody={textBody}
           />
         ))}

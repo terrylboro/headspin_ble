@@ -54,12 +54,12 @@ export default function CalibrationScreen({
     deviceUp.normalize();
     const uprightThreshold = Math.cos(MathUtils.degToRad(UPRIGHT_TOLERANCE_DEGREES));
 
-    if (deviceUp.dot(WORLD_UP_AXIS) < uprightThreshold) {
-      setOrientationError(
-        'The device does not appear to be upright. Check its position on the patient and ensure they are sitting upright and looking straight ahead.'
-      );
-      return;
-    }
+    // if (deviceUp.dot(WORLD_UP_AXIS) < uprightThreshold) {
+    //   setOrientationError(
+    //     'The device does not appear to be upright. Check its position on the patient and ensure they are sitting upright and looking straight ahead.'
+    //   );
+    //   return;
+    // }
 
     calibrateOffset();
     onContinue();

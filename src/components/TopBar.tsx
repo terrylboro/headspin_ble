@@ -1,5 +1,6 @@
 import { Box, Button, Group, Slider, Text, Title } from '@mantine/core';
 import { useTreatment } from '../context/TreatmentProvider';
+import { useBleDevice } from '../context/BleProvider';
 import { HoldDurationType } from '../types/treatmentTypes';
 
 const SHOW_ADVANCED_CONTROLS = false;
@@ -19,6 +20,7 @@ type TopBarProps = {
 
 export default function TopBar({ setScreen, setCalibrationOpen, onReset, showTimerSlider }: TopBarProps) {
   const treatment = useTreatment();
+  const ble = useBleDevice();
   const selectedHoldDuration = treatment.state.holdDurationSec === 5
     ? 45
     : treatment.state.holdDurationSec;
@@ -38,6 +40,11 @@ export default function TopBar({ setScreen, setCalibrationOpen, onReset, showTim
         <Badge color="green">Streaming</Badge>
       </Group> */}
       <Group gap="md" wrap="nowrap">
+        {showTimerSlider && !ble.connected && (
+          <Button color="orange" loading={ble.connecting} onClick={() => void ble.connect()}>
+            Reconnect device
+          </Button>
+        )}
         {showTimerSlider && (
           <Group gap="sm" wrap="nowrap" mr="md">
             <Text size="sm" fw={600} ta="center" style={{ whiteSpace: 'nowrap' }} component="p">
