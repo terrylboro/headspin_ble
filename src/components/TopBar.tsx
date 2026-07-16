@@ -4,7 +4,6 @@ import { useBleDevice } from '../context/BleProvider';
 import { HoldDurationType } from '../types/treatmentTypes';
 
 const SHOW_ADVANCED_CONTROLS = false;
-const PLACEHOLDER_BATTERY_PERCENTAGE = 75;
 const sliderMarks = [
   { value: 30, label: '30s' },
   { value: 45, label: '45s' },
@@ -24,6 +23,16 @@ export default function TopBar({ setScreen, setCalibrationOpen, onReset, showTim
   const selectedHoldDuration = treatment.state.holdDurationSec === 5
     ? 45
     : treatment.state.holdDurationSec;
+  const batteryPercentage = ble.batteryLevel;
+  const batteryFill = batteryPercentage === null
+    ? 0
+    : Math.min(100, Math.max(0, batteryPercentage));
+  const batteryLabel = batteryPercentage === null ? 'Unavailable' : `${batteryPercentage}%`;
+  const batteryColor = batteryFill <= 20
+    ? 'var(--mantine-color-red-6)'
+    : batteryFill <= 40
+    ? 'var(--mantine-color-yellow-6)'
+    : 'var(--mantine-color-green-6)';
 
   function handleHoldDurationChange(value: number) {
     treatment.dispatch({
@@ -80,7 +89,7 @@ export default function TopBar({ setScreen, setCalibrationOpen, onReset, showTim
           gap={8}
           wrap="nowrap"
           role="status"
-          aria-label={`Device battery ${PLACEHOLDER_BATTERY_PERCENTAGE}%`}
+          aria-label={`Device battery ${batteryLabel}`}
           px="sm"
           py={6}
           style={{
@@ -101,10 +110,10 @@ export default function TopBar({ setScreen, setCalibrationOpen, onReset, showTim
             >
               <Box
                 style={{
-                  width: `${PLACEHOLDER_BATTERY_PERCENTAGE}%`,
+                  width: `${batteryFill}%`,
                   height: '100%',
                   borderRadius: 1,
-                  background: 'var(--mantine-color-green-6)',
+                  background: batteryColor,
                 }}
               />
             </Box>
@@ -118,7 +127,7 @@ export default function TopBar({ setScreen, setCalibrationOpen, onReset, showTim
             />
           </Group>
           <Text size="sm" fw={600} c="gray.8">
-            {PLACEHOLDER_BATTERY_PERCENTAGE}%
+            {batteryPercentage === null ? '--' : `${batteryPercentage}%`}
           </Text>
         </Group>
 

@@ -10,6 +10,8 @@ export type ReceivedMessage = {
 export type ButtonCommand = 'progress' | 'return';
 
 const BUTTON_CHAR_UUID = '12345678-1234-5678-1234-56789abcdef4';
+const BATTERY_SERVICE_UUID = 0x180f;
+const BATTERY_LEVEL_UUID = 0x2a19;
 
 type UseBleDeviceOptions = {
   initialServiceUUID?: string;
@@ -20,6 +22,7 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
   const [deviceName, setDeviceName] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
+  const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
 
   const [serviceUUID, setServiceUUID] = useState(
     options?.initialServiceUUID ?? '12345678-1234-5678-1234-56789abcdef0'
@@ -36,6 +39,7 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
   const deviceRef = useRef<BluetoothDevice | null>(null);
   const characteristicRef = useRef<BluetoothRemoteGATTCharacteristic | null>(null);
   const buttonCharacteristicRef = useRef<BluetoothRemoteGATTCharacteristic | null>(null);
+  const batteryCharacteristicRef = useRef<BluetoothRemoteGATTCharacteristic | null>(null);
   const disconnectHandlerRef = useRef<((event: Event) => void) | null>(null);
   const messageIdRef = useRef(0);
 
@@ -75,6 +79,17 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
     }
   }, [appendMessage]);
 
+  const onBatteryLevelChanged = useCallback((event: Event) => {
+    const target = event.target as BluetoothRemoteGATTCharacteristic;
+    const value = target.value;
+
+    if (!value || value.byteLength === 0) {
+      return;
+    }
+
+    setBatteryLevel(value.getUint8(0));
+  }, []);
+
   const connect = useCallback(async () => {
     setError(null);
     setConnecting(true);
@@ -94,12 +109,14 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
       if (trimmedServiceUUID) {
         options = {
           filters: [{ services: [trimmedServiceUUID] }],
-          optionalServices: [trimmedServiceUUID],
+          optionalServices: [trimmedServiceUUID, BATTERY_SERVICE_UUID],
         };
       } else {
         options = {
           acceptAllDevices: true,
-          optionalServices: trimmedCharUUID ? [trimmedCharUUID] : undefined,
+          optionalServices: trimmedCharUUID
+            ? [trimmedCharUUID, BATTERY_SERVICE_UUID]
+            : [BATTERY_SERVICE_UUID],
         };
       }
 
@@ -109,6 +126,7 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
 
       const handleDisconnected = () => {
         setConnected(false);
+        setBatteryLevel(null);
       };
 
       disconnectHandlerRef.current = handleDisconnected;
@@ -176,7 +194,50 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
         return false;
       }
 
+      // The required IMU and button characteristics are ready, so report the
+      // connection immediately. Optional battery discovery must not hold the UI
+      // in its connecting state if a peripheral is slow to answer.
       setConnected(true);
+
+      void (async () => {
+        try {
+          const batteryService = await server.getPrimaryService(BATTERY_SERVICE_UUID);
+          const batteryCharacteristic = await batteryService.getCharacteristic(
+            BATTERY_LEVEL_UUID
+          );
+
+          if (deviceRef.current !== device || !device.gatt?.connected) {
+            return;
+          }
+
+          batteryCharacteristicRef.current = batteryCharacteristic;
+
+          if (batteryCharacteristic.properties.read) {
+            const initialValue = await batteryCharacteristic.readValue();
+            if (initialValue.byteLength > 0 && deviceRef.current === device) {
+              setBatteryLevel(initialValue.getUint8(0));
+            }
+          }
+
+          if (
+            batteryCharacteristic.properties.notify ||
+            batteryCharacteristic.properties.indicate
+          ) {
+            batteryCharacteristic.addEventListener(
+              'characteristicvaluechanged',
+              onBatteryLevelChanged as EventListener
+            );
+            await batteryCharacteristic.startNotifications();
+          }
+        } catch (batteryError) {
+          if (deviceRef.current === device) {
+            batteryCharacteristicRef.current = null;
+            setBatteryLevel(null);
+          }
+          console.warn('Battery Service unavailable:', batteryError);
+        }
+      })();
+
       return true;
     } catch (e: any) {
       setError(e?.message || String(e));
@@ -190,11 +251,26 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
     charUUID,
     onCharacteristicValueChanged,
     onButtonCharacteristicValueChanged,
+    onBatteryLevelChanged,
     appendMessage,
   ]);
 
   const disconnect = useCallback(async () => {
     try {
+      if (batteryCharacteristicRef.current) {
+        try {
+          await batteryCharacteristicRef.current.stopNotifications();
+        } catch {
+          // ignore
+        }
+
+        batteryCharacteristicRef.current.removeEventListener(
+          'characteristicvaluechanged',
+          onBatteryLevelChanged as EventListener
+        );
+        batteryCharacteristicRef.current = null;
+      }
+
       if (buttonCharacteristicRef.current) {
         try {
           await buttonCharacteristicRef.current.stopNotifications();
@@ -241,12 +317,17 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
       setMessages([]);
       setLatestMessage(null);
       setLatestButtonMessage(null);
+      setBatteryLevel(null);
       setError(null);
       messageIdRef.current = 0;
     } catch {
       // ignore
     }
-  }, [onCharacteristicValueChanged, onButtonCharacteristicValueChanged]);
+  }, [
+    onCharacteristicValueChanged,
+    onButtonCharacteristicValueChanged,
+    onBatteryLevelChanged,
+  ]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
@@ -262,6 +343,7 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
     deviceName,
     connected,
     connecting,
+    batteryLevel,
     serviceUUID,
     setServiceUUID,
     charUUID,

@@ -24,6 +24,7 @@ import { InfoCard } from '../custom/infoCard';
 type SetupScreenProps = {
   bleStatus: 'disconnected' | 'connecting' | 'connected' | 'error';
   deviceName: string | null;
+  batteryLevel: number | null;
   bleError: string | null;
   onConnect: () => void;
   onDisconnect: () => void;
@@ -59,6 +60,7 @@ const getEpleyImageSrc = (position: number, sideLabel: string) => {
 export default function SetupScreen({
   bleStatus,
   deviceName,
+  batteryLevel,
   bleError,
   onConnect,
   onDisconnect,
@@ -168,6 +170,12 @@ export default function SetupScreen({
                 <Button fullWidth size="xl" onClick={onConnect} loading={bleStatus === 'connecting'} color={bleStatus === 'connected' ? theme.colors.green[6] : theme.colors.blue[6]}>
                   {bleStatus === 'connected' ? 'Connected' : 'Connect'}
                 </Button>
+                {/* {bleStatus === 'connected' && (
+                  <Text ta="center" fw={600}>
+                    {deviceName ?? 'Bluetooth device'}
+                    {batteryLevel !== null ? ` · Battery: ${batteryLevel}%` : ''}
+                  </Text>
+                )} */}
                 </Stack>
 
               </Stack>

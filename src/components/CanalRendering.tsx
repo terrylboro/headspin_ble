@@ -269,7 +269,7 @@ const CanalRendering = () => {
                     state.stage === TreatmentStage.STAGE_1 && canalAlignRes.score > 0.85
 
                 meshParts.current.forEach((mesh, index) => {
-                    const shouldDim = dimOtherMeshes && index !== 1
+                    const shouldDim = false //dimOtherMeshes && index !== 1
                     const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
 
                     materials.forEach((material) => {
