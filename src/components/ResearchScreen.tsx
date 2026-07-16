@@ -161,7 +161,12 @@ export default function ResearchScreen({
               </Group>
               {/* <Text fw={600}>Canal Alignment</Text> */}
               
-              <AlignmentProgress score={treatment.alignmentRef!.current}/>
+              <AlignmentProgress
+                score={treatment.alignmentRef!.current}
+                greenThreshold={
+                  treatment.state.stage === TreatmentStage.STAGE_2 ? 75 : 85
+                }
+              />
               <div
                 style={{
                   flex: 1,
