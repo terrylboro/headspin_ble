@@ -87,6 +87,18 @@ export function treatmentReducer(
       const nextProgress = Math.min((nextElapsed) / (state.holdDurationSec*ONE_MILLISECOND), 1);
 
       if (nextProgress === 1 ) {
+        if (state.stage === TreatmentStage.STAGE_4) {
+          return {
+            ...state,
+            stage: TreatmentStage.COMPLETE,
+            lastTickTime: action.now,
+            isAligned: false,
+            timerOn: false,
+            timerElapsedTime: state.holdDurationSec * ONE_MILLISECOND,
+            stageProgress: 1,
+          };
+        }
+
         return {
           ...state,
           lastTickTime: action.now,
