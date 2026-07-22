@@ -30,6 +30,9 @@ export default function TreatmentScreen({
 }: TreatmentScreenProps) {
 
   const treatment =  useTreatment();
+  const treatmentStage = treatment.state.stage;
+  const isRecording = treatment.isRecording;
+  const stopRecording = treatment.stopRecording;
   const [completionModalOpened, setCompletionModalOpened] = useState(false);
   const affectedEarImageLabel = treatment.state.affectedEar === 'right' ? 'Right' : 'Left';
   const isComplete = treatment.state.stage === TreatmentStage.COMPLETE;
@@ -41,8 +44,13 @@ export default function TreatmentScreen({
   const sideProfileImageSrc = `${process.env.PUBLIC_URL}/diagrams/Position ${currentPositionNumber} ${affectedEarImageLabel} Side Profile.png`;
 
   useEffect(() => {
-    setCompletionModalOpened(treatment.state.stage === TreatmentStage.COMPLETE);
-  }, [treatment.state.stage]);
+    const treatmentComplete = treatmentStage === TreatmentStage.COMPLETE;
+    setCompletionModalOpened(treatmentComplete);
+
+    if (treatmentComplete && isRecording) {
+      stopRecording();
+    }
+  }, [isRecording, stopRecording, treatmentStage]);
 
   function calibrateOrientation() {
         const current = treatment.matrixRef.current.clone();

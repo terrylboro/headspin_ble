@@ -20,7 +20,7 @@ import { changeQuaternionBase } from '../utils/changeBase';
 import { applyEarAxisBasis } from '../utils/earAxisBasis';
 
 import { treatmentReducer, initialState } from './treatmentReducer';
-import { TreatmentState, Action, EarSide, CanalType } from '../types/treatmentTypes';
+import { TreatmentState, Action, EarSide, CanalType, TreatmentStage } from '../types/treatmentTypes';
 
 // export type EarSide = 'left' | 'right' | null;
 // export type CanalType = 'anterior' | 'posterior' | 'lateral' | null;
@@ -91,6 +91,7 @@ type TreatmentContextValue = {
 type RecordedImuSample = {
   timestamp: number;
   relativeTimestampMs: number;
+  treatmentStage: string;
   ax: number;
   ay: number;
   az: number;
@@ -332,10 +333,11 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
       twoDigits(now.getSeconds()),
     ];
 
-    const header = ['timestamp', 'relative_timestamp_ms', 'ax', 'ay', 'az', 'gx', 'gy', 'gz', 'roll_deg', 'pitch_deg', 'yaw_deg'];
+    const header = ['timestamp', 'relative_timestamp_ms', 'treatment_stage', 'ax', 'ay', 'az', 'gx', 'gy', 'gz', 'roll_deg', 'pitch_deg', 'yaw_deg'];
     const rows = samples.map((sample) => [
       sample.timestamp,
       sample.relativeTimestampMs,
+      sample.treatmentStage,
       sample.ax,
       sample.ay,
       sample.az,
@@ -493,6 +495,9 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
           recordedSamplesRef.current.push({
             timestamp: latestMessage.timestamp,
             relativeTimestampMs: latestMessage.timestamp - recordingStartTimestampRef.current,
+            treatmentStage: state.stage === TreatmentStage.COMPLETE
+              ? 'complete'
+              : `position_${state.stage + 1}`,
             ax: basisCorrectedDataArr[0],
             ay: basisCorrectedDataArr[1],
             az: basisCorrectedDataArr[2],
@@ -518,7 +523,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
        * Replace this section with your exact treatment progression rules.
        */
       
-  }, [ble.latestMessage, isRecording, state.affectedEar]);
+  }, [ble.latestMessage, isRecording, state.affectedEar, state.stage]);
 
   const value = useMemo<TreatmentContextValue>(
     () => ({
