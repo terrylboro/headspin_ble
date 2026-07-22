@@ -217,32 +217,37 @@ export default function TreatmentScreen({
                 <CanalRendering/>
               </div>
 
-              <Box mt="xs" pos="relative" style={{ flexShrink: 0 }}>
-                <Progress
-                  value={treatment.state.stageProgress * 100}
-                  color={isComplete || isPositionTimeComplete ? "green" : "blue"}
-                  animated={isComplete || isPositionTimeComplete}
-                  size={28}
-                  radius="xl"
-                />
-                {isPositionTimeComplete && (
-                  <Text
-                    size="sm"
-                    fw={700}
-                    c="white"
-                    ta="center"
-                    pos="absolute"
-                    inset={0}
-                    style={{
-                      display: 'grid',
-                      placeItems: 'center',
-                      lineHeight: 1,
-                      pointerEvents: 'none',
-                    }}
-                  >
-                    Progress when dizziness subsides
-                  </Text>
-                )}
+              <Box style={{ flexShrink: 0, marginTop: -12 }}>
+                <Text size="sm" fw={600} mb={2} mt={0}>
+                  {isComplete || isPositionTimeComplete ? "" : "Time in Position"}
+                </Text>
+                <Box pos="relative">
+                  <Progress
+                    value={treatment.state.stageProgress * 100}
+                    color={isComplete || isPositionTimeComplete ? "green" : "green"}
+                    animated={isComplete || isPositionTimeComplete}
+                    size={isComplete || isPositionTimeComplete ? 42 : 24}
+                    radius="xl"
+                  />
+                  {isPositionTimeComplete && (
+                    <Text
+                      size="lg"
+                      fw={700}
+                      c="white"
+                      ta="center"
+                      pos="absolute"
+                      inset={0}
+                      style={{
+                        display: 'grid',
+                        placeItems: 'center',
+                        lineHeight: 1,
+                        pointerEvents: 'none',
+                      }}
+                    >
+                      Press Next to progress when dizziness subsides
+                    </Text>
+                  )}
+                </Box>
               </Box>
             </Stack>
           </Card>

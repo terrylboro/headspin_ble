@@ -1,4 +1,4 @@
-import { Box, Button, Group, Slider, Text, Title } from '@mantine/core';
+import { Box, Button, Group, Slider, Text } from '@mantine/core';
 import { useTreatment } from '../context/TreatmentProvider';
 import { useBleDevice } from '../context/BleProvider';
 import { HoldDurationType } from '../types/treatmentTypes';
@@ -43,7 +43,11 @@ export default function TopBar({ setScreen, setCalibrationOpen, onReset, showTim
 
   return (
     <Group justify="space-between" h="100%" px="md">
-      <Title order={3}>HeadSpin</Title>
+      <img
+        src={`${process.env.PUBLIC_URL}/diagrams/HeadSpin Logo White.png`}
+        alt="HeadSpin"
+        style={{ display: 'block', width: 'auto', height: 38 }}
+      />
       {/* <Group>
         <Badge color="green">Bluetooth connected</Badge>
         <Badge color="green">Streaming</Badge>
