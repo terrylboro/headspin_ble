@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   Button,
@@ -9,6 +9,7 @@ import { MathUtils, Vector3 } from 'three';
 
 import { useTreatment } from '../context/TreatmentProvider';
 import { InfoCard } from '../custom/infoCard';
+import { applyEarAxisBasis } from '../utils/earAxisBasis';
 
 const UPRIGHT_TOLERANCE_DEGREES = 30;
 const WORLD_UP_AXIS = new Vector3(0, 0, 1);
@@ -16,11 +17,15 @@ const WORLD_UP_AXIS = new Vector3(0, 0, 1);
 type CalibrationScreenProps = {
   onBack: () => void;
   onContinue: ()=> void;
+  startRequestId: number | null;
+  onStartRequestHandled: () => void;
 };
 
 export default function CalibrationScreen({
   onBack,
   onContinue,
+  startRequestId,
+  onStartRequestHandled,
 }: CalibrationScreenProps) {
 
   const { latestImuSample, calibrateOffset, state } = useTreatment();
@@ -29,7 +34,7 @@ export default function CalibrationScreen({
   // face left. Select by facing direction so it matches the affected ear.
   const affectedEarImageLabel = state.affectedEar === 'right' ? 'Left' : 'Right';
 
-  function handleStart() {
+  const handleStart = useCallback(() => {
     setOrientationError(null);
 
     if (!latestImuSample) {
@@ -40,11 +45,13 @@ export default function CalibrationScreen({
     // Use the latest gravity reading rather than the filtered orientation matrix.
     // This responds immediately when the clinician removes and replaces the device;
     // the orientation filter can otherwise retain the previous inverted pose briefly.
-    const deviceUp = new Vector3(
-      -latestImuSample.ay,
-      -latestImuSample.az,
-      latestImuSample.ax
+    const [ax, ay, az] = applyEarAxisBasis(
+      latestImuSample.ax,
+      latestImuSample.ay,
+      latestImuSample.az,
+      state.affectedEar
     );
+    const deviceUp = new Vector3(-ay, -az, ax);
 
     if (deviceUp.lengthSq() === 0) {
       setOrientationError('Waiting for a valid orientation reading from the device.');
@@ -63,7 +70,16 @@ export default function CalibrationScreen({
 
     calibrateOffset();
     onContinue();
-  }
+  }, [calibrateOffset, latestImuSample, onContinue, state.affectedEar]);
+
+  useEffect(() => {
+    if (startRequestId === null) {
+      return;
+    }
+
+    onStartRequestHandled();
+    handleStart();
+  }, [handleStart, onStartRequestHandled, startRequestId]);
 
 
   return (

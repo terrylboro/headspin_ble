@@ -17,6 +17,7 @@ import { decodeNumericIMUPacket } from '../utils/imuDecoder';
 // Example only — replace with your actual import:
 import { MadgwickFilter } from '../utils/madgwickFilter';
 import { changeQuaternionBase } from '../utils/changeBase';
+import { applyEarAxisBasis } from '../utils/earAxisBasis';
 
 import { treatmentReducer, initialState } from './treatmentReducer';
 import { TreatmentState, Action, EarSide, CanalType } from '../types/treatmentTypes';
@@ -185,9 +186,6 @@ function applyGyroscopeOffsets(
 
 const TreatmentContext = createContext<TreatmentContextValue | null>(null);
 
-const BLE_BUTTON_PROGRESS_COMMAND = 1;
-const BLE_BUTTON_RETURN_COMMAND = 2;
-
 /**
  * Replace this with your real treatment rule.
  * This function takes your distilled orientation/alignment info
@@ -242,32 +240,9 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
 
   // Track the latest processed BLE messages so we do not reprocess the same one
   const lastProcessedMessageIdRef = useRef<number | null>(null);
-  const lastProcessedButtonMessageIdRef = useRef<number | null>(null);
 
   // Track hold timing for progress logic
   const holdStartRef = useRef<number | null>(null);
-
-  const handleBleButtonCommand = useCallback((value: DataView) => {
-    if (value.byteLength < 1) {
-      return false;
-    }
-
-    const command = value.byteLength >= 2
-      ? value.getUint16(0, true)
-      : value.getUint8(0);
-
-    if (command === BLE_BUTTON_PROGRESS_COMMAND) {
-      dispatch({ type: 'PROGRESS' });
-      return true;
-    }
-
-    if (command === BLE_BUTTON_RETURN_COMMAND) {
-      dispatch({ type: 'RETURN_TO_PREVIOUS_STAGE' });
-      return true;
-    }
-
-    return false;
-  }, []);
 
   // Optional: instantiate your Madgwick stateful filter once if needed
   // Replace this with your actual setup if your module is class-based or stateful.
@@ -279,7 +254,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
     madgwickRef.current = new MadgwickFilter(1/256, 0.1); // dt=1/256s, beta=0.1 (tune as needed for responsiveness vs noise)
     madgwickRef.current.init(0, 0, 9.81);
     // madgwickRef.current = madgwickFilter;
-  }, []);
+  }, [state.affectedEar]);
 
   const calibrateOffset = useCallback(() => {
     offsetMatrixRef.current.copy(matrixRef.current).invert();
@@ -324,7 +299,6 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
     recordedSamplesRef.current = [];
     recordingStartTimestampRef.current = null;
     lastProcessedMessageIdRef.current = null;
-    lastProcessedButtonMessageIdRef.current = null;
 
     madgwickRef.current = new MadgwickFilter(1/256, 0.1);
     madgwickRef.current.init(0, 0, 9.81);
@@ -438,6 +412,23 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
       gyroscopeOffsetsRef.current
     );
 
+    const correctedAcceleration = applyEarAxisBasis(
+      dataArr[0],
+      dataArr[1],
+      dataArr[2],
+      state.affectedEar
+    );
+    const correctedAngularVelocity = applyEarAxisBasis(
+      dataArr[3],
+      dataArr[4],
+      dataArr[5],
+      state.affectedEar
+    );
+    const basisCorrectedDataArr = [
+      ...correctedAcceleration,
+      ...correctedAngularVelocity,
+    ];
+
     // console.log(dataArr);
 
     
@@ -453,7 +444,15 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
        * - const result = updateMadgwick(frame)
        */
     // Attempt to map IMU co-ordinates to madgwick co-ordinates
-      const filtPos = madgwickRef.current.update(-dataArr[1]*9.81, -dataArr[2]*9.81, dataArr[0]*9.81, -dataArr[4], -dataArr[5], dataArr[3], 0.01);
+      const filtPos = madgwickRef.current.update(
+        -basisCorrectedDataArr[1] * 9.81,
+        -basisCorrectedDataArr[2] * 9.81,
+        basisCorrectedDataArr[0] * 9.81,
+        -basisCorrectedDataArr[4],
+        -basisCorrectedDataArr[5],
+        basisCorrectedDataArr[3],
+        0.01
+      );
 
       /**
        * Expect your distilled output to provide orientation in some usable form.
@@ -480,7 +479,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
         changeQuaternionBase(correctedMatrix, correctedQuaternion);
         const correctedEuler = new Euler().setFromQuaternion(correctedQuaternion, 'XYZ');
 
-        setLatestSampleText(`Received data: ${dataArr.map((v) => v.toFixed(2)).join(' | ')} | ${filtPos.roll.toFixed(3)} | ${filtPos.pitch.toFixed(3)} | ${filtPos.yaw.toFixed(3)}`);
+        setLatestSampleText(`Received data: ${basisCorrectedDataArr.map((v) => v.toFixed(2)).join(' | ')} | ${filtPos.roll.toFixed(3)} | ${filtPos.pitch.toFixed(3)} | ${filtPos.yaw.toFixed(3)}`);
 
         orientationRef.current.roll = correctedEuler.x;
         orientationRef.current.pitch = correctedEuler.y;
@@ -494,12 +493,12 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
           recordedSamplesRef.current.push({
             timestamp: latestMessage.timestamp,
             relativeTimestampMs: latestMessage.timestamp - recordingStartTimestampRef.current,
-            ax: dataArr[0],
-            ay: dataArr[1],
-            az: dataArr[2],
-            gx: dataArr[3],
-            gy: dataArr[4],
-            gz: dataArr[5],
+            ax: basisCorrectedDataArr[0],
+            ay: basisCorrectedDataArr[1],
+            az: basisCorrectedDataArr[2],
+            gx: basisCorrectedDataArr[3],
+            gy: basisCorrectedDataArr[4],
+            gz: basisCorrectedDataArr[5],
             roll: orientationRef.current.roll * 180 / Math.PI,
             pitch: orientationRef.current.pitch * 180 / Math.PI,
             yaw: orientationRef.current.yaw * 180 / Math.PI,
@@ -519,19 +518,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
        * Replace this section with your exact treatment progression rules.
        */
       
-  }, [ble.latestMessage, isRecording]);
-
-  useEffect(() => {
-    const latestButtonMessage = ble.latestButtonMessage;
-    if (!latestButtonMessage) return;
-
-    console.log('Received button message:', latestButtonMessage);
-
-    if (lastProcessedButtonMessageIdRef.current === latestButtonMessage.id) return;
-    lastProcessedButtonMessageIdRef.current = latestButtonMessage.id;
-
-    handleBleButtonCommand(latestButtonMessage.data);
-  }, [ble.latestButtonMessage, handleBleButtonCommand]);
+  }, [ble.latestMessage, isRecording, state.affectedEar]);
 
   const value = useMemo<TreatmentContextValue>(
     () => ({
