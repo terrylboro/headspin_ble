@@ -7,6 +7,7 @@ import { changeQuaternionBase } from "../utils/changeBase";
 import {applyYawOffset} from "../utils/applyYawOffset"
 import { useTreatment } from "../context/TreatmentProvider";
 import { Text } from "@mantine/core";
+import { publicAsset } from "../utils/publicAsset";
 
 // interface Props {
 //     ear: "left" | "right" | "unselected"
@@ -89,7 +90,7 @@ const HeadRendering = ({calibrateMode} : HeadRenderingProps) => {
         // Load Ear Mesh
         const loader = new PLYLoader()
         let earMeshPath;
-        earMeshPath = (state.affectedEar !== "right") ? (process.env.PUBLIC_URL + "/rh_meshes/capsule_3x.ply") : (process.env.PUBLIC_URL + "/new_right_meshes/capsule.ply");
+        earMeshPath = publicAsset(state.affectedEar !== "right" ? "/rh_meshes/capsule_3x.ply" : "/new_right_meshes/capsule.ply");
         loader.load(earMeshPath, (geometry) => {
 
             const material = new THREE.MeshStandardMaterial({color: BLUE_COLOUR, flatShading: true})
@@ -100,7 +101,7 @@ const HeadRendering = ({calibrateMode} : HeadRenderingProps) => {
         })
 
         // Load head mesh
-        loader.load(process.env.PUBLIC_URL + "/rh_meshes/head.ply", (geometry) => {
+        loader.load(publicAsset('/rh_meshes/head.ply'), (geometry) => {
 
             const material = new THREE.MeshPhongMaterial({color: 0x555555, flatShading: true, transparent: true, opacity: 0.5})
             const loadedMesh = new THREE.Mesh(geometry.center(), material)

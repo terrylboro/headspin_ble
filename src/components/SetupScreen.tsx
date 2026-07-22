@@ -20,6 +20,7 @@ import { useState } from 'react';
 import { SelectCanalButton } from '../custom/canalButton';
 import { useTreatment } from '../context/TreatmentProvider';
 import { InfoCard } from '../custom/infoCard';
+import { publicAsset } from '../utils/publicAsset';
 
 type SetupScreenProps = {
   bleStatus: 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -54,7 +55,7 @@ const getEpleyImageSrc = (position: number, sideLabel: string) => {
   const fullBedPositions = new Set([1, 2, 3]);
   const fullBedLabel = fullBedPositions.has(position) ? ' Full Bed' : '';
 
-  return `${process.env.PUBLIC_URL}/diagrams/Position ${position}${fullBedLabel} ${sideLabel}.png`;
+  return publicAsset(`/diagrams/Position ${position}${fullBedLabel} ${sideLabel}.png`);
 };
 
 export default function SetupScreen({
@@ -218,9 +219,9 @@ export default function SetupScreen({
 
                 <Stack gap="md">
                   <Group wrap="nowrap" grow>
-                    <SelectCanalButton label="Posterior" imageSrc={process.env.PUBLIC_URL + "/Posterior Canal Selected.png"} selected={state.affectedCanal === 'posterior'} onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'posterior' })}/>
-                    <SelectCanalButton label="Anterior" imageSrc={process.env.PUBLIC_URL + "/Anterior Canal Selected.png"} selected={state.affectedCanal === 'anterior'} disabled onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'anterior' })}/>
-                    <SelectCanalButton label="Lateral" imageSrc={process.env.PUBLIC_URL + "/Lateral Canal Selected.png"} selected={state.affectedCanal === 'lateral'} disabled onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'lateral' })}/>
+                    <SelectCanalButton label="Posterior" imageSrc={publicAsset('/Posterior Canal Selected.png')} selected={state.affectedCanal === 'posterior'} onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'posterior' })}/>
+                    <SelectCanalButton label="Anterior" imageSrc={publicAsset('/Anterior Canal Selected.png')} selected={state.affectedCanal === 'anterior'} disabled onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'anterior' })}/>
+                    <SelectCanalButton label="Lateral" imageSrc={publicAsset('/Lateral Canal Selected.png')} selected={state.affectedCanal === 'lateral'} disabled onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'lateral' })}/>
                   </Group>
                 </Stack>
               </Stack>

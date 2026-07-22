@@ -12,6 +12,7 @@ import {
   Text,
 } from '@mantine/core';
 import { BACKGR_COLOUR, BLUE_COLOUR, ORANGE_COLOUR } from '../utils/config';
+import { publicAsset } from '../utils/publicAsset';
 
 const CANAL_MESH_FILENAMES = {
   left: [
@@ -58,15 +59,7 @@ function getPublicMeshPath(filename: string) {
     return '';
   }
 
-  const publicUrl = process.env.PUBLIC_URL.replace(/\/+$/, '');
-
-  if (filename.startsWith('http') || (publicUrl && filename.startsWith(publicUrl))) {
-    return filename;
-  }
-
-  const cleanFilename = filename.replace(/^\/+/, '');
-
-  return `${publicUrl}/${cleanFilename}`;
+  return publicAsset(filename);
 }
 
 function disposeObject(object: THREE.Object3D) {

@@ -13,6 +13,7 @@ import { TreatmentStage } from "../types/treatmentTypes";
 import { createThickArrow } from "../custom/thickArrow";
 import LiveWebcam from "../components/LiveWebcam";
 import { getHighlightedMeshPart } from "../utils/meshPartDisplay";
+import { publicAsset } from "../utils/publicAsset";
 
 
 const ManualCanalRendering = () => {
@@ -264,7 +265,7 @@ const ManualCanalRendering = () => {
         let color = 0
         for (let i = 0; i < meshPartsLength[state.affectedCanal ? state.affectedCanal : 5]; i++) {
             // const meshPath = "rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply"
-            const meshPath = process.env.PUBLIC_URL + "/rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply"
+            const meshPath = publicAsset(`/rh_meshes/${state.affectedCanal}_${i}.ply`)
             // const meshPath = (state.affectedEar === "left") ? ("rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply") : ("right_rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply");
 
             loader.load(meshPath, (geometry) => {

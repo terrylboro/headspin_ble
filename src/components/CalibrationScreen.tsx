@@ -9,6 +9,7 @@ import { MathUtils, Vector3 } from 'three';
 
 import { useTreatment } from '../context/TreatmentProvider';
 import { InfoCard } from '../custom/infoCard';
+import { publicAsset } from '../utils/publicAsset';
 
 const UPRIGHT_TOLERANCE_DEGREES = 30;
 const WORLD_UP_AXIS = new Vector3(0, 0, 1);
@@ -71,13 +72,13 @@ export default function CalibrationScreen({
       <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="xl" style={{ flex: 1 }}>
         <InfoCard
           title="Place the device"
-          imageSrc={`${process.env.PUBLIC_URL}/diagrams/HeadSpin Device Placement ${affectedEarImageLabel}.png`}
+          imageSrc={publicAsset(`/diagrams/HeadSpin Device Placement ${affectedEarImageLabel}.png`)}
           textBody="Place the device on the patient, ensuring the device is sat next to their affected ear. Adjust the timer slider in the top bar to select 30 seconds, 45 seconds or 60 seconds reminders for each position."
         />
 
         <InfoCard
           title="Get ready"
-          imageSrc={`${process.env.PUBLIC_URL}/diagrams/Calibration Get Ready Side Profile ${affectedEarImageLabel}.png`}
+          imageSrc={publicAsset(`/diagrams/Calibration Get Ready Side Profile ${affectedEarImageLabel}.png`)}
           textBody="Sit the patient upright with their legs on the bed. Ensure they are looking straight ahead, then press either the big button on the device or the Start button below to begin the manoeuvre."
         />
       </SimpleGrid>
