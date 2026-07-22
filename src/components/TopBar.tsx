@@ -15,9 +15,16 @@ type TopBarProps = {
     setCalibrationOpen: (open: boolean) => void;
     onReset: () => void;
     showTimerSlider: boolean;
+    showReconnectButton: boolean;
 };
 
-export default function TopBar({ setScreen, setCalibrationOpen, onReset, showTimerSlider }: TopBarProps) {
+export default function TopBar({
+  setScreen,
+  setCalibrationOpen,
+  onReset,
+  showTimerSlider,
+  showReconnectButton,
+}: TopBarProps) {
   const treatment = useTreatment();
   const ble = useBleDevice();
   const selectedHoldDuration = treatment.state.holdDurationSec === 5
@@ -53,7 +60,7 @@ export default function TopBar({ setScreen, setCalibrationOpen, onReset, showTim
         <Badge color="green">Streaming</Badge>
       </Group> */}
       <Group gap="md" wrap="nowrap">
-        {showTimerSlider && !ble.connected && (
+        {showReconnectButton && !ble.connected && (
           <Button color="orange" loading={ble.connecting} onClick={() => void ble.connect()}>
             Reconnect device
           </Button>

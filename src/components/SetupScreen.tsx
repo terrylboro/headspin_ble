@@ -12,6 +12,7 @@ import {
   SimpleGrid,
   ActionIcon,
   SegmentedControl,
+  Image,
 } from '@mantine/core';
 
 import { useDisclosure } from '@mantine/hooks';
@@ -162,9 +163,16 @@ export default function SetupScreen({
                     Connect device
                   </Title>
                   <Text c="dimmed" size="sm">
-                    Connect to your Bluetooth device before starting the manoeuvre.
+                    Press any button on your device to turn it on. Press Connect, select Headspin-BLE from the device list and Pair.
                   </Text>
                 </Box>
+
+                <Image
+                  src={`${process.env.PUBLIC_URL}/diagrams/HeadSpin Device With Band.png`}
+                  alt="HeadSpin device"
+                  h={150}
+                  fit="contain"
+                />
 
                 <Stack gap="md">
                 <Button fullWidth size="xl" onClick={onConnect} loading={bleStatus === 'connecting'} color={bleStatus === 'connected' ? theme.colors.green[6] : theme.colors.blue[6]}>
@@ -216,13 +224,13 @@ export default function SetupScreen({
                   
                 </Box>
 
-                <Stack gap="md">
-                  <Group wrap="nowrap" grow>
+                <Box style={{ flex: 1, minHeight: 0 }}>
+                  <Group wrap="nowrap" grow align="stretch" h="100%">
                     <SelectCanalButton label="Posterior" imageSrc={process.env.PUBLIC_URL + "/Posterior Canal Selected.png"} selected={state.affectedCanal === 'posterior'} onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'posterior' })}/>
                     <SelectCanalButton label="Anterior" imageSrc={process.env.PUBLIC_URL + "/Anterior Canal Selected.png"} selected={state.affectedCanal === 'anterior'} disabled onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'anterior' })}/>
                     <SelectCanalButton label="Lateral" imageSrc={process.env.PUBLIC_URL + "/Lateral Canal Selected.png"} selected={state.affectedCanal === 'lateral'} disabled onClick={() => dispatch({ type: 'SELECT_CANAL', canal: 'lateral' })}/>
                   </Group>
-                </Stack>
+                </Box>
               </Stack>
             </Card>
           </Grid.Col>
@@ -246,11 +254,11 @@ export default function SetupScreen({
                   </Text>
                 </Box>
 
-                <Stack gap="md">
-                    <Button color={state.affectedEar === "left" ? theme.colors.green[6] : theme.colors.gray[6]} fullWidth size="xl" onClick={() => dispatch({ type: 'SELECT_EAR', ear: 'left' })}>
+                <Stack gap="md" style={{ flex: 1 }}>
+                    <Button color={state.affectedEar === "left" ? theme.colors.green[6] : theme.colors.gray[6]} fullWidth size="xl" style={{ flex: 1, height: 'auto' }} onClick={() => dispatch({ type: 'SELECT_EAR', ear: 'left' })}>
                       Left
                     </Button>
-                    <Button color={state.affectedEar === "right" ? theme.colors.green[6] : theme.colors.gray[6]} fullWidth size="xl" onClick={() => dispatch({ type: 'SELECT_EAR', ear: 'right' })}>
+                    <Button color={state.affectedEar === "right" ? theme.colors.green[6] : theme.colors.gray[6]} fullWidth size="xl" style={{ flex: 1, height: 'auto' }} onClick={() => dispatch({ type: 'SELECT_EAR', ear: 'right' })}>
                       Right
                     </Button>
                 </Stack>
@@ -260,7 +268,7 @@ export default function SetupScreen({
 
         </Grid>
 
-        <Button size="lg" fullWidth onClick={onContinue} disabled={!state.affectedEar || !state.affectedCanal || !( bleStatus === 'connected')} color="green">
+        <Button size="xl" fullWidth onClick={onContinue} disabled={!state.affectedEar || !state.affectedCanal || !( bleStatus === 'connected')} color="green">
           Continue
         </Button>
       </Stack>

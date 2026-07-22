@@ -145,7 +145,8 @@ function App(): JSX.Element {
           setScreen={setScreen}
           setCalibrationOpen={setCalibrationOpen}
           onReset={handleSystemReset}
-          showTimerSlider={screen === 'calibrate' || screen === 'treatment'}
+          showTimerSlider={false} //{screen === 'calibrate' || screen === 'treatment'}
+          showReconnectButton={screen !== 'setup'}
         />
 
       </AppShell.Header>
