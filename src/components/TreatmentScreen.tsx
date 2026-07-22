@@ -11,7 +11,7 @@ import {
   Image,
   Modal,
 } from '@mantine/core';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import HeadRendering from  './HeadRendering';
 import CanalRendering from './CanalRendering';
@@ -23,17 +23,25 @@ const POSITION_COUNT = 4;
 
 type TreatmentScreenProps = {
   onBack: () => void;
+  deviceConnected: boolean;
+  onFinish: () => void | Promise<void>;
 };
+
+type CompletionPage = 'complete' | 'power-off' | 'disconnected';
 
 export default function TreatmentScreen({
   onBack,
+  deviceConnected,
+  onFinish,
 }: TreatmentScreenProps) {
 
   const treatment =  useTreatment();
   const treatmentStage = treatment.state.stage;
   const isRecording = treatment.isRecording;
   const stopRecording = treatment.stopRecording;
+  const onFinishRef = useRef(onFinish);
   const [completionModalOpened, setCompletionModalOpened] = useState(false);
+  const [completionPage, setCompletionPage] = useState<CompletionPage>('complete');
   const affectedEarImageLabel = treatment.state.affectedEar === 'right' ? 'Right' : 'Left';
   const isComplete = treatment.state.stage === TreatmentStage.COMPLETE;
   const isPositionTimeComplete = !isComplete && treatment.state.stageProgress >= 1;
@@ -44,13 +52,45 @@ export default function TreatmentScreen({
   const sideProfileImageSrc = `${process.env.PUBLIC_URL}/diagrams/Position ${currentPositionNumber} ${affectedEarImageLabel} Side Profile.png`;
 
   useEffect(() => {
+    onFinishRef.current = onFinish;
+  }, [onFinish]);
+
+  useEffect(() => {
     const treatmentComplete = treatmentStage === TreatmentStage.COMPLETE;
     setCompletionModalOpened(treatmentComplete);
+
+    if (treatmentComplete) {
+      setCompletionPage('complete');
+    }
+  }, [treatmentStage]);
+
+  useEffect(() => {
+    const treatmentComplete = treatmentStage === TreatmentStage.COMPLETE;
 
     if (treatmentComplete && isRecording) {
       stopRecording();
     }
   }, [isRecording, stopRecording, treatmentStage]);
+
+  useEffect(() => {
+    if (!completionModalOpened || completionPage !== 'power-off' || deviceConnected) {
+      return;
+    }
+
+    setCompletionPage('disconnected');
+  }, [completionModalOpened, completionPage, deviceConnected]);
+
+  useEffect(() => {
+    if (completionPage !== 'disconnected') {
+      return;
+    }
+
+    const resetTimer = window.setTimeout(() => {
+      void onFinishRef.current();
+    }, 1500);
+
+    return () => window.clearTimeout(resetTimer);
+  }, [completionPage]);
 
   function calibrateOrientation() {
         const current = treatment.matrixRef.current.clone();
@@ -65,14 +105,46 @@ export default function TreatmentScreen({
 
       <Modal
         opened={completionModalOpened}
-        onClose={() => setCompletionModalOpened(false)}
-        title="Manoeuvre complete"
+        onClose={() => {
+          if (completionPage === 'complete') {
+            setCompletionModalOpened(false);
+          }
+        }}
+        withCloseButton={completionPage === 'complete'}
+        closeOnClickOutside={completionPage === 'complete'}
+        closeOnEscape={completionPage === 'complete'}
+        title={completionPage === 'complete' ? 'Manoeuvre complete' : 'Turn off device'}
         centered
         size="lg"
       >
-        <Text size="xl" fw={600} ta="center" py="lg">
-          Manoeuvre completed - continue to hold here until dizziness subsides
-        </Text>
+        {completionPage === 'complete' ? (
+          <Stack>
+            <Text size="xl" fw={600} ta="center" py="lg">
+              Manoeuvre completed - continue to hold here until dizziness subsides
+            </Text>
+            <Button size="lg" color="green" fullWidth onClick={() => setCompletionPage('power-off')}>
+              Finish
+            </Button>
+          </Stack>
+        ) : completionPage === 'power-off' ? (
+          <Stack align="center" py="lg">
+            <Text size="xl" fw={600} ta="center">
+              Turn the device off by pressing and holding both buttons together for 2 seconds
+            </Text>
+            <Text c="dimmed" ta="center">
+              Waiting for the device to disconnect (this may take a few seconds)…
+            </Text>
+          </Stack>
+        ) : (
+          <Stack align="center" py="lg">
+            <Text size="xl" fw={700} c="green.7" ta="center" role="status">
+              Device disconnected
+            </Text>
+            <Text c="dimmed" ta="center">
+              Returning to setup…
+            </Text>
+          </Stack>
+        )}
       </Modal>
 
       {/* <Group align="stretch" grow style={{ flex: 1 }}> */}

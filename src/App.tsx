@@ -26,6 +26,7 @@ import ResearchScreen from './components/ResearchScreen';
 import GyroscopeCalibrationScreen from './components/GyroscopeCalibrationScreen';
 import { truncate } from 'node:fs';
 import HeadCanalAlignmentTestPanel from './test/HeadCanalAlignmentTestPanel';
+import { TreatmentStage } from './types/treatmentTypes';
 
 type Screen = 'setup' | 'gyroscope-calibration' | 'calibrate' | 'treatment' | 'research';
 
@@ -76,7 +77,12 @@ function App(): JSX.Element {
     lastProcessedButtonMessageIdRef.current = message.id;
 
     if (isPowerDownNotification(message.data)) {
-      setPowerDownNotificationOpen(true);
+      const isCompletedTreatment = screen === 'treatment'
+        && treatment.state.stage === TreatmentStage.COMPLETE;
+
+      if (!isCompletedTreatment) {
+        setPowerDownNotificationOpen(true);
+      }
       return;
     }
 
@@ -88,14 +94,17 @@ function App(): JSX.Element {
       ? message.data.getUint16(0, true)
       : message.data.getUint8(0);
 
+    const treatmentNavigationEnabled = screen === 'treatment'
+      && treatment.state.stage !== TreatmentStage.COMPLETE;
+
     if (screen === 'calibrate' && command === BLE_BUTTON_PROGRESS_COMMAND) {
       setCalibrationStartRequestId(message.id);
-    } else if (screen === 'treatment' && command === BLE_BUTTON_PROGRESS_COMMAND) {
+    } else if (treatmentNavigationEnabled && command === BLE_BUTTON_PROGRESS_COMMAND) {
       treatmentDispatch({ type: 'PROGRESS' });
-    } else if (screen === 'treatment' && command === BLE_BUTTON_RETURN_COMMAND) {
+    } else if (treatmentNavigationEnabled && command === BLE_BUTTON_RETURN_COMMAND) {
       treatmentDispatch({ type: 'RETURN_TO_PREVIOUS_STAGE' });
     }
-  }, [ble.latestButtonMessage, screen, treatmentDispatch]);
+  }, [ble.latestButtonMessage, screen, treatment.state.stage, treatmentDispatch]);
 
  
   // Mantine theming
@@ -103,8 +112,10 @@ function App(): JSX.Element {
 
   async function handleSystemReset() {
     setCalibrationOpen(false);
+    setPowerDownNotificationOpen(false);
     setSelectedCanals([]);
     await ble.disconnect();
+    lastProcessedButtonMessageIdRef.current = null;
     treatment.resetTreatment();
     treatment.clearGyroscopeOffsets();
     setScreen('setup');
@@ -219,6 +230,8 @@ function App(): JSX.Element {
       screen === 'treatment' ? (
         <TreatmentScreen
           onBack={() => setScreen('calibrate')}
+          deviceConnected={ble.connected}
+          onFinish={handleSystemReset}
         />
       ) : (
           <CalibrationScreen
