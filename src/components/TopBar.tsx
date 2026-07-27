@@ -1,7 +1,8 @@
-import { Box, Button, Group, Slider, Text, Title } from '@mantine/core';
+import { Box, Button, Group, Slider, Text } from '@mantine/core';
 import { useTreatment } from '../context/TreatmentProvider';
 import { useBleDevice } from '../context/BleProvider';
 import { HoldDurationType } from '../types/treatmentTypes';
+import { publicAsset } from '../utils/publicAsset';
 
 const SHOW_ADVANCED_CONTROLS = false;
 const sliderMarks = [
@@ -15,9 +16,16 @@ type TopBarProps = {
     setCalibrationOpen: (open: boolean) => void;
     onReset: () => void;
     showTimerSlider: boolean;
+    showReconnectButton: boolean;
 };
 
-export default function TopBar({ setScreen, setCalibrationOpen, onReset, showTimerSlider }: TopBarProps) {
+export default function TopBar({
+  setScreen,
+  setCalibrationOpen,
+  onReset,
+  showTimerSlider,
+  showReconnectButton,
+}: TopBarProps) {
   const treatment = useTreatment();
   const ble = useBleDevice();
   const selectedHoldDuration = treatment.state.holdDurationSec === 5
@@ -43,13 +51,17 @@ export default function TopBar({ setScreen, setCalibrationOpen, onReset, showTim
 
   return (
     <Group justify="space-between" h="100%" px="md">
-      <Title order={3}>HeadSpin</Title>
+      <img
+        src={publicAsset(`/diagrams/HeadSpin Logo White.png`)}
+        alt="HeadSpin"
+        style={{ display: 'block', width: 'auto', height: 38 }}
+      />
       {/* <Group>
         <Badge color="green">Bluetooth connected</Badge>
         <Badge color="green">Streaming</Badge>
       </Group> */}
       <Group gap="md" wrap="nowrap">
-        {showTimerSlider && !ble.connected && (
+        {showReconnectButton && !ble.connected && (
           <Button color="orange" loading={ble.connecting} onClick={() => void ble.connect()}>
             Reconnect device
           </Button>

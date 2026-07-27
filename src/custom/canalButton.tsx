@@ -19,7 +19,7 @@ export function SelectCanalButton({
     <UnstyledButton
       onClick={onClick}
       disabled={disabled}
-      style={{ width: '100%', display: 'block' }}
+      style={{ width: '100%', height: '100%', display: 'block' }}
     >
       <Card
         withBorder
@@ -35,12 +35,12 @@ export function SelectCanalButton({
           opacity: disabled ? 0.45 : 1,
         }}
       >
-        <Stack gap="xs" align="center">
+        <Stack gap="xs" align="center" h="100%">
           <Image
             src={imageSrc}
             alt={label}
-            h={100}
             fit="contain"
+            style={{ flex: 1, minHeight: 0 }}
           />
           <Text fw={600} ta="center">
             {label}

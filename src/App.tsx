@@ -25,11 +25,14 @@ import CalibrationScreen from './components/CalibrationScreen';
 import ResearchScreen from './components/ResearchScreen';
 import GyroscopeCalibrationScreen from './components/GyroscopeCalibrationScreen';
 import HeadCanalAlignmentTestPanel from './test/HeadCanalAlignmentTestPanel';
+import { TreatmentStage } from './types/treatmentTypes';
 
 type Screen = 'setup' | 'gyroscope-calibration' | 'calibrate' | 'treatment' | 'research';
 
 const POWER_DOWN_BYTE = 0xf0;
 const POWER_DOWN_TEXT = '0xF0';
+const BLE_BUTTON_PROGRESS_COMMAND = 1;
+const BLE_BUTTON_RETURN_COMMAND = 2;
 
 function isPowerDownNotification(value: DataView): boolean {
   const bytes = new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
@@ -49,6 +52,7 @@ function App(): JSX.Element {
 
   const ble = useBleDevice();
   const treatment = useTreatment();
+  const treatmentDispatch = treatment.dispatch;
 
   const [screen, setScreen] = useState<Screen>('setup');
   const [selectedCanals, setSelectedCanals] = useState<string[]>([]);
@@ -57,14 +61,49 @@ function App(): JSX.Element {
   // To control calibration popup
   const [calibrationOpen, setCalibrationOpen] = useState(false);
   const [powerDownNotificationOpen, setPowerDownNotificationOpen] = useState(false);
+  const [calibrationStartRequestId, setCalibrationStartRequestId] = useState<number | null>(null);
+  const lastProcessedButtonMessageIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     const message = ble.latestButtonMessage;
 
-    if (message && isPowerDownNotification(message.data)) {
-      setPowerDownNotificationOpen(true);
+    if (!message || lastProcessedButtonMessageIdRef.current === message.id) {
+      return;
     }
-  }, [ble.latestButtonMessage]);
+
+    // Consume every button message immediately so a press made on another
+    // screen cannot be replayed when the treatment screen is opened later.
+    lastProcessedButtonMessageIdRef.current = message.id;
+
+    if (isPowerDownNotification(message.data)) {
+      const isCompletedTreatment = screen === 'treatment'
+        && treatment.state.stage === TreatmentStage.COMPLETE;
+
+      if (!isCompletedTreatment) {
+        setPowerDownNotificationOpen(true);
+      }
+      return;
+    }
+
+    if (message.data.byteLength < 1) {
+      return;
+    }
+
+    const command = message.data.byteLength >= 2
+      ? message.data.getUint16(0, true)
+      : message.data.getUint8(0);
+
+    const treatmentNavigationEnabled = screen === 'treatment'
+      && treatment.state.stage !== TreatmentStage.COMPLETE;
+
+    if (screen === 'calibrate' && command === BLE_BUTTON_PROGRESS_COMMAND) {
+      setCalibrationStartRequestId(message.id);
+    } else if (treatmentNavigationEnabled && command === BLE_BUTTON_PROGRESS_COMMAND) {
+      treatmentDispatch({ type: 'PROGRESS' });
+    } else if (treatmentNavigationEnabled && command === BLE_BUTTON_RETURN_COMMAND) {
+      treatmentDispatch({ type: 'RETURN_TO_PREVIOUS_STAGE' });
+    }
+  }, [ble.latestButtonMessage, screen, treatment.state.stage, treatmentDispatch]);
 
  
   // Mantine theming
@@ -72,8 +111,10 @@ function App(): JSX.Element {
 
   async function handleSystemReset() {
     setCalibrationOpen(false);
+    setPowerDownNotificationOpen(false);
     setSelectedCanals([]);
     await ble.disconnect();
+    lastProcessedButtonMessageIdRef.current = null;
     treatment.resetTreatment();
     treatment.clearGyroscopeOffsets();
     setScreen('setup');
@@ -103,7 +144,8 @@ function App(): JSX.Element {
           setScreen={setScreen}
           setCalibrationOpen={setCalibrationOpen}
           onReset={handleSystemReset}
-          showTimerSlider={screen === 'calibrate' || screen === 'treatment'}
+          showTimerSlider={false} //{screen === 'calibrate' || screen === 'treatment'}
+          showReconnectButton={screen !== 'setup'}
         />
 
       </AppShell.Header>
@@ -188,11 +230,21 @@ function App(): JSX.Element {
       screen === 'treatment' ? (
         <TreatmentScreen
           onBack={() => setScreen('calibrate')}
+          deviceConnected={ble.connected}
+          onFinish={handleSystemReset}
         />
       ) : (
           <CalibrationScreen
-            onBack={() => setScreen('gyroscope-calibration')}
-            onContinue={() => setScreen('treatment')}
+            onBack={() => {
+              setCalibrationStartRequestId(null);
+              setScreen('gyroscope-calibration');
+            }}
+            onContinue={() => {
+              setCalibrationStartRequestId(null);
+              setScreen('treatment');
+            }}
+            startRequestId={calibrationStartRequestId}
+            onStartRequestHandled={() => setCalibrationStartRequestId(null)}
         />
       )}
     </AppShell.Main>

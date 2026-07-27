@@ -1,14 +1,18 @@
-import { Box, Card, Image, Stack, Text } from '@mantine/core';
+import { Box, Card, Image, Text, TextProps } from '@mantine/core';
 
 type InfoCardProps = {
   title: string;
   imageSrc: string;
   textBody : string;
+  titleTextSize?: TextProps['size'];
+  bodyTextSize?: TextProps['size'];
 };
 export function InfoCard({
   title,
   imageSrc,
   textBody,
+  titleTextSize = 'md',
+  bodyTextSize = 'sm',
 }: InfoCardProps) {
     return(
         <Card>
@@ -23,9 +27,9 @@ export function InfoCard({
                 </Card.Section>
 
                 <Box p="md" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                   <Text fw={500}>{title}</Text>
+                   <Text size={titleTextSize} fw={500}>{title}</Text>
 
-                    <Text size="sm" c="dimmed" lineClamp={8}>
+                    <Text size={bodyTextSize} c="dimmed" lineClamp={8}>
                         {textBody}
                     </Text> 
                 </Box>
