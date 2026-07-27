@@ -2,6 +2,7 @@ import { Box, Button, Group, Slider, Text } from '@mantine/core';
 import { useTreatment } from '../context/TreatmentProvider';
 import { useBleDevice } from '../context/BleProvider';
 import { HoldDurationType } from '../types/treatmentTypes';
+import { publicAsset } from '../utils/publicAsset';
 
 const SHOW_ADVANCED_CONTROLS = false;
 const sliderMarks = [
@@ -51,7 +52,7 @@ export default function TopBar({
   return (
     <Group justify="space-between" h="100%" px="md">
       <img
-        src={`${process.env.PUBLIC_URL}/diagrams/HeadSpin Logo White.png`}
+        src={publicAsset(`/diagrams/HeadSpin Logo White.png`)}
         alt="HeadSpin"
         style={{ display: 'block', width: 'auto', height: 38 }}
       />

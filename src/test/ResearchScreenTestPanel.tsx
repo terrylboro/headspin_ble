@@ -6,6 +6,7 @@ import { TreatmentStage } from '../types/treatmentTypes';
 
 import useSound from "use-sound"
 import LiveChartCard from '../custom/liveChartCard';
+import { publicAsset } from '../utils/publicAsset';
 
 type ResearchScreenTestProps = {
   bleStatus: 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -33,9 +34,9 @@ export default function ResearchScreenTestPanel({
   const theme = useMantineTheme();
   const treatment = useTreatment();
 
-  const [playAligned] = useSound(process.env.PUBLIC_URL + "/sounds/aligned.mp3")
-  const [playNotAligned] = useSound(process.env.PUBLIC_URL + "/sounds/naligned.mp3")
-  const [playNext] = useSound(process.env.PUBLIC_URL + "/sounds/stagedone.mp3")
+  const [playAligned] = useSound(publicAsset('/sounds/aligned.mp3'))
+  const [playNotAligned] = useSound(publicAsset('/sounds/naligned.mp3'))
+  const [playNext] = useSound(publicAsset('/sounds/stagedone.mp3'))
 
   return (
     <Stack h="100%" gap="xl">

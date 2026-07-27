@@ -24,7 +24,6 @@ import StateMachineTestPanel from './test/StateMachineTestPanel';
 import CalibrationScreen from './components/CalibrationScreen';
 import ResearchScreen from './components/ResearchScreen';
 import GyroscopeCalibrationScreen from './components/GyroscopeCalibrationScreen';
-import { truncate } from 'node:fs';
 import HeadCanalAlignmentTestPanel from './test/HeadCanalAlignmentTestPanel';
 import { TreatmentStage } from './types/treatmentTypes';
 

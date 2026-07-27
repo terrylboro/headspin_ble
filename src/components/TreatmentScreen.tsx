@@ -18,6 +18,7 @@ import CanalRendering from './CanalRendering';
 import { useTreatment } from '../context/TreatmentProvider';
 import { TreatmentStage } from '../types/treatmentTypes';
 import AlignmentProgress from '../custom/alignmentProgress';
+import { publicAsset } from '../utils/publicAsset';
 
 const POSITION_COUNT = 4;
 
@@ -48,8 +49,8 @@ export default function TreatmentScreen({
   const currentPositionIndex = Math.min(treatment.state.stage, POSITION_COUNT - 1);
   const currentPositionNumber = currentPositionIndex + 1;
   const hasSideProfileImage = currentPositionNumber <= 3;
-  const originalPositionImageSrc = `${process.env.PUBLIC_URL}/diagrams/Position ${currentPositionNumber} ${affectedEarImageLabel}.png`;
-  const sideProfileImageSrc = `${process.env.PUBLIC_URL}/diagrams/Position ${currentPositionNumber} ${affectedEarImageLabel} Side Profile.png`;
+  const originalPositionImageSrc = publicAsset(`/diagrams/Position ${currentPositionNumber} ${affectedEarImageLabel}.png`);
+  const sideProfileImageSrc = publicAsset(`/diagrams/Position ${currentPositionNumber} ${affectedEarImageLabel} Side Profile.png`);
 
   useEffect(() => {
     onFinishRef.current = onFinish;

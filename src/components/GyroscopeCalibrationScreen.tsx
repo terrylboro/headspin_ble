@@ -10,6 +10,7 @@ import {
   Text,
 } from '@mantine/core';
 import { useTreatment, GyroscopeOffsets } from '../context/TreatmentProvider';
+import { publicAsset } from '../utils/publicAsset';
 
 const CALIBRATION_DURATION_MS = 3000;
 
@@ -130,7 +131,7 @@ export default function GyroscopeCalibrationScreen({
 
         <Box style={{ flex: 1, minHeight: 0, overflow: 'hidden', borderRadius: 8 }}>
           <Image
-            src={`${process.env.PUBLIC_URL}/diagrams/Gyroscope Calibration Flat Surface.png`}
+            src={publicAsset('/diagrams/Gyroscope Calibration Flat Surface.png')}
             alt="HeadSpin device placed flat on a stable surface"
             w="100%"
             h="100%"

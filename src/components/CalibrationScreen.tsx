@@ -10,6 +10,7 @@ import { MathUtils, Vector3 } from 'three';
 import { useTreatment } from '../context/TreatmentProvider';
 import { InfoCard } from '../custom/infoCard';
 import { applyEarAxisBasis } from '../utils/earAxisBasis';
+import { publicAsset } from '../utils/publicAsset';
 
 const UPRIGHT_TOLERANCE_DEGREES = 30;
 const WORLD_UP_AXIS = new Vector3(0, 0, 1);
@@ -88,7 +89,7 @@ export default function CalibrationScreen({
       <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="xl" style={{ flex: 1 }}>
         <InfoCard
           title="Place the device"
-          imageSrc={`${process.env.PUBLIC_URL}/diagrams/HeadSpin Device Placement ${affectedEarImageLabel}.png`}
+          imageSrc={publicAsset(`/diagrams/HeadSpin Device Placement ${affectedEarImageLabel}.png`)}
           textBody="Ensure the device is sat above the patient's affected ear and fastened securely."
           titleTextSize="xl"
           bodyTextSize="lg"
@@ -96,7 +97,7 @@ export default function CalibrationScreen({
 
         <InfoCard
           title="Get ready"
-          imageSrc={`${process.env.PUBLIC_URL}/diagrams/Calibration Get Ready Side Profile ${affectedEarImageLabel}.png`}
+          imageSrc={publicAsset(`/diagrams/Calibration Get Ready Side Profile ${affectedEarImageLabel}.png`)}
           textBody="Sit the patient upright with their legs on the bed. Ensure they are looking straight ahead."
           titleTextSize="xl"
           bodyTextSize="lg"
@@ -104,7 +105,7 @@ export default function CalibrationScreen({
 
         <InfoCard
           title="Commence Manoeuvre"
-          imageSrc={`${process.env.PUBLIC_URL}/diagrams/Button Explanation.png`}
+          imageSrc={publicAsset(`/diagrams/Button Explanation.png`)}
           textBody="Press the Start button on the device to begin the manoeuvre. During the manoeuvre, progress between positions using the device buttons."
           titleTextSize="xl"
           bodyTextSize="lg"

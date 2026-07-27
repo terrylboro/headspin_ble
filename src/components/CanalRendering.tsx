@@ -14,6 +14,7 @@ import { canalDirections } from "../utils/canalDirections";
 import { createThickArrow } from "../custom/thickArrow";
 import { useSound } from "use-sound";
 import { getHighlightedMeshPart } from "../utils/meshPartDisplay";
+import { publicAsset } from "../utils/publicAsset";
 
 // Set camera position and rotation constants for the scene
 const CAMERA_POSITION = new THREE.Vector3(-50, 0, 0);
@@ -53,9 +54,9 @@ const CanalRendering = () => {
     const {matrixRef, offsetMatrixRef, alignmentRef, alignedRef, state, dispatch, showGuidanceArrows, setShowGuidanceArrows} = useTreatment();
 
     // Setup sounds
-    const [playAligned] = useSound(process.env.PUBLIC_URL + "/sounds/aligned.mp3")
-    const [playNotAligned] = useSound(process.env.PUBLIC_URL + "/sounds/naligned.mp3")
-    const [playNext] = useSound(process.env.PUBLIC_URL + "/sounds/stagedone.mp3")
+    const [playAligned] = useSound(publicAsset('/sounds/aligned.mp3'))
+    const [playNotAligned] = useSound(publicAsset('/sounds/naligned.mp3'))
+    const [playNext] = useSound(publicAsset('/sounds/stagedone.mp3'))
     const highlightedMeshPart = getHighlightedMeshPart(state.affectedCanal, state.stage, state.isAligned)
 
     // Scene setting variables
@@ -201,8 +202,8 @@ const CanalRendering = () => {
         for (let i = 0; i < meshPartsLength[state.affectedCanal ? state.affectedCanal : 5]; i++) {
             // const meshPath = "rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply"
 
-            // const meshPath = (state.affectedEar !== "right") ? (process.env.PUBLIC_URL + "/rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply") : (process.env.PUBLIC_URL + "/right_rh_meshes/" + state.affectedCanal + "_" + i.toString() + "_right" + ".ply");
-            const meshPath = (state.affectedEar !== "right") ? (process.env.PUBLIC_URL + "/rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply") : (process.env.PUBLIC_URL + "/new_right_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply");
+            const meshDirectory = state.affectedEar !== "right" ? 'rh_meshes' : 'new_right_meshes';
+            const meshPath = publicAsset(`/${meshDirectory}/${state.affectedCanal}_${i}.ply`);
 
             loader.load(meshPath, (geometry) => {
 
