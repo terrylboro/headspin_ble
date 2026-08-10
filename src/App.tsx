@@ -210,7 +210,15 @@ function App(): JSX.Element {
         
       ) : screen === 'setup' ? (
         <SetupScreen
-          bleStatus={ble.connected ? 'connected' : 'disconnected'}
+          bleStatus={
+            ble.connected
+              ? 'connected'
+              : ble.connecting
+                ? 'connecting'
+                : ble.error
+                  ? 'error'
+                  : 'disconnected'
+          }
           deviceName={ble.deviceName}
           batteryLevel={ble.batteryLevel}
           bleError={ble.error}

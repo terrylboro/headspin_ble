@@ -42,6 +42,8 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
   const batteryCharacteristicRef = useRef<BluetoothRemoteGATTCharacteristic | null>(null);
   const disconnectHandlerRef = useRef<((event: Event) => void) | null>(null);
   const messageIdRef = useRef(0);
+  const connectPromiseRef = useRef<Promise<boolean> | null>(null);
+  const connectAttemptRef = useRef(0);
 
   const appendMessage = useCallback((value: DataView, source: ReceivedMessage['source']) => {
 
@@ -90,37 +92,59 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
     setBatteryLevel(value.getUint8(0));
   }, []);
 
-  const connect = useCallback(async () => {
-    setError(null);
-    setConnecting(true);
+  const connect = useCallback((): Promise<boolean> => {
+    // Web Bluetooth does not provide a way to cancel a device chooser. Keep
+    // one request in flight and let repeated button presses share it rather
+    // than creating competing/stale requestDevice calls.
+    if (connectPromiseRef.current) {
+      return connectPromiseRef.current;
+    }
 
     if (!navigator.bluetooth) {
       setError('Web Bluetooth API not available in this browser. Use Chrome or Edge.');
       setConnecting(false);
-      return false;
+      return Promise.resolve(false);
     }
 
+    const trimmedServiceUUID = serviceUUID.trim();
+    const trimmedCharUUID = charUUID.trim();
+
+    let requestOptions: RequestDeviceOptions;
+
+    if (trimmedServiceUUID) {
+      requestOptions = {
+        filters: [{ services: [trimmedServiceUUID] }],
+        optionalServices: [trimmedServiceUUID, BATTERY_SERVICE_UUID],
+      };
+    } else {
+      requestOptions = {
+        acceptAllDevices: true,
+        optionalServices: trimmedCharUUID
+          ? [trimmedCharUUID, BATTERY_SERVICE_UUID]
+          : [BATTERY_SERVICE_UUID],
+      };
+    }
+
+    let deviceRequest: Promise<BluetoothDevice>;
     try {
-      const trimmedServiceUUID = serviceUUID.trim();
-      const trimmedCharUUID = charUUID.trim();
+      // Invoke this synchronously in the original click call stack, before any
+      // await, so the browser reliably recognises the user activation.
+      deviceRequest = navigator.bluetooth.requestDevice(requestOptions);
+    } catch (e: any) {
+      setError(e?.message || String(e));
+      return Promise.resolve(false);
+    }
 
-      let options: RequestDeviceOptions;
+    const attemptId = ++connectAttemptRef.current;
+    setError(null);
+    setConnecting(true);
 
-      if (trimmedServiceUUID) {
-        options = {
-          filters: [{ services: [trimmedServiceUUID] }],
-          optionalServices: [trimmedServiceUUID, BATTERY_SERVICE_UUID],
-        };
-      } else {
-        options = {
-          acceptAllDevices: true,
-          optionalServices: trimmedCharUUID
-            ? [trimmedCharUUID, BATTERY_SERVICE_UUID]
-            : [BATTERY_SERVICE_UUID],
-        };
-      }
+    let connectionPromise: Promise<boolean>;
+    connectionPromise = (async () => {
+      try {
+      const device = await deviceRequest;
+      if (attemptId !== connectAttemptRef.current) return false;
 
-      const device = await navigator.bluetooth.requestDevice(options);
       deviceRef.current = device;
       setDeviceName(device.name || device.id || 'Unknown');
 
@@ -133,6 +157,11 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
       device.addEventListener('gattserverdisconnected', handleDisconnected);
 
       const server = await device.gatt!.connect();
+      if (attemptId !== connectAttemptRef.current) {
+        server.disconnect();
+        return false;
+      }
+
       let service: BluetoothRemoteGATTService;
 
       if (trimmedServiceUUID) {
@@ -197,6 +226,10 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
       // The required IMU and button characteristics are ready, so report the
       // connection immediately. Optional battery discovery must not hold the UI
       // in its connecting state if a peripheral is slow to answer.
+      if (attemptId !== connectAttemptRef.current) {
+        device.gatt?.disconnect();
+        return false;
+      }
       setConnected(true);
 
       void (async () => {
@@ -239,13 +272,21 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
       })();
 
       return true;
-    } catch (e: any) {
+      } catch (e: any) {
+      if (attemptId !== connectAttemptRef.current) return false;
       setError(e?.message || String(e));
       setConnected(false);
       return false;
-    } finally {
-      setConnecting(false);
-    }
+      } finally {
+        connectPromiseRef.current = null;
+        if (attemptId === connectAttemptRef.current) {
+          setConnecting(false);
+        }
+      }
+    })();
+
+    connectPromiseRef.current = connectionPromise;
+    return connectionPromise;
   }, [
     serviceUUID,
     charUUID,
@@ -256,6 +297,11 @@ export function useBleDeviceInternal(options?: UseBleDeviceOptions) {
   ]);
 
   const disconnect = useCallback(async () => {
+    // Invalidate any chooser/GATT continuation. The outstanding chooser cannot
+    // be programmatically closed, so its promise remains single-flight until
+    // the user completes or dismisses it.
+    connectAttemptRef.current += 1;
+
     try {
       if (batteryCharacteristicRef.current) {
         try {

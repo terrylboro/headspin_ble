@@ -175,8 +175,18 @@ export default function SetupScreen({
                 />
 
                 <Stack gap="md">
-                <Button fullWidth size="xl" onClick={onConnect} loading={bleStatus === 'connecting'} color={bleStatus === 'connected' ? theme.colors.green[6] : theme.colors.blue[6]}>
-                  {bleStatus === 'connected' ? 'Connected' : 'Connect'}
+                <Button
+                  fullWidth
+                  size="xl"
+                  onClick={onConnect}
+                  aria-busy={bleStatus === 'connecting'}
+                  color={bleStatus === 'connected' ? theme.colors.green[6] : theme.colors.blue[6]}
+                >
+                  {bleStatus === 'connected'
+                    ? 'Connected'
+                    : bleStatus === 'connecting'
+                      ? 'Bluetooth window open'
+                      : 'Connect'}
                 </Button>
                 {/* {bleStatus === 'connected' && (
                   <Text ta="center" fw={600}>
