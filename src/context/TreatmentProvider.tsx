@@ -36,6 +36,8 @@ import { TreatmentState, Action, EarSide, CanalType, TreatmentStage } from '../t
 type TreatmentContextValue = {
   affectedEar: EarSide;
   setAffectedEar: (ear: EarSide) => void;
+  sensorMountEar: EarSide;
+  switchToOppositeEarWithoutRemount: () => boolean;
 
   affectedCanal: CanalType;
   setAffectedCanal: (canal: CanalType) => void;
@@ -204,6 +206,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
   const ble = useBleDevice();
 
   const [affectedEar, setAffectedEar] = useState<EarSide>(null);
+  const [sensorMountEarOverride, setSensorMountEarOverride] = useState<EarSide>(null);
   const [affectedCanal, setAffectedCanal] = useState<CanalType>('posterior');
   const [selectedCanals, setSelectedCanals] = useState<string[]>([]);
 
@@ -248,6 +251,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
   // Optional: instantiate your Madgwick stateful filter once if needed
   // Replace this with your actual setup if your module is class-based or stateful.
   const madgwickRef = useRef<any>(null);
+  const sensorMountEar = sensorMountEarOverride ?? state.affectedEar;
 
   useEffect(() => {
     // Example only.
@@ -255,6 +259,21 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
     madgwickRef.current = new MadgwickFilter(0.25, 0); // beta, beta_mag
     madgwickRef.current.init(0, 0, 9.81);
     // madgwickRef.current = madgwickFilter;
+  }, [sensorMountEar]);
+
+  const switchToOppositeEarWithoutRemount = useCallback(() => {
+    const currentEar = state.affectedEar;
+    if (currentEar !== 'left' && currentEar !== 'right') return false;
+
+    // Preserve the original physical mounting basis while changing the ear
+    // that drives treatment directions, images, and clinical logic.
+    setSensorMountEarOverride((currentOverride) => currentOverride ?? currentEar);
+    dispatch({
+      type: 'SELECT_EAR',
+      ear: currentEar === 'left' ? 'right' : 'left',
+    });
+    dispatch({ type: 'RESET_PROGRESS' });
+    return true;
   }, [state.affectedEar]);
 
   const calibrateOffset = useCallback(() => {
@@ -280,6 +299,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
   const resetTreatment = useCallback(() => {
     dispatch({ type: 'RESET' });
     setAffectedEar(null);
+    setSensorMountEarOverride(null);
     setAffectedCanal('posterior');
     setSelectedCanals([]);
     setIsTreating(false);
@@ -418,13 +438,13 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
       dataArr[0],
       dataArr[1],
       dataArr[2],
-      state.affectedEar
+      sensorMountEar
     );
     const correctedAngularVelocity = applyEarAxisBasis(
       dataArr[3],
       dataArr[4],
       dataArr[5],
-      state.affectedEar
+      sensorMountEar
     );
     const basisCorrectedDataArr = [
       ...correctedAcceleration,
@@ -523,12 +543,14 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
        * Replace this section with your exact treatment progression rules.
        */
       
-  }, [ble.latestMessage, isRecording, state.affectedEar, state.stage]);
+  }, [ble.latestMessage, isRecording, sensorMountEar, state.stage]);
 
   const value = useMemo<TreatmentContextValue>(
     () => ({
       affectedEar,
       setAffectedEar,
+      sensorMountEar,
+      switchToOppositeEarWithoutRemount,
 
       affectedCanal,
       setAffectedCanal,
@@ -577,6 +599,8 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
     }),
     [
       affectedEar,
+      sensorMountEar,
+      switchToOppositeEarWithoutRemount,
       affectedCanal,
       selectedCanals,
       alignmentRef,

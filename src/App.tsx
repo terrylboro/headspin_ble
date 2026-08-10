@@ -62,7 +62,28 @@ function App(): JSX.Element {
   const [calibrationOpen, setCalibrationOpen] = useState(false);
   const [powerDownNotificationOpen, setPowerDownNotificationOpen] = useState(false);
   const [calibrationStartRequestId, setCalibrationStartRequestId] = useState<number | null>(null);
+  const [dixHallpikeModalOpened, setDixHallpikeModalOpened] = useState(false);
+  const [dixHallpikeBackArmed, setDixHallpikeBackArmed] = useState(false);
   const lastProcessedButtonMessageIdRef = useRef<number | null>(null);
+  const lastDixHallpikeBackPressRef = useRef<number | null>(null);
+  const dixHallpikeBackTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const reachedDixHallpikeDecision =
+      screen === 'treatment' &&
+      treatment.state.stage === TreatmentStage.STAGE_1 &&
+      treatment.state.stageProgress >= 1;
+
+    if (reachedDixHallpikeDecision) {
+      setDixHallpikeModalOpened(true);
+    }
+  }, [screen, treatment.state.stage, treatment.state.stageProgress]);
+
+  useEffect(() => () => {
+    if (dixHallpikeBackTimerRef.current !== null) {
+      window.clearTimeout(dixHallpikeBackTimerRef.current);
+    }
+  }, []);
 
   useEffect(() => {
     const message = ble.latestButtonMessage;
@@ -99,17 +120,24 @@ function App(): JSX.Element {
     if (screen === 'calibrate' && command === BLE_BUTTON_PROGRESS_COMMAND) {
       setCalibrationStartRequestId(message.id);
     } else if (treatmentNavigationEnabled && command === BLE_BUTTON_PROGRESS_COMMAND) {
-      treatmentDispatch({ type: 'PROGRESS' });
+      handleTreatmentProgressRequest();
     } else if (treatmentNavigationEnabled && command === BLE_BUTTON_RETURN_COMMAND) {
-      treatmentDispatch({ type: 'RETURN_TO_PREVIOUS_STAGE' });
+      handleTreatmentBackRequest();
     }
-  }, [ble.latestButtonMessage, screen, treatment.state.stage, treatmentDispatch]);
+  }, [
+    ble.latestButtonMessage,
+    dixHallpikeModalOpened,
+    screen,
+    treatment.state.stage,
+    treatmentDispatch,
+  ]);
 
  
   // Mantine theming
   const theme = useMantineTheme();
 
   async function handleSystemReset() {
+    closeDixHallpikeDecision();
     setCalibrationOpen(false);
     setPowerDownNotificationOpen(false);
     setSelectedCanals([]);
@@ -126,6 +154,70 @@ function App(): JSX.Element {
     if (connected) {
       setPowerDownNotificationOpen(false);
     }
+  }
+
+  function handleSwitchToOppositeEar() {
+    closeDixHallpikeDecision();
+    if (!treatment.switchToOppositeEarWithoutRemount()) return;
+
+    if (treatment.isRecording) {
+      treatment.stopRecording();
+    }
+    setCalibrationStartRequestId(null);
+    setScreen('calibrate');
+  }
+
+  function closeDixHallpikeDecision() {
+    setDixHallpikeModalOpened(false);
+    setDixHallpikeBackArmed(false);
+    lastDixHallpikeBackPressRef.current = null;
+    if (dixHallpikeBackTimerRef.current !== null) {
+      window.clearTimeout(dixHallpikeBackTimerRef.current);
+      dixHallpikeBackTimerRef.current = null;
+    }
+  }
+
+  function continueFromDixHallpike() {
+    closeDixHallpikeDecision();
+    treatmentDispatch({ type: 'PROGRESS' });
+  }
+
+  function handleTreatmentProgressRequest() {
+    if (treatment.state.stage === TreatmentStage.STAGE_1) {
+      if (dixHallpikeModalOpened) {
+        continueFromDixHallpike();
+        return;
+      }
+      setDixHallpikeModalOpened(true);
+      return;
+    }
+    treatmentDispatch({ type: 'PROGRESS' });
+  }
+
+  function handleTreatmentBackRequest() {
+    if (!dixHallpikeModalOpened) {
+      treatmentDispatch({ type: 'RETURN_TO_PREVIOUS_STAGE' });
+      return;
+    }
+
+    const now = Date.now();
+    const previousPress = lastDixHallpikeBackPressRef.current;
+
+    if (previousPress !== null && now - previousPress <= 1500) {
+      handleSwitchToOppositeEar();
+      return;
+    }
+
+    lastDixHallpikeBackPressRef.current = now;
+    setDixHallpikeBackArmed(true);
+    if (dixHallpikeBackTimerRef.current !== null) {
+      window.clearTimeout(dixHallpikeBackTimerRef.current);
+    }
+    dixHallpikeBackTimerRef.current = window.setTimeout(() => {
+      lastDixHallpikeBackPressRef.current = null;
+      setDixHallpikeBackArmed(false);
+      dixHallpikeBackTimerRef.current = null;
+    }, 1500);
   }
 
   return (
@@ -241,6 +333,11 @@ function App(): JSX.Element {
           onBack={() => setScreen('calibrate')}
           deviceConnected={ble.connected}
           onFinish={handleSystemReset}
+          onSwitchToOppositeEar={handleSwitchToOppositeEar}
+          onRequestProgress={handleTreatmentProgressRequest}
+          onContinueFromDixHallpike={continueFromDixHallpike}
+          dixHallpikeModalOpened={dixHallpikeModalOpened}
+          dixHallpikeBackArmed={dixHallpikeBackArmed}
         />
       ) : (
           <CalibrationScreen

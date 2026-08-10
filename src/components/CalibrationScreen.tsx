@@ -28,11 +28,16 @@ export default function CalibrationScreen({
   onStartRequestHandled,
 }: CalibrationScreenProps) {
 
-  const { latestImuSample, calibrateOffset, startRecording, state } = useTreatment();
+  const { latestImuSample, calibrateOffset, startRecording, state, sensorMountEar } = useTreatment();
   const [orientationError, setOrientationError] = useState<string | null>(null);
   // The original "Left" assets face right, while the mirrored "Right" assets
   // face left. Select by facing direction so it matches the affected ear.
   const affectedEarImageLabel = state.affectedEar === 'right' ? 'Left' : 'Right';
+  const sensorEarImageLabel = sensorMountEar === 'right' ? 'Left' : 'Right';
+  const treatingOppositeEarWithoutRemount =
+    sensorMountEar !== null &&
+    state.affectedEar !== null &&
+    sensorMountEar !== state.affectedEar;
 
   const handleStart = useCallback(() => {
     setOrientationError(null);
@@ -49,7 +54,7 @@ export default function CalibrationScreen({
       latestImuSample.ax,
       latestImuSample.ay,
       latestImuSample.az,
-      state.affectedEar
+      sensorMountEar
     );
     const deviceUp = new Vector3(-ay, -az, ax);
 
@@ -71,7 +76,7 @@ export default function CalibrationScreen({
     calibrateOffset();
     startRecording();
     onContinue();
-  }, [calibrateOffset, latestImuSample, onContinue, startRecording, state.affectedEar]);
+  }, [calibrateOffset, latestImuSample, onContinue, sensorMountEar, startRecording]);
 
   useEffect(() => {
     if (startRequestId === null) {
@@ -87,9 +92,13 @@ export default function CalibrationScreen({
     <Stack h="100%" gap="xl">
       <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="xl" style={{ flex: 1 }}>
         <InfoCard
-          title="Place the device"
-          imageSrc={`${process.env.PUBLIC_URL}/diagrams/HeadSpin Device Placement ${affectedEarImageLabel}.png`}
-          textBody="Ensure the device is sat above the patient's affected ear and fastened securely."
+          title={treatingOppositeEarWithoutRemount ? 'Keep the device in place' : 'Place the device'}
+          imageSrc={`${process.env.PUBLIC_URL}/diagrams/HeadSpin Device Placement ${sensorEarImageLabel}.png`}
+          textBody={
+            treatingOppositeEarWithoutRemount
+              ? `Leave the device secured above the patient's ${sensorMountEar} ear while treating the ${state.affectedEar} ear.`
+              : "Ensure the device is sat above the patient's affected ear and fastened securely."
+          }
           titleTextSize="xl"
           bodyTextSize="lg"
         />

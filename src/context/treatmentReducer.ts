@@ -129,7 +129,10 @@ export function treatmentReducer(
     }
 
     case 'RESET_PROGRESS':
-      return { ...state, stage: TreatmentStage.STAGE_1, lastTickTime: null, stageProgress: 0, isAligned: false,};
+      return resetTimerProgress({
+        ...state,
+        stage: TreatmentStage.STAGE_1,
+      });
 
     case 'RESET':
       return initialState;

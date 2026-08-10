@@ -25,6 +25,11 @@ type TreatmentScreenProps = {
   onBack: () => void;
   deviceConnected: boolean;
   onFinish: () => void | Promise<void>;
+  onSwitchToOppositeEar: () => void;
+  onRequestProgress: () => void;
+  onContinueFromDixHallpike: () => void;
+  dixHallpikeModalOpened: boolean;
+  dixHallpikeBackArmed: boolean;
 };
 
 type CompletionPage = 'complete' | 'power-off' | 'disconnected';
@@ -33,6 +38,11 @@ export default function TreatmentScreen({
   onBack,
   deviceConnected,
   onFinish,
+  onSwitchToOppositeEar,
+  onRequestProgress,
+  onContinueFromDixHallpike,
+  dixHallpikeModalOpened,
+  dixHallpikeBackArmed,
 }: TreatmentScreenProps) {
 
   const treatment =  useTreatment();
@@ -46,6 +56,7 @@ export default function TreatmentScreen({
   const affectedEarImageLabel = treatment.state.affectedEar === 'right' ? 'Right' : 'Left';
   const isComplete = treatment.state.stage === TreatmentStage.COMPLETE;
   const isPositionTimeComplete = !isComplete && treatment.state.stageProgress >= 1;
+  const oppositeEarLabel = treatment.state.affectedEar === 'left' ? 'right' : 'left';
   const currentPositionIndex = Math.min(treatment.state.stage, POSITION_COUNT - 1);
   const currentPositionNumber = currentPositionIndex + 1;
   const hasSideProfileImage = currentPositionNumber <= 3;
@@ -114,6 +125,48 @@ export default function TreatmentScreen({
       h="calc(100vh - 92px)"
       style={{ minHeight: 0, overflow: 'hidden' }}
     >
+
+      <Modal
+        opened={dixHallpikeModalOpened}
+        onClose={() => {}}
+        withCloseButton={false}
+        closeOnClickOutside={false}
+        closeOnEscape={false}
+        // title="Dix-Hallpike"
+        centered
+        size="lg"
+      >
+        <Stack gap="lg">
+          <Text size="lg" fw={600} ta="center">
+            Position 1 complete!
+          </Text>
+          <Stack gap="md">
+            <Text ta="center">
+              If performing the full Epley manoeuvre, press the forward button
+              to continue to Position 2.
+            </Text>
+
+            <Text ta="center">
+              If performing the Dix-Hallpike manoeuvre, press the back button
+              twice to repeat with the {oppositeEarLabel} ear without moving
+              the sensor.
+            </Text>
+          </Stack>
+          {dixHallpikeBackArmed && (
+            <Text c="orange.8" fw={700} ta="center" role="status">
+              Back pressed once — press Back again to treat the {oppositeEarLabel} ear.
+            </Text>
+          )}
+          <Group grow>
+            <Button color="orange" variant="light" onClick={onSwitchToOppositeEar}>
+              Treat {oppositeEarLabel} ear
+            </Button>
+            <Button color="green" onClick={onContinueFromDixHallpike}>
+              Continue to Position 2
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
 
       <Modal
         opened={completionModalOpened}
@@ -280,7 +333,7 @@ export default function TreatmentScreen({
                   Previous
                 </Button>
 
-                <Button onClick={() => treatment.dispatch({ type: 'PROGRESS' })}>
+                <Button onClick={onRequestProgress}>
                   Next
                 </Button>
               </Group>
