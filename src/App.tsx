@@ -1,5 +1,4 @@
-import { useRef, useState } from 'react';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './App.css';
 
 import SetupScreen from './components/SetupScreen';
@@ -24,9 +23,9 @@ import StateMachineTestPanel from './test/StateMachineTestPanel';
 import CalibrationScreen from './components/CalibrationScreen';
 import ResearchScreen from './components/ResearchScreen';
 import GyroscopeCalibrationScreen from './components/GyroscopeCalibrationScreen';
-import { truncate } from 'node:fs';
 import HeadCanalAlignmentTestPanel from './test/HeadCanalAlignmentTestPanel';
 import { TreatmentStage } from './types/treatmentTypes';
+import AssetLoadingGate from './components/AssetLoadingGate';
 
 type Screen = 'setup' | 'gyroscope-calibration' | 'calibrate' | 'treatment' | 'research';
 
@@ -130,6 +129,7 @@ function App(): JSX.Element {
   }
 
   return (
+    <AssetLoadingGate>
       <AppShell
         header={{ height: 60 }}
         // footer={{ height: 40 }}
@@ -266,6 +266,7 @@ function App(): JSX.Element {
     </AppShell.Footer> */}
 
     </AppShell>
+    </AssetLoadingGate>
     
   );
 }

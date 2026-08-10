@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react"
 import * as THREE from "three";
-import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { BLUE_COLOUR, ORANGE_COLOUR, BROWN_COLOUR, BACKGR_COLOUR, RED_COLOUR, BACKGR_COLOUR_CSS} from "../utils/config";
 
 import { changeQuaternionBase } from "../utils/changeBase";
 import {applyYawOffset} from "../utils/applyYawOffset"
 import { useTreatment } from "../context/TreatmentProvider";
 import { Text } from "@mantine/core";
+import { loadPlyGeometry, publicAssetUrl } from "../utils/assetLoader";
 
 // interface Props {
 //     ear: "left" | "right" | "unselected"
@@ -45,6 +45,7 @@ const HeadRendering = ({calibrateMode} : HeadRenderingProps) => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
     useEffect(() => {
+        let cancelled = false;
 
         // Renderer initialisation
         canvasRef.current = document.getElementById("headCanvas") as HTMLCanvasElement;
@@ -87,20 +88,33 @@ const HeadRendering = ({calibrateMode} : HeadRenderingProps) => {
 
 
         // Load Ear Mesh
-        const loader = new PLYLoader()
-        let earMeshPath;
-        earMeshPath = (state.affectedEar !== "right") ? (process.env.PUBLIC_URL + "/rh_meshes/capsule_3x.ply") : (process.env.PUBLIC_URL + "/new_right_meshes/capsule.ply");
-        loader.load(earMeshPath, (geometry) => {
+        const earMeshPath = publicAssetUrl(
+            state.affectedEar !== "right"
+                ? "rh_meshes/capsule_3x.ply"
+                : "new_right_meshes/capsule.ply"
+        );
+        void loadPlyGeometry(earMeshPath).then((geometry) => {
+            if (cancelled) {
+                geometry.dispose();
+                return;
+            }
 
             const material = new THREE.MeshStandardMaterial({color: BLUE_COLOUR, flatShading: true})
             const loadedMesh = new THREE.Mesh(geometry.center(), material)
 
             loadedMesh.position.set(0, state.affectedEar === "left" ? 3.5 : -3.5, 0)
             headGroup.current!.add(loadedMesh);
+        }).catch((error) => {
+            if (!cancelled) console.error(`Failed to load head capsule: ${earMeshPath}`, error);
         })
 
         // Load head mesh
-        loader.load(process.env.PUBLIC_URL + "/rh_meshes/head.ply", (geometry) => {
+        const headMeshPath = publicAssetUrl("rh_meshes/head.ply");
+        void loadPlyGeometry(headMeshPath).then((geometry) => {
+            if (cancelled) {
+                geometry.dispose();
+                return;
+            }
 
             const material = new THREE.MeshPhongMaterial({color: 0x555555, flatShading: true, transparent: true, opacity: 0.5})
             const loadedMesh = new THREE.Mesh(geometry.center(), material)
@@ -108,6 +122,8 @@ const HeadRendering = ({calibrateMode} : HeadRenderingProps) => {
             // scene.current!.add(loadedMesh)
             meshParts.current.push(loadedMesh)
             headGroup.current.add(loadedMesh)
+        }).catch((error) => {
+            if (!cancelled) console.error(`Failed to load head mesh: ${headMeshPath}`, error);
         })
 
 
@@ -143,8 +159,18 @@ const HeadRendering = ({calibrateMode} : HeadRenderingProps) => {
         }
 
         return () => {
+            cancelled = true;
             cancelAnimationFrame(loop)
-            scene.current!.clear() 
+            headGroup.current.traverse((child) => {
+                if (!(child instanceof THREE.Mesh)) return;
+                child.geometry.dispose();
+                const materials = Array.isArray(child.material) ? child.material : [child.material];
+                materials.forEach((material) => material.dispose());
+            });
+            headGroup.current.clear();
+            scene.current!.clear()
+            renderer.current?.dispose();
+            renderer.current = undefined;
             meshParts.current = [] // flush any previous loadings
         }
     }, [state.affectedEar, matrixRef, offsetMatrixRef])

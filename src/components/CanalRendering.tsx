@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react"
 import * as THREE from "three";
-import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { getCanalAlignment, meshPartsLength } from "../utils/alignment";
 import { BLUE_COLOUR, ORANGE_COLOUR, BROWN_COLOUR, BACKGR_COLOUR, GREEN_COLOUR, RED_COLOUR, BACKGR_COLOUR_CSS} from "../utils/config";
 import { changeQuaternionBase } from "../utils/changeBase";
@@ -14,6 +13,7 @@ import { canalDirections } from "../utils/canalDirections";
 import { createThickArrow } from "../custom/thickArrow";
 import { useSound } from "use-sound";
 import { getHighlightedMeshPart } from "../utils/meshPartDisplay";
+import { loadPlyGeometry, publicAssetUrl } from "../utils/assetLoader";
 
 // Set camera position and rotation constants for the scene
 const CAMERA_POSITION = new THREE.Vector3(-50, 0, 0);
@@ -239,14 +239,17 @@ const CanalRendering = () => {
         }
 
         // Load Canal Mesh
-        const loader = new PLYLoader()
         for (let i = 0; i < meshPartsLength[state.affectedCanal ? state.affectedCanal : 5]; i++) {
             // const meshPath = "rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply"
 
             // const meshPath = (state.affectedEar !== "right") ? (process.env.PUBLIC_URL + "/rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply") : (process.env.PUBLIC_URL + "/right_rh_meshes/" + state.affectedCanal + "_" + i.toString() + "_right" + ".ply");
-            const meshPath = (state.affectedEar !== "right") ? (process.env.PUBLIC_URL + "/rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply") : (process.env.PUBLIC_URL + "/new_right_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply");
+            const meshPath = publicAssetUrl(
+                state.affectedEar !== "right"
+                    ? `rh_meshes/${state.affectedCanal}_${i}.ply`
+                    : `new_right_meshes/${state.affectedCanal}_${i}.ply`
+            );
 
-            loader.load(meshPath, (geometry) => {
+            void loadPlyGeometry(meshPath).then((geometry) => {
 
                 if (cancelled) {
                     geometry.dispose()
@@ -283,7 +286,7 @@ const CanalRendering = () => {
                 } else if (i === currentSegmentID) {
                     material.color.setHex(currentState.isAligned ? GREEN_COLOUR : RED_COLOUR)
                 }
-            }, undefined, (error) => {
+            }).catch((error) => {
                 if (!cancelled) {
                     console.error(`Failed to load canal mesh: ${meshPath}`, error)
                 }
@@ -396,6 +399,8 @@ const CanalRendering = () => {
                 cancelAnimationFrame(resizeFrame);
             }
             resizeObserver.disconnect();
+            disposeObject(canalGroup.current)
+            canalGroup.current.clear()
             sceneInstance.clear()
             rendererInstance.dispose()
             rendererRef.current = null;
