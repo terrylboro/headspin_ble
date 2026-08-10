@@ -132,6 +132,11 @@ export const CRITICAL_IMAGE_ASSETS = [
   'Lateral Canal Selected.png',
 ];
 
+export const CRITICAL_AUDIO_ASSETS = [
+  'sounds/aligned.mp3',
+  'sounds/545373__stwime__up3.mp3',
+];
+
 export const DEFERRED_IMAGE_ASSETS = [
   'diagrams/Gyroscope Calibration Flat Surface.png',
   'diagrams/HeadSpin Device Placement Left.png',
@@ -187,8 +192,14 @@ export function preloadCriticalAssets(
     path,
     load: () => preloadImage(publicAssetUrl(path)),
   }));
+  const audioTasks = CRITICAL_AUDIO_ASSETS.map((path) => ({
+    path,
+    load: async () => {
+      await fetchWithRetry(publicAssetUrl(path));
+    },
+  }));
 
-  return runWithConcurrency([...plyTasks, ...imageTasks], onProgress);
+  return runWithConcurrency([...plyTasks, ...imageTasks, ...audioTasks], onProgress);
 }
 
 export function preloadDeferredAssets(): Promise<void> {

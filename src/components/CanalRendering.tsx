@@ -11,15 +11,16 @@ import { TreatmentStage } from "../types/treatmentTypes";
 
 import { canalDirections } from "../utils/canalDirections";
 import { createThickArrow } from "../custom/thickArrow";
-import { useSound } from "use-sound";
 import { getHighlightedMeshPart } from "../utils/meshPartDisplay";
 import { loadPlyGeometry, publicAssetUrl } from "../utils/assetLoader";
+import { useAppSounds } from "../context/AppSoundProvider";
 
 // Set camera position and rotation constants for the scene
 const CAMERA_POSITION = new THREE.Vector3(-50, 0, 0);
 const CAMERA_ROTATION = new THREE.Euler(Math.PI / 2, -Math.PI / 2, 0, 'XYZ');
 const CAMERA_NEAR = 0.1;
 const CAMERA_FAR = 1000;
+const MISALIGNMENT_WARNING_DELAY_MS = 3000;
 const CANAL_COLOURS = {
     posterior: BLUE_COLOUR,
     anterior: ORANGE_COLOUR,
@@ -59,10 +60,8 @@ const CanalRendering = () => {
     // Using TreatmentProvider context to get the necessary variables for rendering and alignment
     const {matrixRef, offsetMatrixRef, alignmentRef, alignedRef, state, dispatch, showGuidanceArrows, setShowGuidanceArrows} = useTreatment();
 
-    // Setup sounds
-    const [playAligned] = useSound(process.env.PUBLIC_URL + "/sounds/aligned.mp3")
-    const [playNotAligned] = useSound(process.env.PUBLIC_URL + "/sounds/naligned.mp3")
-    const [playNext] = useSound(process.env.PUBLIC_URL + "/sounds/stagedone.mp3")
+    // Sounds are loaded at app startup so Position 1 transitions are audible.
+    const { playAligned, playMisaligned } = useAppSounds()
     const highlightedMeshPart = getHighlightedMeshPart(state.affectedCanal, state.stage, state.isAligned)
 
     // Scene setting variables
@@ -71,6 +70,9 @@ const CanalRendering = () => {
     const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
     const meshParts = useRef<THREE.Mesh[]>([])
     const stateRef = useRef(state)
+    const soundStageRef = useRef(state.stage)
+    const alignedSoundPlayedRef = useRef(false)
+    const misalignedWarningPlayedRef = useRef(false)
 
     // Group mesh control variables
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -80,6 +82,53 @@ const CanalRendering = () => {
     useEffect(() => {
         stateRef.current = state
     }, [state])
+
+    // Play the aligned cue only once per treatment position. After alignment
+    // has first been achieved, warn only when a single misaligned episode has
+    // lasted for five uninterrupted seconds.
+    useEffect(() => {
+        if (soundStageRef.current !== state.stage) {
+            soundStageRef.current = state.stage
+            alignedSoundPlayedRef.current = false
+            misalignedWarningPlayedRef.current = false
+        }
+
+        if (state.stage === TreatmentStage.COMPLETE) {
+            return
+        }
+
+        if (state.isAligned) {
+            // A later loss of alignment starts a fresh warning episode.
+            misalignedWarningPlayedRef.current = false
+            if (!alignedSoundPlayedRef.current) {
+                playAligned()
+                alignedSoundPlayedRef.current = true
+            }
+            return
+        }
+
+        if (
+            !alignedSoundPlayedRef.current ||
+            misalignedWarningPlayedRef.current
+        ) {
+            return
+        }
+
+        const timer = window.setTimeout(() => {
+            const currentState = stateRef.current
+            if (
+                currentState.stage !== soundStageRef.current ||
+                currentState.isAligned
+            ) {
+                return
+            }
+
+            playMisaligned()
+            misalignedWarningPlayedRef.current = true
+        }, MISALIGNMENT_WARNING_DELAY_MS)
+
+        return () => window.clearTimeout(timer)
+    }, [playAligned, playMisaligned, state.isAligned, state.stage])
 
     // Alignment changes only affect the appearance of the existing meshes and
     // arrow. They do not require the PLY geometry or WebGL scene to be rebuilt.
@@ -365,12 +414,10 @@ const CanalRendering = () => {
                 if (alignedRef!.current && !currentState.isAligned) {
                     // Handle the case where the canal becomes aligned
                     // dispatch({ type: 'TOGGLE_ALIGNED' })
-                    if (state.stage !== TreatmentStage.COMPLETE) playAligned();
                     dispatch({ type: 'ALIGNMENT_ENTER' })
                 }
 
                 else if (!alignedRef!.current && currentState.isAligned) {
-                    if (state.stage !== TreatmentStage.COMPLETE) playNotAligned();
                     // Handle case where canal loses alignment
                     dispatch({ type: 'ALIGNMENT_EXIT'})
                 }

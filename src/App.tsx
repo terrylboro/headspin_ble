@@ -26,6 +26,7 @@ import GyroscopeCalibrationScreen from './components/GyroscopeCalibrationScreen'
 import HeadCanalAlignmentTestPanel from './test/HeadCanalAlignmentTestPanel';
 import { TreatmentStage } from './types/treatmentTypes';
 import AssetLoadingGate from './components/AssetLoadingGate';
+import { AppSoundProvider } from './context/AppSoundProvider';
 
 type Screen = 'setup' | 'gyroscope-calibration' | 'calibrate' | 'treatment' | 'research';
 
@@ -221,6 +222,7 @@ function App(): JSX.Element {
   }
 
   return (
+    <AppSoundProvider>
     <AssetLoadingGate>
       <AppShell
         header={{ height: 60 }}
@@ -364,6 +366,7 @@ function App(): JSX.Element {
 
     </AppShell>
     </AssetLoadingGate>
+    </AppSoundProvider>
     
   );
 }
