@@ -42,6 +42,7 @@ export default function TreatmentScreen({
   const onFinishRef = useRef(onFinish);
   const [completionModalOpened, setCompletionModalOpened] = useState(false);
   const [completionPage, setCompletionPage] = useState<CompletionPage>('complete');
+  const [resetting, setResetting] = useState(false);
   const affectedEarImageLabel = treatment.state.affectedEar === 'right' ? 'Right' : 'Left';
   const isComplete = treatment.state.stage === TreatmentStage.COMPLETE;
   const isPositionTimeComplete = !isComplete && treatment.state.stageProgress >= 1;
@@ -97,6 +98,17 @@ export default function TreatmentScreen({
         treatment.offsetMatrixRef.current.copy(current).invert();
   }
 
+  async function resetAndReturnHome() {
+    if (resetting) return;
+
+    setResetting(true);
+    try {
+      await onFinishRef.current();
+    } finally {
+      setResetting(false);
+    }
+  }
+
   return (
     <Stack
       h="calc(100vh - 92px)"
@@ -122,9 +134,24 @@ export default function TreatmentScreen({
             <Text size="xl" fw={600} ta="center" py="lg">
               Manoeuvre completed - continue to hold here until dizziness subsides
             </Text>
-            <Button size="lg" color="green" fullWidth onClick={() => setCompletionPage('power-off')}>
-              Finish
-            </Button>
+            <Group grow>
+              <Button
+                size="lg"
+                variant="light"
+                loading={resetting}
+                onClick={() => void resetAndReturnHome()}
+              >
+                Reset and return home
+              </Button>
+              <Button
+                size="lg"
+                color="green"
+                disabled={resetting}
+                onClick={() => setCompletionPage('power-off')}
+              >
+                Finish
+              </Button>
+            </Group>
           </Stack>
         ) : completionPage === 'power-off' ? (
           <Stack align="center" py="lg">
