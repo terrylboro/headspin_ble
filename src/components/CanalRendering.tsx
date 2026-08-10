@@ -231,6 +231,10 @@ const CanalRendering = () => {
         }
 
         // Main animation loop
+        const displayQuaternion = new THREE.Quaternion();
+        const smoothingClock = new THREE.Clock();
+        let displayInitialized = false;
+
         let loop: number = requestAnimationFrame(animate)
         function animate() {
 
@@ -244,12 +248,24 @@ const CanalRendering = () => {
             if (meshesLoaded) {
 
                 // Rotate the group
-                const qB = new THREE.Quaternion();
+                const targetQuaternion = new THREE.Quaternion();
 
                 // Add in the offset matrix to correct for any yaw drift in the IMU data
                 const corrected = offsetMatrixRef.current.clone().multiply(matrixRef.current);
-                changeQuaternionBase(corrected, qB);
-                canalGroup.current.setRotationFromQuaternion(qB);
+                changeQuaternionBase(corrected, targetQuaternion);
+
+                if (!displayInitialized) {
+                    displayQuaternion.copy(targetQuaternion);
+                    displayInitialized = true;
+                } else {
+                    const dt = Math.min(smoothingClock.getDelta(), 0.1);
+                    const smoothingRate = 12;
+                    const alpha = 1 - Math.exp(-smoothingRate * dt);
+
+                    displayQuaternion.slerp(targetQuaternion, alpha);
+                }
+
+                canalGroup.current.setRotationFromQuaternion(displayQuaternion);
  
                 const segmentID = (state.stage===TreatmentStage.COMPLETE) ? 4 : ((state.affectedCanal !== "lateral") ? state.stage + 1 : state.stage + 1);
 

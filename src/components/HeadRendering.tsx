@@ -114,13 +114,29 @@ const HeadRendering = ({calibrateMode} : HeadRenderingProps) => {
 
         let loop: number = requestAnimationFrame(animate)
 
+        const displayQuaternion = new THREE.Quaternion();
+        const clock = new THREE.Clock();
+        let displayInitialized = false;
+
         function animate() {
-            const qB = new THREE.Quaternion();
+            const targetQuaternion = new THREE.Quaternion();
             const corrected = offsetMatrixRef.current.clone().multiply(matrixRef.current);
-            changeQuaternionBase(corrected, qB);
+            changeQuaternionBase(corrected, targetQuaternion);
+
+            if (!displayInitialized) {
+                displayQuaternion.copy(targetQuaternion);
+                displayInitialized = true;
+            } else {
+                const dt = Math.min(clock.getDelta(), 0.1);
+                const smoothingRate = 12;
+                const alpha = 1 - Math.exp(-smoothingRate * dt);
+
+                displayQuaternion.slerp(targetQuaternion, alpha);
+            }
+
             // Applying offset
             // applyYawOffset(offsetMatrixRef.current.clone(), qB)
-            headGroup.current.setRotationFromQuaternion(qB);
+            headGroup.current.setRotationFromQuaternion(displayQuaternion);
             renderer.current!.render(scene.current!, cameraRef.current!)
             // }
             loop = requestAnimationFrame(animate)

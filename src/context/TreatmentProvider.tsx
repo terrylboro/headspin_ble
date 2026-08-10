@@ -252,7 +252,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
   useEffect(() => {
     // Example only.
     // If your Madgwick module requires initialization, do it here.
-    madgwickRef.current = new MadgwickFilter(1/256, 0.1); // dt=1/256s, beta=0.1 (tune as needed for responsiveness vs noise)
+    madgwickRef.current = new MadgwickFilter(0.25, 0); // dt=1/256s, beta=0.5 (tune as needed for responsiveness vs noise)
     madgwickRef.current.init(0, 0, 9.81);
     // madgwickRef.current = madgwickFilter;
   }, [state.affectedEar]);
@@ -301,7 +301,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
     recordingStartTimestampRef.current = null;
     lastProcessedMessageIdRef.current = null;
 
-    madgwickRef.current = new MadgwickFilter(1/256, 0.1);
+    madgwickRef.current = new MadgwickFilter(0.25, 0);
     madgwickRef.current.init(0, 0, 9.81);
   }, []);
 
