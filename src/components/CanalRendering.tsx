@@ -20,6 +20,13 @@ const CAMERA_POSITION = new THREE.Vector3(-50, 0, 0);
 const CAMERA_ROTATION = new THREE.Euler(Math.PI / 2, -Math.PI / 2, 0, 'XYZ');
 const CAMERA_NEAR = 0.1;
 const CAMERA_FAR = 1000;
+const CANAL_COLOURS = {
+    posterior: BLUE_COLOUR,
+    anterior: ORANGE_COLOUR,
+    lateral: BROWN_COLOUR,
+    all: 0,
+    unselected: 0x333333,
+};
 
 function applyFixedCameraPose(camera: THREE.PerspectiveCamera) {
   camera.position.copy(CAMERA_POSITION);
@@ -63,17 +70,51 @@ const CanalRendering = () => {
     const scene = useRef<THREE.Scene>()
     const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
     const meshParts = useRef<THREE.Mesh[]>([])
-
-    const canalColours = {"posterior": BLUE_COLOUR, "anterior": ORANGE_COLOUR, "lateral": BROWN_COLOUR, "all": 0, "unselected": 0x333333}
-    const coloursAll = [BLUE_COLOUR, ORANGE_COLOUR, BROWN_COLOUR, 0x333333, 0x333333]
+    const stateRef = useRef(state)
 
     // Group mesh control variables
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const canalGroup = useRef<THREE.Group>(new THREE.Group());
     const arrowRef = useRef<THREE.Group | null>(new THREE.Group());
 
-    // Add clock for animation pulsing
-    const clock = new THREE.Clock();
+    useEffect(() => {
+        stateRef.current = state
+    }, [state])
+
+    // Alignment changes only affect the appearance of the existing meshes and
+    // arrow. They do not require the PLY geometry or WebGL scene to be rebuilt.
+    useEffect(() => {
+        const segmentID = state.stage === TreatmentStage.COMPLETE
+            ? 4
+            : state.stage + 1
+
+        meshParts.current.forEach((mesh, index) => {
+            const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+
+            materials.forEach((material) => {
+                if (!(material instanceof THREE.MeshStandardMaterial)) return
+
+                if (state.stage === TreatmentStage.COMPLETE) {
+                    material.color.setHex(GREEN_COLOUR)
+                } else if (index === segmentID) {
+                    material.color.setHex(state.isAligned ? GREEN_COLOUR : RED_COLOUR)
+                } else {
+                    material.color.setHex(CANAL_COLOURS.unselected)
+                }
+            })
+        })
+
+        arrowRef.current?.traverse((child) => {
+            if (!(child instanceof THREE.Mesh)) return
+
+            const materials = Array.isArray(child.material) ? child.material : [child.material]
+            materials.forEach((material) => {
+                if ('color' in material && material.color instanceof THREE.Color) {
+                    material.color.setHex(state.isAligned ? GREEN_COLOUR : ORANGE_COLOUR)
+                }
+            })
+        })
+    }, [state.isAligned, state.stage])
 
     // Function to clear the scene and reset variables when canal changes
     function clearCanalGroup() {
@@ -97,6 +138,8 @@ const CanalRendering = () => {
     useEffect(() => {
 
         if (!canvasRef.current) return;
+        let cancelled = false;
+        const clock = new THREE.Clock();
         const rendererInstance = new THREE.WebGLRenderer({canvas: canvasRef.current, antialias: true})
         rendererRef.current = rendererInstance;
         const container = document.getElementById("canalCanvasContainer") as HTMLDivElement;
@@ -188,7 +231,7 @@ const CanalRendering = () => {
                 (state.affectedEar !== "right") ? canalDirections[state.affectedCanal!].directions[state.stage!] : canalDirections[state.affectedCanal!].directions[state.stage!].clone().setY(canalDirections["posterior"].directions[state.stage!].y * -1),
                 (state.affectedEar !== "right") ? canalDirections[state.affectedCanal!].origins[state.stage!] : canalDirections[state.affectedCanal!].origins[state.stage!].clone().setY(canalDirections["posterior"].origins[state.stage!].y * -1),
                 10,
-                (state.isAligned) ? GREEN_COLOUR : ORANGE_COLOUR,
+                stateRef.current.isAligned ? GREEN_COLOUR : ORANGE_COLOUR,
                 alignmentRef!.current,
             );
             canalGroup.current.add(arrowRef.current);
@@ -197,7 +240,6 @@ const CanalRendering = () => {
 
         // Load Canal Mesh
         const loader = new PLYLoader()
-        let color = 0
         for (let i = 0; i < meshPartsLength[state.affectedCanal ? state.affectedCanal : 5]; i++) {
             // const meshPath = "rh_meshes/" + state.affectedCanal + "_" + i.toString() + ".ply"
 
@@ -206,11 +248,14 @@ const CanalRendering = () => {
 
             loader.load(meshPath, (geometry) => {
 
+                if (cancelled) {
+                    geometry.dispose()
+                    return
+                }
 
-                color = canalColours["unselected"]
 
                 const material = new THREE.MeshStandardMaterial({
-                    color,
+                    color: CANAL_COLOURS.unselected,
                     side: THREE.DoubleSide,
                     flatShading: true,
                 })
@@ -227,6 +272,21 @@ const CanalRendering = () => {
                 }
                 canalGroup.current.add(loadedMesh)
                 meshParts.current[i] = loadedMesh
+
+                const currentState = stateRef.current
+                const currentSegmentID = currentState.stage === TreatmentStage.COMPLETE
+                    ? 4
+                    : currentState.stage + 1
+
+                if (currentState.stage === TreatmentStage.COMPLETE) {
+                    material.color.setHex(GREEN_COLOUR)
+                } else if (i === currentSegmentID) {
+                    material.color.setHex(currentState.isAligned ? GREEN_COLOUR : RED_COLOUR)
+                }
+            }, undefined, (error) => {
+                if (!cancelled) {
+                    console.error(`Failed to load canal mesh: ${meshPath}`, error)
+                }
             })
         }
 
@@ -297,41 +357,21 @@ const CanalRendering = () => {
                     })
                 })
     
-                if (alignedRef!.current && !state.isAligned) {
+                const currentState = stateRef.current
+
+                if (alignedRef!.current && !currentState.isAligned) {
                     // Handle the case where the canal becomes aligned
                     // dispatch({ type: 'TOGGLE_ALIGNED' })
                     if (state.stage !== TreatmentStage.COMPLETE) playAligned();
                     dispatch({ type: 'ALIGNMENT_ENTER' })
                 }
 
-                else if (!alignedRef!.current && state.isAligned) {
+                else if (!alignedRef!.current && currentState.isAligned) {
                     if (state.stage !== TreatmentStage.COMPLETE) playNotAligned();
                     // Handle case where canal loses alignment
                     dispatch({ type: 'ALIGNMENT_EXIT'})
                 }
                 
-                // else {
-                if (state.stage === TreatmentStage.COMPLETE) {
-                    meshParts.current.forEach((mesh) => {
-                        const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
-                        materials.forEach((material) => {
-                            if (material instanceof THREE.MeshStandardMaterial) {
-                                material.color.setHex(GREEN_COLOUR)
-                            }
-                        })
-                    })
-                }
-                else if (state.isAligned) {
-                    const material = new THREE.MeshStandardMaterial({color: GREEN_COLOUR, side: THREE.DoubleSide, flatShading: true})
-                    meshParts.current[segmentID!].material = material
-                } 
-                else {
-                    const material = new THREE.MeshStandardMaterial({color: RED_COLOUR, side: THREE.DoubleSide, flatShading: true})
-                    meshParts.current[segmentID!].material = material
-                }
-    
-                // }
-
             // Make the arrow pulse
             const arrowMesh = arrowRef.current;
             arrowMesh?.traverse((child) => {
@@ -350,6 +390,7 @@ const CanalRendering = () => {
         }
 
         return () => {
+            cancelled = true
             cancelAnimationFrame(loop) 
             if (resizeFrame !== null) {
                 cancelAnimationFrame(resizeFrame);
@@ -362,7 +403,7 @@ const CanalRendering = () => {
             meshParts.current = [] // flush any previous loadings
         }
 
-    }, [state.isAligned, state.affectedCanal, state.affectedEar, state.stage, matrixRef, offsetMatrixRef, showGuidanceArrows])
+    }, [state.affectedCanal, state.affectedEar, state.stage, matrixRef, offsetMatrixRef, showGuidanceArrows])
 
 
     return (
