@@ -256,7 +256,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
   useEffect(() => {
     // Example only.
     // If your Madgwick module requires initialization, do it here.
-    madgwickRef.current = new MadgwickFilter(0.25, 0); // beta, beta_mag
+    madgwickRef.current = new MadgwickFilter(0.5, 0); // beta, beta_mag
     madgwickRef.current.init(0, 0, 9.81);
     // madgwickRef.current = madgwickFilter;
   }, [sensorMountEar]);
@@ -321,7 +321,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
     recordingStartTimestampRef.current = null;
     lastProcessedMessageIdRef.current = null;
 
-    madgwickRef.current = new MadgwickFilter(0.25, 0);
+    madgwickRef.current = new MadgwickFilter(0.5, 0);
     madgwickRef.current.init(0, 0, 9.81);
   }, []);
 
@@ -465,16 +465,27 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
        * - const pose = madgwickRef.current.getOrientation()
        * - const result = updateMadgwick(frame)
        */
+    // // Attempt to map IMU co-ordinates to madgwick co-ordinates
+    //   const filtPos = madgwickRef.current.update(
+    //     -basisCorrectedDataArr[1] * 9.81,
+    //     -basisCorrectedDataArr[2] * 9.81,
+    //     basisCorrectedDataArr[0] * 9.81,
+    //     -basisCorrectedDataArr[4],
+    //     -basisCorrectedDataArr[5],
+    //     basisCorrectedDataArr[3],
+    //     0.01
+    //   );
     // Attempt to map IMU co-ordinates to madgwick co-ordinates
       const filtPos = madgwickRef.current.update(
+        basisCorrectedDataArr[2] * 9.81,
         -basisCorrectedDataArr[1] * 9.81,
-        -basisCorrectedDataArr[2] * 9.81,
         basisCorrectedDataArr[0] * 9.81,
+        basisCorrectedDataArr[5],
         -basisCorrectedDataArr[4],
-        -basisCorrectedDataArr[5],
         basisCorrectedDataArr[3],
         0.01
       );
+
 
       /**
        * Expect your distilled output to provide orientation in some usable form.

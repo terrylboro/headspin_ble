@@ -56,7 +56,9 @@ export default function CalibrationScreen({
       latestImuSample.az,
       sensorMountEar
     );
-    const deviceUp = new Vector3(-ay, -az, ax);
+    // const deviceUp = new Vector3(-ay, -az, ax);
+    const deviceUp = new Vector3(-az, -ay, ax);
+
 
     if (deviceUp.lengthSq() === 0) {
       setOrientationError('Waiting for a valid orientation reading from the device.');

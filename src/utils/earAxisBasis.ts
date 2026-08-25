@@ -11,5 +11,6 @@ export function applyEarAxisBasis(
   z: number,
   affectedEar: EarSide
 ): [number, number, number] {
-  return affectedEar === 'left' ? [x, -y, -z] : [x, y, z];
+  // return affectedEar === 'left' ? [x, -y, -z] : [x, y, z];
+  return [x, y, z];
 }
