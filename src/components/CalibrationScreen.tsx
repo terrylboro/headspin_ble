@@ -89,13 +89,12 @@ export default function CalibrationScreen({
     handleStart();
   }, [handleStart, onStartRequestHandled, startRequestId]);
 
-
   return (
     <Stack h="100%" gap="xl">
       <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="xl" style={{ flex: 1 }}>
         <InfoCard
           title={treatingOppositeEarWithoutRemount ? 'Keep the device in place' : 'Place the device'}
-          imageSrc={`${process.env.PUBLIC_URL}/diagrams/HeadSpin Device Placement ${sensorEarImageLabel}.png`}
+          imageSrc={`${process.env.PUBLIC_URL}/diagrams/HeadSpin Device Placement Central.png`} // ${sensorEarImageLabel}.png`}
           textBody={
             treatingOppositeEarWithoutRemount
               ? `Leave the device secured above the patient's ${sensorMountEar} ear while treating the ${state.affectedEar} ear.`
