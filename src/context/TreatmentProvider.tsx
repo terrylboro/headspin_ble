@@ -18,6 +18,7 @@ import { decodeNumericIMUPacket } from '../utils/imuDecoder';
 import { MadgwickFilter } from '../utils/madgwickFilter';
 import { changeQuaternionBase } from '../utils/changeBase';
 import { applyEarAxisBasis } from '../utils/earAxisBasis';
+import { applySensorToAnatomicalMatrix, SensorToAnatomicalMatrix } from '../utils/sensorSegmentAlignment';
 
 import { treatmentReducer, initialState } from './treatmentReducer';
 import { TreatmentState, Action, EarSide, CanalType, TreatmentStage } from '../types/treatmentTypes';
@@ -72,6 +73,8 @@ type TreatmentContextValue = {
   clearGyroscopeOffsets: () => void;
   functionalCalibration: FunctionalCalibration | null;
   setFunctionalCalibration: (calibration: FunctionalCalibration | null) => void;
+  sensorToAnatomicalMatrix: SensorToAnatomicalMatrix | null;
+  setSensorToAnatomicalMatrix: (matrix: SensorToAnatomicalMatrix | null) => void;
 
   orientationRef: React.MutableRefObject<{
     roll: number;
@@ -230,6 +233,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
     initialGyroscopeOffsets
   );
   const [functionalCalibration, setFunctionalCalibration] = useState<FunctionalCalibration | null>(null);
+  const [sensorToAnatomicalMatrix, setSensorToAnatomicalMatrixState] = useState<SensorToAnatomicalMatrix | null>(null);
 
   const [showGuidanceArrows, setShowGuidanceArrows] = useState(true);
 
@@ -268,6 +272,19 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
     madgwickRef.current.init(0, 0, 9.81);
     // madgwickRef.current = madgwickFilter;
   }, [sensorMountEar]);
+
+  const setSensorToAnatomicalMatrix = useCallback((nextMatrix: SensorToAnatomicalMatrix | null) => {
+    setSensorToAnatomicalMatrixState(nextMatrix);
+
+    // A quaternion accumulated in the old sensor basis is not valid in the
+    // newly calibrated basis. Restart fusion and clear rendered orientation so
+    // Step 4 establishes its forward offset from a consistent filter state.
+    madgwickRef.current = new MadgwickFilter(0.5, 0);
+    madgwickRef.current.init(0, 0, 9.81);
+    matrixRef.current.identity();
+    offsetMatrixRef.current.identity();
+    orientationRef.current = { roll: 0, pitch: 0, yaw: 0 };
+  }, []);
 
   const switchToOppositeEarWithoutRemount = useCallback(() => {
     const currentEar = state.affectedEar;
@@ -318,6 +335,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
     setLatestSampleText('Waiting for data');
     setLatestImuSample(null);
     setFunctionalCalibration(null);
+    setSensorToAnatomicalMatrix(null);
 
     matrixRef.current.identity();
     offsetMatrixRef.current.identity();
@@ -332,7 +350,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
 
     madgwickRef.current = new MadgwickFilter(0.5, 0);
     madgwickRef.current.init(0, 0, 9.81);
-  }, []);
+  }, [setSensorToAnatomicalMatrix]);
 
   const setGyroscopeOffsets = useCallback((offsets: GyroscopeOffsets) => {
     gyroscopeOffsetsRef.current = offsets;
@@ -443,18 +461,12 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
       gyroscopeOffsetsRef.current
     );
 
-    const correctedAcceleration = applyEarAxisBasis(
-      dataArr[0],
-      dataArr[1],
-      dataArr[2],
-      sensorMountEar
-    );
-    const correctedAngularVelocity = applyEarAxisBasis(
-      dataArr[3],
-      dataArr[4],
-      dataArr[5],
-      sensorMountEar
-    );
+    const correctedAcceleration = sensorToAnatomicalMatrix
+      ? applySensorToAnatomicalMatrix(sensorToAnatomicalMatrix, dataArr[0], dataArr[1], dataArr[2])
+      : applyEarAxisBasis(dataArr[0], dataArr[1], dataArr[2], sensorMountEar);
+    const correctedAngularVelocity = sensorToAnatomicalMatrix
+      ? applySensorToAnatomicalMatrix(sensorToAnatomicalMatrix, dataArr[3], dataArr[4], dataArr[5])
+      : applyEarAxisBasis(dataArr[3], dataArr[4], dataArr[5], sensorMountEar);
     const basisCorrectedDataArr = [
       ...correctedAcceleration,
       ...correctedAngularVelocity,
@@ -563,7 +575,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
        * Replace this section with your exact treatment progression rules.
        */
       
-  }, [ble.latestMessage, isRecording, sensorMountEar, state.stage]);
+  }, [ble.latestMessage, isRecording, sensorMountEar, sensorToAnatomicalMatrix, state.stage]);
 
   const value = useMemo<TreatmentContextValue>(
     () => ({
@@ -605,6 +617,8 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
       clearGyroscopeOffsets,
       functionalCalibration,
       setFunctionalCalibration,
+      sensorToAnatomicalMatrix,
+      setSensorToAnatomicalMatrix,
 
       orientationRef,
       isRecording,
@@ -637,6 +651,9 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
       setGyroscopeOffsets,
       clearGyroscopeOffsets,
       functionalCalibration,
+      sensorToAnatomicalMatrix,
+      setSensorToAnatomicalMatrix,
+      showGuidanceArrows,
       orientationRef,
       isRecording,
       startRecording,

@@ -2,10 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Badge, Button, Card, Group, Progress, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { GyroscopeOffsets, LatestImuSample, useTreatment } from '../context/TreatmentProvider';
 import { applyEarAxisBasis } from '../utils/earAxisBasis';
+import { calculateSensorToAnatomicalMatrix, evaluateMovementCycles } from '../utils/sensorSegmentAlignment';
 
-const RECORDING_DURATION_MS = 3000;
+const STATIC_RECORDING_DURATION_MS = 3000;
+const DYNAMIC_RECORDING_DURATION_MS = 30000;
 type RecordedStep = 'still' | 'nod' | 'shake';
-type GyroscopeSample = Pick<LatestImuSample, 'gx' | 'gy' | 'gz'>;
+type CalibrationSample = Pick<LatestImuSample, 'ax' | 'ay' | 'az' | 'gx' | 'gy' | 'gz'>;
 
 type GuidedCalibrationScreenProps = {
   onBack: () => void;
@@ -16,8 +18,8 @@ type GuidedCalibrationScreenProps = {
 
 const steps = [
   { id: 'still', title: 'Look forwards', instruction: 'Look directly forwards and hold your head completely still for 3 seconds.', buttonLabel: 'Record still position' },
-  { id: 'nod', title: 'Nod carefully', instruction: 'Gently nod your head up and down for 3 seconds.', buttonLabel: 'Record nodding' },
-  { id: 'shake', title: 'Shake carefully', instruction: 'Gently turn your head from side to side for 3 seconds.', buttonLabel: 'Record head shaking' },
+  { id: 'nod', title: 'Nod carefully', instruction: 'Complete 2 controlled nods, moving your head up and down in one plane. A third will only be requested if needed.', buttonLabel: 'Record nodding' },
+  { id: 'shake', title: 'Shake carefully', instruction: 'Complete 2 controlled head shakes, moving from side to side in one plane. A third will only be requested if needed.', buttonLabel: 'Record head shaking' },
   { id: 'forward', title: 'Look forwards again', instruction: 'Return to looking directly forwards. When you are ready, start the treatment.', buttonLabel: 'Start treatment' },
 ] as const;
 
@@ -28,7 +30,7 @@ function median(values: number[]) {
   return sorted.length % 2 === 1 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
 }
 
-function stationaryOffsets(samples: GyroscopeSample[]): GyroscopeOffsets {
+function stationaryOffsets(samples: CalibrationSample[]): GyroscopeOffsets {
   return {
     gx: median(samples.map((sample) => sample.gx)),
     gy: median(samples.map((sample) => sample.gy)),
@@ -36,7 +38,18 @@ function stationaryOffsets(samples: GyroscopeSample[]): GyroscopeOffsets {
   };
 }
 
-function peakMotion(samples: GyroscopeSample[], offsets: GyroscopeOffsets, sensorMountEar: 'left' | 'right' | null): GyroscopeOffsets {
+function stationaryGyroscopeNoise(samples: CalibrationSample[], offsets: GyroscopeOffsets) {
+  if (samples.length === 0) return 0;
+  const squaredMagnitudes = samples.map((sample) => {
+    const gx = sample.gx - offsets.gx;
+    const gy = sample.gy - offsets.gy;
+    const gz = sample.gz - offsets.gz;
+    return gx * gx + gy * gy + gz * gz;
+  });
+  return Math.sqrt(squaredMagnitudes.reduce((sum, value) => sum + value, 0) / squaredMagnitudes.length);
+}
+
+function peakMotion(samples: CalibrationSample[], offsets: GyroscopeOffsets, sensorMountEar: 'left' | 'right' | null): GyroscopeOffsets {
   return samples.reduce<GyroscopeOffsets>((peak, sample) => {
     const [gx, gy, gz] = applyEarAxisBasis(
       sample.gx - offsets.gx,
@@ -58,16 +71,21 @@ export default function GuidedCalibrationScreen({ onBack, onComplete, startReque
     sensorMountEar,
     setGyroscopeOffsets,
     setFunctionalCalibration,
+    setSensorToAnatomicalMatrix,
     calibrateOffset,
     startRecording,
   } = useTreatment();
   const [stepIndex, setStepIndex] = useState(0);
   const [isRecordingStep, setIsRecordingStep] = useState(false);
-  const [remainingMs, setRemainingMs] = useState(RECORDING_DURATION_MS);
+  const [remainingMs, setRemainingMs] = useState(STATIC_RECORDING_DURATION_MS);
+  const [detectedCycles, setDetectedCycles] = useState(0);
+  const [needsThirdCycle, setNeedsThirdCycle] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const samplesRef = useRef<Record<RecordedStep, GyroscopeSample[]>>({ still: [], nod: [], shake: [] });
+  const samplesRef = useRef<Record<RecordedStep, CalibrationSample[]>>({ still: [], nod: [], shake: [] });
   const lastTimestampRef = useRef<number | null>(null);
   const offsetsRef = useRef<GyroscopeOffsets>({ gx: 0, gy: 0, gz: 0 });
+  const noiseFloorRef = useRef(0);
+  const completionLockedRef = useRef(false);
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
 
@@ -89,14 +107,63 @@ export default function GuidedCalibrationScreen({ onBack, onComplete, startReque
     const stepId = steps[stepIndex].id as RecordedStep;
     samplesRef.current[stepId] = [];
     lastTimestampRef.current = null;
-    if (stepIndex === 0) setFunctionalCalibration(null);
+    if (stepIndex === 0) {
+      setFunctionalCalibration(null);
+      setSensorToAnatomicalMatrix(null);
+    }
     setError(null);
-    setRemainingMs(RECORDING_DURATION_MS);
+    completionLockedRef.current = false;
+    setDetectedCycles(0);
+    setNeedsThirdCycle(false);
+    setRemainingMs(stepIndex === 0 ? STATIC_RECORDING_DURATION_MS : DYNAMIC_RECORDING_DURATION_MS);
     setIsRecordingStep(true);
-  }, [calibrateOffset, isRecordingStep, latestImuSample, setFunctionalCalibration, startRecording, stepIndex]);
+  }, [calibrateOffset, isRecordingStep, latestImuSample, setFunctionalCalibration, setSensorToAnatomicalMatrix, startRecording, stepIndex]);
 
   const primaryActionRef = useRef(handlePrimaryAction);
   primaryActionRef.current = handlePrimaryAction;
+
+  const completeDynamicStep = useCallback((currentStepIndex: number, acceptedSamples: CalibrationSample[]) => {
+    const stepId = steps[currentStepIndex].id as RecordedStep;
+    samplesRef.current[stepId] = acceptedSamples;
+    setIsRecordingStep(false);
+    setDetectedCycles(2);
+    setNeedsThirdCycle(false);
+
+    if (stepId === 'shake') {
+      try {
+        const alignmentMatrix = calculateSensorToAnatomicalMatrix(
+          samplesRef.current.nod,
+          samplesRef.current.shake,
+          [offsetsRef.current.gx, offsetsRef.current.gy, offsetsRef.current.gz],
+          [
+            median(samplesRef.current.still.map((sample) => sample.ax)),
+            median(samplesRef.current.still.map((sample) => sample.ay)),
+            median(samplesRef.current.still.map((sample) => sample.az)),
+          ],
+          noiseFloorRef.current
+        );
+        setSensorToAnatomicalMatrix(alignmentMatrix);
+        setFunctionalCalibration({
+          nodPeak: peakMotion(samplesRef.current.nod, offsetsRef.current, sensorMountEar),
+          shakePeak: peakMotion(samplesRef.current.shake, offsetsRef.current, sensorMountEar),
+        });
+      } catch (calibrationError) {
+        setError(calibrationError instanceof Error ? calibrationError.message : 'The movement axes could not be calculated.');
+        samplesRef.current.nod = [];
+        samplesRef.current.shake = [];
+        setStepIndex(1);
+        setDetectedCycles(0);
+        setRemainingMs(DYNAMIC_RECORDING_DURATION_MS);
+        return;
+      }
+    }
+
+    setRemainingMs(DYNAMIC_RECORDING_DURATION_MS);
+    setStepIndex(currentStepIndex + 1);
+  }, [sensorMountEar, setFunctionalCalibration, setSensorToAnatomicalMatrix]);
+
+  const completeDynamicStepRef = useRef(completeDynamicStep);
+  completeDynamicStepRef.current = completeDynamicStep;
 
   useEffect(() => {
     if (startRequestId === null) return;
@@ -109,16 +176,39 @@ export default function GuidedCalibrationScreen({ onBack, onComplete, startReque
     if (lastTimestampRef.current === latestImuSample.timestamp) return;
     lastTimestampRef.current = latestImuSample.timestamp;
     const stepId = steps[stepIndex].id as RecordedStep;
-    samplesRef.current[stepId].push({ gx: latestImuSample.gx, gy: latestImuSample.gy, gz: latestImuSample.gz });
+    samplesRef.current[stepId].push({
+      ax: latestImuSample.ax, ay: latestImuSample.ay, az: latestImuSample.az,
+      gx: latestImuSample.gx, gy: latestImuSample.gy, gz: latestImuSample.gz,
+    });
+
+    if (stepIndex > 0) {
+      const evaluation = evaluateMovementCycles(
+        samplesRef.current[stepId],
+        [offsetsRef.current.gx, offsetsRef.current.gy, offsetsRef.current.gz],
+        noiseFloorRef.current
+      );
+      setDetectedCycles(Math.min(3, evaluation.detectedCycles));
+      setNeedsThirdCycle(evaluation.needsThirdCycle);
+      if (evaluation.error) {
+        setIsRecordingStep(false);
+        setError(evaluation.error);
+        samplesRef.current[stepId] = [];
+        setDetectedCycles(0);
+      } else if (evaluation.acceptedSamples && !completionLockedRef.current) {
+        completionLockedRef.current = true;
+        completeDynamicStepRef.current(stepIndex, evaluation.acceptedSamples as CalibrationSample[]);
+      }
+    }
   }, [isRecordingStep, latestImuSample, stepIndex]);
 
   useEffect(() => {
     if (!isRecordingStep || stepIndex > 2) return;
     const currentStepIndex = stepIndex;
     const stepId = steps[currentStepIndex].id as RecordedStep;
+    const recordingDuration = currentStepIndex === 0 ? STATIC_RECORDING_DURATION_MS : DYNAMIC_RECORDING_DURATION_MS;
     const startedAt = Date.now();
     const intervalId = window.setInterval(() => {
-      setRemainingMs(Math.max(0, RECORDING_DURATION_MS - (Date.now() - startedAt)));
+      setRemainingMs(Math.max(0, recordingDuration - (Date.now() - startedAt)));
     }, 50);
     const timeoutId = window.setTimeout(() => {
       window.clearInterval(intervalId);
@@ -127,31 +217,39 @@ export default function GuidedCalibrationScreen({ onBack, onComplete, startReque
 
       if (samples.length === 0) {
         setError('No motion samples were received. Check the device connection and record this step again.');
-        setRemainingMs(RECORDING_DURATION_MS);
+        setRemainingMs(recordingDuration);
         return;
       }
 
       if (stepId === 'still') {
         offsetsRef.current = stationaryOffsets(samples);
+        noiseFloorRef.current = stationaryGyroscopeNoise(samples, offsetsRef.current);
         setGyroscopeOffsets(offsetsRef.current);
-      } else if (stepId === 'shake') {
-        setFunctionalCalibration({
-          nodPeak: peakMotion(samplesRef.current.nod, offsetsRef.current, sensorMountEar),
-          shakePeak: peakMotion(samplesRef.current.shake, offsetsRef.current, sensorMountEar),
-        });
+      } else {
+        setError('The movement was not completed within 30 seconds. Please rest and try this step again.');
+        samplesRef.current[stepId] = [];
+        setDetectedCycles(0);
+        setNeedsThirdCycle(false);
+        setRemainingMs(DYNAMIC_RECORDING_DURATION_MS);
+        return;
       }
 
-      setRemainingMs(RECORDING_DURATION_MS);
+      setRemainingMs(DYNAMIC_RECORDING_DURATION_MS);
       setStepIndex(currentStepIndex + 1);
-    }, RECORDING_DURATION_MS);
+    }, recordingDuration);
 
     return () => {
       window.clearInterval(intervalId);
       window.clearTimeout(timeoutId);
     };
-  }, [isRecordingStep, sensorMountEar, setFunctionalCalibration, setGyroscopeOffsets, stepIndex]);
+  }, [isRecordingStep, sensorMountEar, setFunctionalCalibration, setGyroscopeOffsets, setSensorToAnatomicalMatrix, stepIndex]);
 
-  const recordingProgress = isRecordingStep ? (RECORDING_DURATION_MS - remainingMs) / RECORDING_DURATION_MS : 0;
+  const currentRecordingDuration = stepIndex === 0 ? STATIC_RECORDING_DURATION_MS : DYNAMIC_RECORDING_DURATION_MS;
+  const recordingProgress = isRecordingStep
+    ? stepIndex === 0
+      ? (currentRecordingDuration - remainingMs) / currentRecordingDuration
+      : Math.min(detectedCycles / 2, 0.99)
+    : 0;
   const overallProgress = ((stepIndex + recordingProgress) / steps.length) * 100;
   const activeStep = steps[stepIndex];
 
@@ -178,7 +276,7 @@ export default function GuidedCalibrationScreen({ onBack, onComplete, startReque
                     <Stack gap="sm">
                       <Group justify="space-between">
                         <Badge size="lg" color={isComplete ? 'green' : isActive ? 'blue' : 'gray'}>{isComplete ? 'Complete' : `Step ${index + 1}`}</Badge>
-                        {isActive && isRecordingStep && <Text fw={700} size="xl">{Math.max(1, Math.ceil(remainingMs / 1000))}s</Text>}
+                        {isActive && isRecordingStep && stepIndex === 0 && <Text fw={700} size="xl">{Math.max(1, Math.ceil(remainingMs / 1000))}s</Text>}
                       </Group>
                       <Title order={3}>{item.title}</Title>
                       <Text c="dimmed">{item.instruction}</Text>
@@ -190,6 +288,13 @@ export default function GuidedCalibrationScreen({ onBack, onComplete, startReque
 
             <Progress value={overallProgress} size="xl" radius="xl" animated={isRecordingStep} aria-label="Calibration progress" />
             <Text ta="center" size="xl" fw={700} role="status" aria-live="polite">{activeStep.instruction}</Text>
+            {isRecordingStep && stepIndex > 0 && (
+              <Text ta="center" size="lg" fw={600} c={needsThirdCycle ? 'orange.8' : undefined}>
+                {needsThirdCycle
+                  ? 'The first 2 movements differed — please complete 1 additional movement.'
+                  : `${Math.min(detectedCycles, 2)} of 2 complete movements detected`}
+              </Text>
+            )}
             {!isRecordingStep && <Text ta="center" c="dimmed">This recording will not begin until you press a button.</Text>}
           </>
         ) : (
