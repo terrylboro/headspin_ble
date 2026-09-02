@@ -28,7 +28,7 @@ export default function CalibrationScreen({
   onStartRequestHandled,
 }: CalibrationScreenProps) {
 
-  const { latestImuSample, calibrateOffset, startRecording, state, sensorMountEar } = useTreatment();
+  const { latestImuSample, state, sensorMountEar } = useTreatment();
   const [orientationError, setOrientationError] = useState<string | null>(null);
   // The original "Left" assets face right, while the mirrored "Right" assets
   // face left. Select by facing direction so it matches the affected ear.
@@ -75,10 +75,8 @@ export default function CalibrationScreen({
       return;
     }
 
-    calibrateOffset();
-    startRecording();
     onContinue();
-  }, [calibrateOffset, latestImuSample, onContinue, sensorMountEar, startRecording]);
+  }, [latestImuSample, onContinue, sensorMountEar]);
 
   useEffect(() => {
     if (startRequestId === null) {

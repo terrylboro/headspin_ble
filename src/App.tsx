@@ -23,12 +23,13 @@ import StateMachineTestPanel from './test/StateMachineTestPanel';
 import CalibrationScreen from './components/CalibrationScreen';
 import ResearchScreen from './components/ResearchScreen';
 import GyroscopeCalibrationScreen from './components/GyroscopeCalibrationScreen';
+import GuidedCalibrationScreen from './components/GuidedCalibrationScreen';
 import HeadCanalAlignmentTestPanel from './test/HeadCanalAlignmentTestPanel';
 import { TreatmentStage } from './types/treatmentTypes';
 import AssetLoadingGate from './components/AssetLoadingGate';
 import { AppSoundProvider } from './context/AppSoundProvider';
 
-type Screen = 'setup' | 'gyroscope-calibration' | 'calibrate' | 'treatment' | 'research';
+type Screen = 'setup' | 'calibrate' | 'calibration' | 'treatment' | 'research';
 
 const POWER_DOWN_BYTE = 0xf0;
 const POWER_DOWN_TEXT = '0xF0';
@@ -118,7 +119,7 @@ function App(): JSX.Element {
     const treatmentNavigationEnabled = screen === 'treatment'
       && treatment.state.stage !== TreatmentStage.COMPLETE;
 
-    if (screen === 'calibrate' && command === BLE_BUTTON_PROGRESS_COMMAND) {
+    if ((screen === 'calibrate' || screen === 'calibration') && command === BLE_BUTTON_PROGRESS_COMMAND) {
       setCalibrationStartRequestId(message.id);
     } else if (treatmentNavigationEnabled && command === BLE_BUTTON_PROGRESS_COMMAND) {
       handleTreatmentProgressRequest();
@@ -197,6 +198,11 @@ function App(): JSX.Element {
 
   function handleTreatmentBackRequest() {
     if (!dixHallpikeModalOpened) {
+      if (treatment.state.stage === TreatmentStage.STAGE_1) {
+        setCalibrationStartRequestId(null);
+        setScreen('calibrate');
+        return;
+      }
       treatmentDispatch({ type: 'RETURN_TO_PREVIOUS_STAGE' });
       return;
     }
@@ -318,11 +324,7 @@ function App(): JSX.Element {
           bleError={ble.error}
           onConnect={ble.connect}
           onDisconnect={ble.disconnect}
-          onContinue={() => setScreen('gyroscope-calibration')}
-        />
-      ) : screen === 'gyroscope-calibration' ? (
-        <GyroscopeCalibrationScreen
-          onComplete={() => setScreen('calibrate')}
+          onContinue={() => setScreen('calibrate')}
         />
       ) : screen === 'research' ? (
         <ResearchScreen
@@ -341,19 +343,32 @@ function App(): JSX.Element {
           dixHallpikeModalOpened={dixHallpikeModalOpened}
           dixHallpikeBackArmed={dixHallpikeBackArmed}
         />
-      ) : (
-          <CalibrationScreen
+      ) : screen === 'calibration' ? (
+          <GuidedCalibrationScreen
             onBack={() => {
               setCalibrationStartRequestId(null);
-              setScreen('gyroscope-calibration');
+              setScreen('calibrate');
             }}
-            onContinue={() => {
+            onComplete={() => {
               setCalibrationStartRequestId(null);
               setScreen('treatment');
             }}
             startRequestId={calibrationStartRequestId}
             onStartRequestHandled={() => setCalibrationStartRequestId(null)}
         />
+      ) : (
+          <CalibrationScreen
+            onBack={() => {
+              setCalibrationStartRequestId(null);
+              setScreen('setup');
+            }}
+            onContinue={() => {
+              setCalibrationStartRequestId(null);
+              setScreen('calibration');
+            }}
+            startRequestId={calibrationStartRequestId}
+            onStartRequestHandled={() => setCalibrationStartRequestId(null)}
+          />
       )}
     </AppShell.Main>
 

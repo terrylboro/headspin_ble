@@ -70,6 +70,8 @@ type TreatmentContextValue = {
   gyroscopeOffsets: GyroscopeOffsets;
   setGyroscopeOffsets: (offsets: GyroscopeOffsets) => void;
   clearGyroscopeOffsets: () => void;
+  functionalCalibration: FunctionalCalibration | null;
+  setFunctionalCalibration: (calibration: FunctionalCalibration | null) => void;
 
   orientationRef: React.MutableRefObject<{
     roll: number;
@@ -109,6 +111,11 @@ export type GyroscopeOffsets = {
   gx: number;
   gy: number;
   gz: number;
+};
+
+export type FunctionalCalibration = {
+  nodPeak: GyroscopeOffsets;
+  shakePeak: GyroscopeOffsets;
 };
 
 export type LatestImuSample = {
@@ -222,6 +229,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
   const [gyroscopeOffsets, setGyroscopeOffsetsState] = useState<GyroscopeOffsets>(
     initialGyroscopeOffsets
   );
+  const [functionalCalibration, setFunctionalCalibration] = useState<FunctionalCalibration | null>(null);
 
   const [showGuidanceArrows, setShowGuidanceArrows] = useState(true);
 
@@ -309,6 +317,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
     setStageProgress(0);
     setLatestSampleText('Waiting for data');
     setLatestImuSample(null);
+    setFunctionalCalibration(null);
 
     matrixRef.current.identity();
     offsetMatrixRef.current.identity();
@@ -594,6 +603,8 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
       gyroscopeOffsets,
       setGyroscopeOffsets,
       clearGyroscopeOffsets,
+      functionalCalibration,
+      setFunctionalCalibration,
 
       orientationRef,
       isRecording,
@@ -625,6 +636,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
       gyroscopeOffsets,
       setGyroscopeOffsets,
       clearGyroscopeOffsets,
+      functionalCalibration,
       orientationRef,
       isRecording,
       startRecording,

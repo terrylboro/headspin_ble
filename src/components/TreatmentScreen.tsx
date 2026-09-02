@@ -120,6 +120,15 @@ export default function TreatmentScreen({
     }
   }
 
+  function handlePrevious() {
+    if (treatment.state.stage === TreatmentStage.STAGE_1) {
+      onBack();
+      return;
+    }
+
+    treatment.dispatch({ type: 'RETURN_TO_PREVIOUS_STAGE' });
+  }
+
   return (
     <Stack
       h="calc(100vh - 92px)"
@@ -329,7 +338,7 @@ export default function TreatmentScreen({
               </Box>
 
               <Group grow>
-                <Button onClick={() => treatment.dispatch({ type: 'RETURN_TO_PREVIOUS_STAGE' })}>
+                <Button onClick={handlePrevious}>
                   Previous
                 </Button>
 
