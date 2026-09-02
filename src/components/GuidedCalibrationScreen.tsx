@@ -72,6 +72,7 @@ export default function GuidedCalibrationScreen({ onBack, onComplete, startReque
     setGyroscopeOffsets,
     setFunctionalCalibration,
     setSensorToAnatomicalMatrix,
+    setGyroscopeNoiseFloorDps,
     calibrateOffset,
     startRecording,
   } = useTreatment();
@@ -224,6 +225,7 @@ export default function GuidedCalibrationScreen({ onBack, onComplete, startReque
       if (stepId === 'still') {
         offsetsRef.current = stationaryOffsets(samples);
         noiseFloorRef.current = stationaryGyroscopeNoise(samples, offsetsRef.current);
+        setGyroscopeNoiseFloorDps(noiseFloorRef.current);
         setGyroscopeOffsets(offsetsRef.current);
       } else {
         setError('The movement was not completed within 30 seconds. Please rest and try this step again.');
@@ -242,7 +244,7 @@ export default function GuidedCalibrationScreen({ onBack, onComplete, startReque
       window.clearInterval(intervalId);
       window.clearTimeout(timeoutId);
     };
-  }, [isRecordingStep, sensorMountEar, setFunctionalCalibration, setGyroscopeOffsets, setSensorToAnatomicalMatrix, stepIndex]);
+  }, [isRecordingStep, sensorMountEar, setFunctionalCalibration, setGyroscopeNoiseFloorDps, setGyroscopeOffsets, setSensorToAnatomicalMatrix, stepIndex]);
 
   const currentRecordingDuration = stepIndex === 0 ? STATIC_RECORDING_DURATION_MS : DYNAMIC_RECORDING_DURATION_MS;
   const recordingProgress = isRecordingStep

@@ -19,6 +19,7 @@ import { MadgwickFilter } from '../utils/madgwickFilter';
 import { changeQuaternionBase } from '../utils/changeBase';
 import { applyEarAxisBasis } from '../utils/earAxisBasis';
 import { applySensorToAnatomicalMatrix, SensorToAnatomicalMatrix } from '../utils/sensorSegmentAlignment';
+import { OpportunisticCalibrationEvent, StationaryGyroscopeCalibrator } from '../utils/stationaryGyroscopeCalibrator';
 
 import { treatmentReducer, initialState } from './treatmentReducer';
 import { TreatmentState, Action, EarSide, CanalType, TreatmentStage } from '../types/treatmentTypes';
@@ -75,6 +76,9 @@ type TreatmentContextValue = {
   setFunctionalCalibration: (calibration: FunctionalCalibration | null) => void;
   sensorToAnatomicalMatrix: SensorToAnatomicalMatrix | null;
   setSensorToAnatomicalMatrix: (matrix: SensorToAnatomicalMatrix | null) => void;
+  gyroscopeNoiseFloorDps: number;
+  setGyroscopeNoiseFloorDps: (noiseFloorDps: number) => void;
+  opportunisticCalibrationEvents: OpportunisticCalibrationEvent[];
 
   orientationRef: React.MutableRefObject<{
     roll: number;
@@ -234,6 +238,8 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
   );
   const [functionalCalibration, setFunctionalCalibration] = useState<FunctionalCalibration | null>(null);
   const [sensorToAnatomicalMatrix, setSensorToAnatomicalMatrixState] = useState<SensorToAnatomicalMatrix | null>(null);
+  const [gyroscopeNoiseFloorDps, setGyroscopeNoiseFloorDps] = useState(0);
+  const [opportunisticCalibrationEvents, setOpportunisticCalibrationEvents] = useState<OpportunisticCalibrationEvent[]>([]);
 
   const [showGuidanceArrows, setShowGuidanceArrows] = useState(true);
 
@@ -263,6 +269,8 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
   // Optional: instantiate your Madgwick stateful filter once if needed
   // Replace this with your actual setup if your module is class-based or stateful.
   const madgwickRef = useRef<any>(null);
+  const stationaryCalibratorRef = useRef(new StationaryGyroscopeCalibrator());
+  const treatmentStageGuardUntilRef = useRef(0);
   const sensorMountEar = sensorMountEarOverride ?? state.affectedEar;
 
   useEffect(() => {
@@ -272,6 +280,11 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
     madgwickRef.current.init(0, 0, 9.81);
     // madgwickRef.current = madgwickFilter;
   }, [sensorMountEar]);
+
+  useEffect(() => {
+    stationaryCalibratorRef.current.resetCandidate();
+    treatmentStageGuardUntilRef.current = Date.now() + 1000;
+  }, [state.stage]);
 
   const setSensorToAnatomicalMatrix = useCallback((nextMatrix: SensorToAnatomicalMatrix | null) => {
     setSensorToAnatomicalMatrixState(nextMatrix);
@@ -336,6 +349,9 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
     setLatestImuSample(null);
     setFunctionalCalibration(null);
     setSensorToAnatomicalMatrix(null);
+    setGyroscopeNoiseFloorDps(0);
+    setOpportunisticCalibrationEvents([]);
+    stationaryCalibratorRef.current.resetCandidate();
 
     matrixRef.current.identity();
     offsetMatrixRef.current.identity();
@@ -353,6 +369,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
   }, [setSensorToAnatomicalMatrix]);
 
   const setGyroscopeOffsets = useCallback((offsets: GyroscopeOffsets) => {
+    stationaryCalibratorRef.current.resetCandidate();
     gyroscopeOffsetsRef.current = offsets;
     setGyroscopeOffsetsState(offsets);
     writeStoredGyroscopeOffsets(offsets);
@@ -363,6 +380,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
     gyroscopeOffsetsRef.current = emptyOffsets;
     setGyroscopeOffsetsState(emptyOffsets);
     removeStoredGyroscopeOffsets();
+    stationaryCalibratorRef.current.resetCandidate();
   }, []);
 
   const downloadRecording = useCallback((samples: RecordedImuSample[]) => {
@@ -455,6 +473,26 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
       gy: rawDataArr[4],
       gz: rawDataArr[5],
     });
+
+    const opportunisticCalibrationEnabled =
+      isRecording &&
+      state.stage !== TreatmentStage.COMPLETE &&
+      latestMessage.timestamp >= treatmentStageGuardUntilRef.current;
+    if (opportunisticCalibrationEnabled) {
+      const calibrationEvent = stationaryCalibratorRef.current.addSample({
+        timestamp: latestMessage.timestamp,
+        ax: rawDataArr[0], ay: rawDataArr[1], az: rawDataArr[2],
+        gx: rawDataArr[3], gy: rawDataArr[4], gz: rawDataArr[5],
+      }, gyroscopeOffsetsRef.current, gyroscopeNoiseFloorDps);
+
+      if (calibrationEvent) {
+        gyroscopeOffsetsRef.current = calibrationEvent.updatedBias;
+        setGyroscopeOffsetsState(calibrationEvent.updatedBias);
+        setOpportunisticCalibrationEvents((events) => [...events, calibrationEvent]);
+      }
+    } else {
+      stationaryCalibratorRef.current.resetCandidate();
+    }
 
     const dataArr = applyGyroscopeOffsets(
       rawDataArr,
@@ -575,7 +613,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
        * Replace this section with your exact treatment progression rules.
        */
       
-  }, [ble.latestMessage, isRecording, sensorMountEar, sensorToAnatomicalMatrix, state.stage]);
+  }, [ble.latestMessage, gyroscopeNoiseFloorDps, isRecording, sensorMountEar, sensorToAnatomicalMatrix, state.stage]);
 
   const value = useMemo<TreatmentContextValue>(
     () => ({
@@ -619,6 +657,9 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
       setFunctionalCalibration,
       sensorToAnatomicalMatrix,
       setSensorToAnatomicalMatrix,
+      gyroscopeNoiseFloorDps,
+      setGyroscopeNoiseFloorDps,
+      opportunisticCalibrationEvents,
 
       orientationRef,
       isRecording,
@@ -653,6 +694,8 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
       functionalCalibration,
       sensorToAnatomicalMatrix,
       setSensorToAnatomicalMatrix,
+      gyroscopeNoiseFloorDps,
+      opportunisticCalibrationEvents,
       showGuidanceArrows,
       orientationRef,
       isRecording,
