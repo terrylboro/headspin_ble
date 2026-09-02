@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Badge, Button, Card, Group, Progress, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import { Alert, Badge, Button, Card, Group, Image, Progress, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { GyroscopeOffsets, LatestImuSample, useTreatment } from '../context/TreatmentProvider';
 import { applyEarAxisBasis } from '../utils/earAxisBasis';
 import { calculateSensorToAnatomicalMatrix, evaluateMovementCycles } from '../utils/sensorSegmentAlignment';
@@ -18,9 +18,9 @@ type GuidedCalibrationScreenProps = {
 };
 
 const steps = [
-  { id: 'still', title: 'Look forwards and Hold Still', instruction: 'Look directly forwards and hold the patient\'s head completely still for 3 seconds.', buttonLabel: 'Start calibration' },
-  { id: 'nod', title: 'Nod Head Twice', instruction: 'Guide the patient through 2 controlled head nods, as though they are saying "yes".' },
-  { id: 'shake', title: 'Shake Head Twice', instruction: 'Guide the patient through 2 controlled head shakes, as though they are saying "no".' },
+  { id: 'still', title: 'Look forwards and Hold Still', instruction: 'Look directly forwards and hold the patient\'s head completely still for 3 seconds.', image: 'HeadSpin Device Placement Central.png', imageAlt: 'Cartoon patient looking forwards with the sensor centred on the head', buttonLabel: 'Start calibration' },
+  { id: 'nod', title: 'Nod Head Twice', instruction: 'Guide the patient through 2 controlled head nods, as though they are saying "yes".', image: 'Calibration Demonstration Nod.png', imageAlt: 'Cartoon patient demonstrating a gentle downward nod' },
+  { id: 'shake', title: 'Shake Head Twice', instruction: 'Guide the patient through 2 controlled head shakes, as though they are saying "no".', image: 'Calibration Demonstration Shake.png', imageAlt: 'Cartoon patient demonstrating a gentle side-to-side head turn' },
 ] as const;
 
 function median(values: number[]) {
@@ -317,6 +317,13 @@ export default function GuidedCalibrationScreen({ onBack, onComplete, startReque
                         {status === 'active' && index === 0 && <Text fw={700} size="xl">{Math.max(1, Math.ceil(remainingMs / 1000))}s</Text>}
                       </Group>
                       <Title order={3}>{item.title}</Title>
+                      <Image
+                        src={`${process.env.PUBLIC_URL}/diagrams/${encodeURIComponent(item.image)}`}
+                        alt={item.imageAlt}
+                        h={170}
+                        fit="contain"
+                        radius="md"
+                      />
                       <Text c="dimmed">{item.instruction}</Text>
                       {stepErrors[index] && status === 'bad' && <Text c="red.8" size="sm">{stepErrors[index]}</Text>}
                     </Stack>
