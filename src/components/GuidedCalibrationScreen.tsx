@@ -6,6 +6,11 @@ import { calculateSensorToAnatomicalMatrix, evaluateMovementCycles } from '../ut
 
 const STATIC_RECORDING_DURATION_MS = 3000;
 const DYNAMIC_RECORDING_DURATION_MS = 30000;
+// Step 1 only needs a usable initial bias estimate. Treatment-time stationary
+// tracking will continue refining it, so allow small postural tremor here.
+const STATIC_ACCEL_NORM_TOLERANCE_G = 0.1;
+const STATIC_ACCEL_VARIABILITY_LIMIT_G = 0.04;
+const STATIC_GYRO_NOISE_LIMIT_DPS = 1;
 type RecordedStep = 'still' | 'nod' | 'shake';
 type StepStatus = 'pending' | 'active' | 'good' | 'bad';
 type CalibrationSample = Pick<LatestImuSample, 'ax' | 'ay' | 'az' | 'gx' | 'gy' | 'gz'>;
@@ -67,8 +72,8 @@ function validateStationarySamples(samples: CalibrationSample[], noiseFloor: num
     standardDeviation(samples.map((sample) => sample.ay)),
     standardDeviation(samples.map((sample) => sample.az))
   );
-  if (Math.abs(median(accelNorms) - 1) >= 0.05) return 'The device experienced acceleration during the still recording.';
-  if (accelStdNorm >= 0.02 || noiseFloor >= 0.5) return 'The head or device moved during the still recording.';
+  if (Math.abs(median(accelNorms) - 1) >= STATIC_ACCEL_NORM_TOLERANCE_G) return 'The device experienced acceleration during the still recording.';
+  if (accelStdNorm >= STATIC_ACCEL_VARIABILITY_LIMIT_G || noiseFloor >= STATIC_GYRO_NOISE_LIMIT_DPS) return 'The head or device moved during the still recording.';
   return null;
 }
 
