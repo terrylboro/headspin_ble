@@ -237,14 +237,33 @@ export function calculateSensorToAnatomicalMatrix(
   noiseFloorDps = 0,
   referenceMatrix: SensorToAnatomicalMatrix = [1, 0, 0, 0, 1, 0, 0, 0, 1]
 ): SensorToAnatomicalMatrix {
-  const nod = analyseRotationAxis(nodSamples, gyroscopeBias, noiseFloorDps);
-  const shake = analyseRotationAxis(shakeSamples, gyroscopeBias, noiseFloorDps);
-  if (nod.dominance < MINIMUM_DOMINANT_VARIANCE) throw new Error('Nodding was not sufficiently single-plane. Please repeat with less sideways movement.');
-  if (shake.dominance < MINIMUM_DOMINANT_VARIANCE) throw new Error('Head shaking was not sufficiently single-plane. Please repeat with less nodding movement.');
+  let nod = analyseRotationAxis(nodSamples, gyroscopeBias, noiseFloorDps);
+  let shake = analyseRotationAxis(shakeSamples, gyroscopeBias, noiseFloorDps);
+  if (nod.dominance < MINIMUM_DOMINANT_VARIANCE) throw new Error('Please repeat head nods with less sideways movement.');
+  if (shake.dominance < MINIMUM_DOMINANT_VARIANCE) throw new Error('Please repeat head shakes with less nodding movement.');
 
   const rawAxisSeparation = Math.acos(Math.min(1, Math.abs(dot(nod.axis, shake.axis)))) * 180 / Math.PI;
   if (rawAxisSeparation < MINIMUM_AXIS_SEPARATION_DEGREES) {
-    throw new Error(`The nod and shake axes were only ${rawAxisSeparation.toFixed(0)}° apart. Please repeat the movements in distinct planes.`);
+    throw new Error(`The nod and shake movements are too similar. Please repeat and ensure they go in distinct directions.`);
+  }
+
+  const gravityDirection = normalize(stationaryGravity);
+  const angleFromGravity = (axis: Vector3Tuple) =>
+    Math.acos(Math.min(1, Math.abs(dot(gravityDirection, axis)))) * 180 / Math.PI;
+  const recordedShakeGravityAngle = angleFromGravity(shake.axis);
+  const recordedNodGravityAngle = angleFromGravity(nod.axis);
+
+  // If the nominal nod recording matches the upright shake axis while the
+  // nominal shake does not, both valid movements were performed in reverse.
+  if (
+    recordedShakeGravityAngle > MAXIMUM_GRAVITY_SHAKE_ANGLE_DEGREES &&
+    recordedNodGravityAngle <= MAXIMUM_GRAVITY_SHAKE_ANGLE_DEGREES
+  ) {
+    [nod, shake] = [shake, nod];
+  } else if (recordedShakeGravityAngle > MAXIMUM_GRAVITY_SHAKE_ANGLE_DEGREES) {
+    throw new Error(
+      'The Step 3 movement looked like another nod rather than a side-to-side head shake. Please repeat the head-shake movement.'
+    );
   }
 
   let shakeAxis = orientLike(
@@ -255,7 +274,7 @@ export function calculateSensorToAnatomicalMatrix(
     nod.axis,
     referenceMatrix.slice(3, 6) as Vector3Tuple
   );
-  let gravityAxis = orientLike(normalize(stationaryGravity), referenceMatrix.slice(0, 3) as Vector3Tuple);
+  let gravityAxis = orientLike(gravityDirection, referenceMatrix.slice(0, 3) as Vector3Tuple);
   gravityAxis = orientLike(gravityAxis, shakeAxis);
   const gravityShakeAngle = Math.acos(Math.min(1, dot(gravityAxis, shakeAxis))) * 180 / Math.PI;
   if (gravityShakeAngle > MAXIMUM_GRAVITY_SHAKE_ANGLE_DEGREES) {

@@ -17,9 +17,9 @@ type GuidedCalibrationScreenProps = {
 };
 
 const steps = [
-  { id: 'still', title: 'Look forwards', instruction: 'Look directly forwards and hold your head completely still for 3 seconds.', buttonLabel: 'Record still position' },
-  { id: 'nod', title: 'Nod carefully', instruction: 'Complete 2 controlled nods, moving your head up and down in one plane. A third will only be requested if needed.', buttonLabel: 'Record nodding' },
-  { id: 'shake', title: 'Shake carefully', instruction: 'Complete 2 controlled head shakes, moving from side to side in one plane. A third will only be requested if needed.', buttonLabel: 'Record head shaking' },
+  { id: 'still', title: 'Look forwards and Hold Still', instruction: 'Look directly forwards and hold the patient\'s head completely still for 3 seconds.', buttonLabel: 'Record still position' },
+  { id: 'nod', title: 'Nod Head Twice', instruction: 'Guide patient through 2 controlled head nods, as though they are saying "yes"', buttonLabel: 'Record nodding' },
+  { id: 'shake', title: 'Shake Head Twice', instruction: 'Guide patient through 2 controlled head shakes, as though they are saying "no"', buttonLabel: 'Record head shaking' },
   { id: 'forward', title: 'Look forwards again', instruction: 'Return to looking directly forwards. When you are ready, start the treatment.', buttonLabel: 'Start treatment' },
 ] as const;
 
