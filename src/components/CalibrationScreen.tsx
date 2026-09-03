@@ -33,7 +33,6 @@ export default function CalibrationScreen({
   // The original "Left" assets face right, while the mirrored "Right" assets
   // face left. Select by facing direction so it matches the affected ear.
   const affectedEarImageLabel = state.affectedEar === 'right' ? 'Left' : 'Right';
-  const sensorEarImageLabel = sensorMountEar === 'right' ? 'Left' : 'Right';
   const treatingOppositeEarWithoutRemount =
     sensorMountEar !== null &&
     state.affectedEar !== null &&
@@ -92,11 +91,11 @@ export default function CalibrationScreen({
       <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="xl" style={{ flex: 1 }}>
         <InfoCard
           title={treatingOppositeEarWithoutRemount ? 'Keep the device in place' : 'Place the device'}
-          imageSrc={`${process.env.PUBLIC_URL}/diagrams/HeadSpin Device Placement Central.png`} // ${sensorEarImageLabel}.png`}
+          imageSrc={`${process.env.PUBLIC_URL}/diagrams/HeadSpin Device Placement Left.png`}
           textBody={
             treatingOppositeEarWithoutRemount
               ? `Leave the device secured above the patient's ${sensorMountEar} ear while treating the ${state.affectedEar} ear.`
-              : "Ensure the device is sat above the patient's affected ear and fastened securely."
+              : "Ensure the device is secured on the patient's left side and fastened securely."
           }
           titleTextSize="xl"
           bodyTextSize="lg"

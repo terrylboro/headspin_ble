@@ -24,6 +24,10 @@ import { OpportunisticCalibrationEvent, StationaryGyroscopeCalibrator } from '..
 import { treatmentReducer, initialState } from './treatmentReducer';
 import { TreatmentState, Action, EarSide, CanalType, TreatmentStage } from '../types/treatmentTypes';
 
+// The camera-ui hardware mounts the IMU on the patient's left side. This is
+// physical placement and must not change when the selected treatment ear does.
+const CAMERA_UI_SENSOR_MOUNT_EAR: EarSide = 'left';
+
 // export type EarSide = 'left' | 'right' | null;
 // export type CanalType = 'anterior' | 'posterior' | 'lateral' | null;
 
@@ -220,7 +224,6 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
   const ble = useBleDevice();
 
   const [affectedEar, setAffectedEar] = useState<EarSide>(null);
-  const [sensorMountEarOverride, setSensorMountEarOverride] = useState<EarSide>(null);
   const [affectedCanal, setAffectedCanal] = useState<CanalType>('posterior');
   const [selectedCanals, setSelectedCanals] = useState<string[]>([]);
 
@@ -271,7 +274,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
   const madgwickRef = useRef<any>(null);
   const stationaryCalibratorRef = useRef(new StationaryGyroscopeCalibrator());
   const treatmentStageGuardUntilRef = useRef(0);
-  const sensorMountEar = sensorMountEarOverride ?? state.affectedEar;
+  const sensorMountEar = CAMERA_UI_SENSOR_MOUNT_EAR;
 
   useEffect(() => {
     // Example only.
@@ -303,9 +306,7 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
     const currentEar = state.affectedEar;
     if (currentEar !== 'left' && currentEar !== 'right') return false;
 
-    // Preserve the original physical mounting basis while changing the ear
-    // that drives treatment directions, images, and clinical logic.
-    setSensorMountEarOverride((currentOverride) => currentOverride ?? currentEar);
+    // The physical sensor remains on the left while the treatment ear changes.
     dispatch({
       type: 'SELECT_EAR',
       ear: currentEar === 'left' ? 'right' : 'left',
@@ -337,7 +338,6 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
   const resetTreatment = useCallback(() => {
     dispatch({ type: 'RESET' });
     setAffectedEar(null);
-    setSensorMountEarOverride(null);
     setAffectedCanal('posterior');
     setSelectedCanals([]);
     setIsTreating(false);
@@ -524,16 +524,6 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
        * - const pose = madgwickRef.current.getOrientation()
        * - const result = updateMadgwick(frame)
        */
-    // // Attempt to map IMU co-ordinates to madgwick co-ordinates
-    //   const filtPos = madgwickRef.current.update(
-    //     -basisCorrectedDataArr[1] * 9.81,
-    //     -basisCorrectedDataArr[2] * 9.81,
-    //     basisCorrectedDataArr[0] * 9.81,
-    //     -basisCorrectedDataArr[4],
-    //     -basisCorrectedDataArr[5],
-    //     basisCorrectedDataArr[3],
-    //     0.01
-    //   );
     // Attempt to map IMU co-ordinates to madgwick co-ordinates
       const filtPos = madgwickRef.current.update(
         basisCorrectedDataArr[2] * 9.81,
@@ -544,6 +534,16 @@ export function TreatmentProvider({children,}: {children: React.ReactNode;}) {
         basisCorrectedDataArr[3],
         0.01
       );
+    // // Attempt to map IMU co-ordinates to madgwick co-ordinates
+    //   const filtPos = madgwickRef.current.update(
+    //     basisCorrectedDataArr[2] * 9.81,
+    //     -basisCorrectedDataArr[1] * 9.81,
+    //     basisCorrectedDataArr[0] * 9.81,
+    //     basisCorrectedDataArr[5],
+    //     -basisCorrectedDataArr[4],
+    //     basisCorrectedDataArr[3],
+    //     0.01
+    //   );
 
 
       /**

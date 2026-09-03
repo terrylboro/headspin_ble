@@ -1,4 +1,5 @@
 import { EarSide } from '../types/treatmentTypes';
+import type { SensorToAnatomicalMatrix } from './sensorSegmentAlignment';
 
 /**
  * Convert a sensor vector into the right-ear reference basis used by the app.
@@ -9,8 +10,14 @@ export function applyEarAxisBasis(
   x: number,
   y: number,
   z: number,
-  affectedEar: EarSide
+  sensorMountEar: EarSide
 ): [number, number, number] {
-  // return affectedEar === 'left' ? [x, -y, -z] : [x, y, z];
-  return [x, y, z];
+  return sensorMountEar === 'left' ? [x, -y, -z] : [x, y, z];
+}
+
+/** Fixed mounting rotation used as the sign reference for functional calibration. */
+export function getEarAxisBasisMatrix(sensorMountEar: EarSide): SensorToAnatomicalMatrix {
+  return sensorMountEar === 'left'
+    ? [1, 0, 0, 0, -1, 0, 0, 0, -1]
+    : [1, 0, 0, 0, 1, 0, 0, 0, 1];
 }

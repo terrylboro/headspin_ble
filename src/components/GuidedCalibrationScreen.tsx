@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Badge, Button, Card, Group, Image, Progress, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { GyroscopeOffsets, LatestImuSample, useTreatment } from '../context/TreatmentProvider';
-import { applyEarAxisBasis } from '../utils/earAxisBasis';
+import { applyEarAxisBasis, getEarAxisBasisMatrix } from '../utils/earAxisBasis';
 import { calculateSensorToAnatomicalMatrix, evaluateMovementCycles } from '../utils/sensorSegmentAlignment';
 
 const STATIC_RECORDING_DURATION_MS = 3000;
@@ -23,7 +23,7 @@ type GuidedCalibrationScreenProps = {
 };
 
 const steps = [
-  { id: 'still', title: 'Look forwards and Hold Still', instruction: 'Look directly forwards and hold the patient\'s head completely still for 3 seconds.', image: 'HeadSpin Device Placement Central.png', imageAlt: 'Cartoon patient looking forwards with the sensor centred on the head', buttonLabel: 'Start calibration' },
+  { id: 'still', title: 'Look forwards and Hold Still', instruction: 'Look directly forwards and hold the patient\'s head completely still for 3 seconds.', image: 'HeadSpin Device Placement Left.png', imageAlt: 'Cartoon patient looking forwards with the sensor on the left side of the head', buttonLabel: 'Start calibration' },
   { id: 'nod', title: 'Nod Head Twice', instruction: 'Guide the patient through 2 controlled head nods, as though they are saying "yes".', image: 'Calibration Demonstration Nod.png', imageAlt: 'Cartoon patient demonstrating a gentle downward nod' },
   { id: 'shake', title: 'Shake Head Twice', instruction: 'Guide the patient through 2 controlled head shakes, as though they are saying "no".', image: 'Calibration Demonstration Shake.png', imageAlt: 'Cartoon patient demonstrating a gentle side-to-side head turn' },
 ] as const;
@@ -158,7 +158,8 @@ export default function GuidedCalibrationScreen({ onBack, onComplete, startReque
           median(samplesRef.current.still.map((sample) => sample.ay)),
           median(samplesRef.current.still.map((sample) => sample.az)),
         ],
-        noiseFloorRef.current
+        noiseFloorRef.current,
+        getEarAxisBasisMatrix(sensorMountEar)
       );
       setSensorToAnatomicalMatrix(alignmentMatrix);
       setFunctionalCalibration({
