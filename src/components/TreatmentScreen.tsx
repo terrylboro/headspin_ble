@@ -18,6 +18,7 @@ import CanalRendering from './CanalRendering';
 import { useTreatment } from '../context/TreatmentProvider';
 import { TreatmentStage } from '../types/treatmentTypes';
 import AlignmentProgress from '../custom/alignmentProgress';
+import EpleyCamStream from './EpleyCamStream';
 
 const POSITION_COUNT = 4;
 
@@ -425,9 +426,33 @@ export default function TreatmentScreen({
         <Box style={{ flex: 3.5, minWidth: 0, display: 'flex' }}>
           <Card withBorder shadow="sm" radius="md" style={{ flex: 1, minHeight: 0, height: '100%', overflow: 'hidden' }}>
             <Stack h="100%" style={{ minHeight: 0 }}>
+              <Text fw={600}>EpleyCam</Text>
+
+              <Box
+                style={{
+                  flex: 1,
+                  minHeight: 0,
+                  overflow: 'hidden',
+                  border: '1px solid var(--mantine-color-gray-3)',
+                  borderRadius: 8,
+                }}
+              >
+                <EpleyCamStream />
+              </Box>
+
               <Text fw={600}>Head Position</Text>
 
-              <Box style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+              <Box
+                style={{
+                  flex: 1,
+                  minHeight: 0,
+                  overflow: 'hidden',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  background: '#eeeeee',
+                  borderRadius: 8,
+                }}
+              >
                 <HeadRendering calibrateMode={false} />
               </Box>
 
