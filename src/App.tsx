@@ -161,12 +161,6 @@ function App(): JSX.Element {
   function handleSwitchToOppositeEar() {
     closeDixHallpikeDecision();
     if (!treatment.switchToOppositeEarWithoutRemount()) return;
-
-    if (treatment.isRecording) {
-      treatment.stopRecording();
-    }
-    setCalibrationStartRequestId(null);
-    setScreen('calibrate');
   }
 
   function closeDixHallpikeDecision() {
